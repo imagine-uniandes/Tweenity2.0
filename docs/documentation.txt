@@ -1,0 +1,51 @@
+## Tweenity Graph Editor - UI Documentation
+
+### Overview
+The **Tweenity Graph Editor** is a custom Unity Editor Window designed to manage and visualize node-based structures within the Unity Editor. The interface has been modularized into distinct components for maintainability and ease of extension.
+
+### Components
+The editor consists of five key sections:
+
+#### 1. **Toolbar (TweenityToolbar.cs)**
+- Provides essential file operations and view settings.
+- Buttons include:
+  - **File Menu** (Save, Export, Import)
+  - **View Menu** (Toggle Grid, Zoom In/Out, Reset View)
+  - **Help Button** (Placeholder for documentation/help support)
+  - **Add Node Button** (Future functionality for adding nodes)
+
+#### 2. **Left Panel (TweenityLeftPanel.cs)**
+- Contains tools for managing the hierarchy and searching nodes.
+- Includes:
+  - **Search Bar** (Filter nodes by name)
+  - **Hierarchy View** (Displays node structure)
+
+#### 3. **Graph View (TweenityGraphView.cs)**
+- The core visual representation of nodes and their relationships.
+- Allows interaction with nodes and connections (future development planned).
+
+#### 4. **Right Panel (TweenityRightPanel.cs)**
+- Displays details and properties of the selected node.
+- Contains:
+  - **Node Type Dropdown** (Allows selection of node category)
+  - **Title & Description Fields**
+  - **Expected User Actions**
+  - **Simulator Actions**
+  - **Timeout & Reminder Settings**
+  - **Audio & Dialogue Settings** (Visible only for dialogue nodes)
+  - **Connected Nodes List**
+
+#### 5. **Bottom Toolbar (TweenityBottomToolbar.cs)**
+- Displays debugging and selection information.
+- Includes:
+  - **Debugging Button** (Logs debugging information)
+  - **Current Selection Button** (Shows details of the currently selected node)
+
+### Functionality & Behavior
+- The **Toolbar** handles general actions (file management, view controls, node addition).
+- The **Left Panel** organizes nodes in a hierarchical manner and allows searching.
+- The **Graph View** is the interactive space where users manipulate nodes.
+- The **Right Panel** updates dynamically based on the selected node type.
+- The **Bottom Toolbar** is used for debugging and tracking selections.
+
+This document provides a structured overview of the Tweenity Graph Editor's UI components and functionality as of the current implementation.

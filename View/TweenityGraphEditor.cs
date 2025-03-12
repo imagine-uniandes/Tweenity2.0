@@ -1,0 +1,45 @@
+using UnityEditor;
+using UnityEngine;
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
+using System.Collections.Generic;
+
+public class TweenityGraphEditor : EditorWindow
+{
+    [MenuItem("Window/Tweenity Graph Editor")]
+    public static void OpenWindow()
+    {
+        TweenityGraphEditor window = GetWindow<TweenityGraphEditor>("Tweenity Graph Editor", true);
+        window.titleContent = new GUIContent("Tweenity Graph Editor");
+    }
+
+    private void CreateGUI()
+    {
+        VisualElement root = rootVisualElement;
+        root.style.flexDirection = FlexDirection.Column;
+
+        // Add Toolbar
+        root.Add(TweenityToolbar.CreateToolbar());
+
+        // Main Layout (Left Panel, GraphView, Right Panel)
+        VisualElement mainLayout = new VisualElement();
+        mainLayout.style.flexDirection = FlexDirection.Row;
+        mainLayout.style.flexGrow = 1;
+
+        // Add Left Panel
+        mainLayout.Add(TweenityLeftPanel.CreateLeftPanel());
+        
+        // Graph View (Center Area)
+        TweenityGraphView graphView = new TweenityGraphView();
+        graphView.style.backgroundColor = EditorGUIUtility.isProSkin ? new Color(0.18f, 0.18f, 0.18f) : new Color(0.82f, 0.82f, 0.82f);
+        mainLayout.Add(graphView);
+
+        // Add Right Panel
+        mainLayout.Add(TweenityRightPanel.CreateRightPanel());
+
+        root.Add(mainLayout);
+        
+        // Add Bottom Status Bar
+        root.Add(TweenityBottomToolbar.CreateBottomToolbar());
+    }
+}

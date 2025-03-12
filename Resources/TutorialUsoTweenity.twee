@@ -1,0 +1,213 @@
+:: StoryTitle
+TutorialUsoTweenity
+
+
+:: StoryData
+{
+  "ifid": "B1256EE2-8180-4FF3-AE66-A320CE303723",
+  "format": "Harlowe",
+  "format-version": "3.3.9",
+  "start": "Recibir instrucciones iniciales",
+  "tag-colors": {
+    "END": "red",
+    "START": "green",
+    "dialog": "purple",
+    "dialogue": "purple",
+    "end": "red",
+    "multipleChoice": "orange",
+    "random": "yellow",
+    "reminder": "blue",
+    "start": "green",
+    "timeOut": "blue",
+    "timeout": "blue"
+  },
+  "zoom": 1
+}
+
+
+:: 1:Mostrar partículas amarillas [end] {"position":"702,1","size":"100,100"}
+Cuando el usuario oprime el botón, se le muestran unas partículas color amarillo
+<img src="https://raw.githubusercontent.com/VivianGomez/Tweenity/main/Ejemplos%20bocetos/p.amarillo.jpeg" width="500" height="300">
+@
+[[X]]
+{}
+<
+Particles.ChangeParticleColor(yellow)
+>
+
+
+:: 2:Mostrar partículas rosadas [end] {"position":"700,113","size":"100,100"}
+Cuando el usuario oprime el botón, se le muestran unas partículas color rosado
+<img src="https://raw.githubusercontent.com/VivianGomez/Tweenity/main/Ejemplos%20bocetos/p.rosa.jpeg" width="500" height="300">
+@
+[[X]]
+{}
+<
+Particles.ChangeParticleColor(pink)
+>
+
+
+
+:: 3:Mostrar partículas moradas [end] {"position":"700,225","size":"100,100"}
+Cuando el usuario oprime el botón, se le muestran unas partículas color morado
+<img src="https://raw.githubusercontent.com/VivianGomez/Tweenity/main/Ejemplos%20bocetos/p.purple.jpeg" width="500" height="300">
+@
+[[X]]
+{}
+<
+Particles.ChangeParticleColor(purple)
+>
+
+
+:: BtnTutorial.Touched():Ver partículas de color azul [end] {"position":"698,483","size":"100,100"}
+Cuando el usuario oprime el botón azul, se desaparecen los dos botones y  se le muestran unas partículas color azul. 
+<img src="https://raw.githubusercontent.com/VivianGomez/Tweenity/main/Ejemplos%20bocetos/p.azul.jpeg" width="500" height="300">
+@
+[[X]]
+{}
+<
+Particles.ChangeParticleColor(blue)
+>
+
+
+:: BtnTutorial2.Touched():Ver partículas de color rojo [end] {"position":"702,611","size":"100,100"}
+Cuando el usuario oprime el botón rojo, se desaparecen los dos botones y  se le muestran unas partículas color rojo. 
+<img src="https://raw.githubusercontent.com/VivianGomez/Tweenity/main/Ejemplos%20bocetos/p.rojp.jpeg" width="500" height="300">
+@
+[[X]]
+{}
+<
+Particles.ChangeParticleColor(red)
+>
+
+
+:: Mostrar partículas verdes [end] {"position":"1055,234","size":"100,100"}
+Cuando el usuario oprime el botón, se le muestran unas partículas color verde
+@
+[[X]]
+{}
+<
+Particles.ChangeParticleColor(green)
+>
+
+
+:: Oprimir uno de los botones - Ejemplo selección múltiple [multipleChoice] {"position":"499,601","size":"100,100"}
+En este nodo se quiere que el usuario oprima uno de los dos botones y dependiendo del que se oprima se va a mostar un color diferente de partículas. De hecho, se van a mostrar partículas del color del botón oprimido
+<img src="https://raw.githubusercontent.com/VivianGomez/Tweenity/main/Ejemplos%20bocetos/botones%20color.jpeg" width="500" height="300">
+@
+[[BtnTutorial.Touched():Ver partículas de color azul]]
+[[BtnTutorial2.Touched():Ver partículas de color rojo]]
+{
+BtnTutorial.Touched()
+BtnTutorial2.Touched()
+}
+<
+BtnsManager.ShowButton("button1";false)
+BtnsManager.ShowButton("button2";false)
+>
+
+
+:: Prefiero el color azul {"position":"398,478","size":"100,100"}
+Al seleccionar el azul se muestra un botón azul y un botón rojo
+<img src="https://raw.githubusercontent.com/VivianGomez/Tweenity/main/Ejemplos%20bocetos/botones%20color.jpeg" width="500" height="300">
+@
+[[Oprimir uno de los botones - Ejemplo selección múltiple]]
+{}
+<
+Simulator.CloseDialogueViewer()
+BtnsManager.ShowButton("button1";true)
+BtnTutorial.ChangeBtnColor(blue)
+BtnsManager.ShowButton("button2";true)
+BtnTutorial2.ChangeBtnColor(red)
+>
+
+
+:: Prefiero el color rojo {"position":"396,223","size":"100,100"}
+Al seleccionar el rojo se muestra un botón rojo
+<img src="https://raw.githubusercontent.com/VivianGomez/Tweenity/main/Ejemplos%20bocetos/botoncolor.jpeg" width="500" height="300">
+@
+[[Ver ejemplo selección random]]
+{}
+<
+Simulator.CloseDialogueViewer()
+BtnsManager.ShowButton("button1";true)
+BtnTutorial.ChangeBtnColor(red)
+>
+
+
+:: Prefiero el color verde {"position":"537,349","size":"100,100"}
+Al seleccionar el verde se muestra un botón verde
+<img src="https://raw.githubusercontent.com/VivianGomez/Tweenity/main/Ejemplos%20bocetos/botoncolor.jpeg" width="500" height="300">
+@
+[[Ver ejemplo de timeout]]
+{}
+<
+Simulator.CloseDialogueViewer()
+BtnsManager.ShowButton("button1";true)
+BtnTutorial.ChangeBtnColor(green)
+>
+
+
+:: Recibir instrucciones iniciales [start] {"position":"48,354","size":"100,100"}
+En este nodo se va a reproducir un audio y se mostraran particulas de color azul celeste. El audio dirá "este es un audio de ejemplo, en el nodo actual sólo hay acciones de simulador y una de ellas es la ejecución de este audio, esto puede ser muy util para dar instrucciones en tus entornos virtuales".
+<img src="https://raw.githubusercontent.com/VivianGomez/Tweenity/main/Ejemplos%20bocetos/inicial.jpeg" width="500" height="300">
+@
+[[Ver un ejemplo de diálogo]]
+{}
+<
+Simulator.InitializeAudiosDirectory("TweenityInstructions")
+Simulator.Wait(2)
+Simulator.Play("InstruccionInicial")
+Simulator.OpenDialogueViewer()
+>
+
+
+:: Ver ejemplo de timeout [timeout] {"position":"886,349","size":"100,100"}
+En este nodo se quiere que el usuario oprima el botón verde. Si no lo hace después de un determinado tiempo se mostrará una pantalla de "GameOver"
+@
+[[Mostrar partículas verdes]]
+[[timeout: Ver pantalla GameOver]]
+{
+Simulator.Timeout(5)
+BtnTutorial.Touched()
+}
+<
+BtnsManager.ShowButton("button1";false)
+>
+
+
+:: Ver ejemplo selección random [random reminder] {"position":"514,98","size":"100,100"}
+Al oprimir se selecciona una de 3 opciones (:aleatoriamente)
+@
+[[1:Mostrar partículas amarillas]]
+[[2:Mostrar partículas rosadas]]
+[[3:Mostrar partículas moradas]]
+{
+Simulator.ShowReminder(1; BtnTutorial;"")
+BtnTutorial.Touched()
+}
+<>
+
+
+:: Ver un ejemplo de diálogo [dialogue] {"position":"194,354","size":"100,100"}
+En tus simuladores/aplicaciones es posible que necesites poner diálogos y capturar una de varias posibles respuestas de tu usuario. 
+<img src="https://raw.githubusercontent.com/VivianGomez/Tweenity/main/Ejemplos%20bocetos/dialogo.jpeg" width="500" height="300">
+@
+Este es un ejemplo de diálogo con varias posibles respuestas de usuario. 
+¿Puedes contarme qué color te prefieres entre rojo, verde y azul?
+[[Prefiero el color rojo]]
+[[Prefiero el color verde]]
+[[Prefiero el color azul]]
+{}
+<>
+
+
+:: timeout: Ver pantalla GameOver [end] {"position":"1058,435","size":"100,100"}
+Cuando el usuario oprime el botón, se le muestran un mensaje de GameOver
+@
+[[X]]
+{}
+<
+BtnsManager.ShowButton("button1";false)
+GameOver.Activate()
+>
