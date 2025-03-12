@@ -33,49 +33,58 @@ public static class TweenityRightPanel
         nodeSection.Add(nodeDetailsLabel);
 
         DropdownField nodeTypeDropdown = new DropdownField("Node Type");
-        nodeTypeDropdown.choices = new List<string> {"noType", "Start", "End", "Random", "MultipleChoice", "Reminder", "Timeout", "Dialogue"};
-        nodeTypeDropdown.value = "noType"; // Set default value
+        nodeTypeDropdown.choices = new List<string>(System.Enum.GetNames(typeof(NodeType)));
+        nodeTypeDropdown.value = NodeType.NoType.ToString(); // Set default value
         nodeSection.Add(nodeTypeDropdown);
 
-        nodeSection.Add(new Label("Title"));
-        TextField titleField = new TextField();
-        nodeSection.Add(titleField);
-        nodeSection.Add(new Label("Description"));
-        TextField descriptionField = new TextField();
-        nodeSection.Add(descriptionField);
+        // Container for dynamic content
+        VisualElement dynamicContent = new VisualElement();
+        nodeSection.Add(dynamicContent);
 
-        // Expected User Action Section
-        nodeSection.Add(new Label("Expected User Action"));
-        TextField expectedUserActionField = new TextField();
-        nodeSection.Add(expectedUserActionField);
+        // Function to update the view based on selected node type
+        void UpdateNodeView(NodeType selectedType)
+        {
+            dynamicContent.Clear();
+            switch (selectedType)
+            {
+                case NodeType.NoType:
+                    dynamicContent.Add(new Nodes.NoTypeView());
+                    break;
+                case NodeType.Start:
+                    dynamicContent.Add(new Nodes.StartView());
+                    break;
+                case NodeType.End:
+                    dynamicContent.Add(new Nodes.EndView());
+                    break;
+                case NodeType.Random:
+                    dynamicContent.Add(new Nodes.RandomView());
+                    break;
+                case NodeType.MultipleChoice:
+                    dynamicContent.Add(new Nodes.MultipleChoiceView());
+                    break;
+                case NodeType.Reminder:
+                    dynamicContent.Add(new Nodes.ReminderView());
+                    break;
+                case NodeType.Timeout:
+                    dynamicContent.Add(new Nodes.TimeoutView());
+                    break;
+                case NodeType.Dialogue:
+                    dynamicContent.Add(new Nodes.DialogueView());
+                    break;
+            }
+        }
 
-        // Simulator Actions Section
-        nodeSection.Add(new Label("Simulator Actions"));
-        ListView simulatorActionsList = new ListView();
-        nodeSection.Add(simulatorActionsList);
+        // Register callback for dropdown changes
+        nodeTypeDropdown.RegisterValueChangedCallback(evt =>
+        {
+            if (System.Enum.TryParse(evt.newValue, out NodeType selectedType))
+            {
+                UpdateNodeView(selectedType);
+            }
+        });
 
-        // Timeout & Reminder Settings
-        nodeSection.Add(new Label("Reminder Time (seconds)"));
-        FloatField reminderTimeField = new FloatField();
-        nodeSection.Add(reminderTimeField);
-
-        nodeSection.Add(new Label("Timeout Duration (seconds)"));
-        FloatField timeoutDurationField = new FloatField();
-        nodeSection.Add(timeoutDurationField);
-
-        // Audio & Dialogue Settings
-        nodeSection.Add(new Label("Audio File Name"));
-        TextField audioFileField = new TextField();
-        nodeSection.Add(audioFileField);
-
-        nodeSection.Add(new Label("Dialogue Text"));
-        TextField dialogueTextField = new TextField();
-        nodeSection.Add(dialogueTextField);
-
-        // Responses (Connected Nodes)
-        nodeSection.Add(new Label("Connected Nodes"));
-        ListView connectedNodesList = new ListView();
-        nodeSection.Add(connectedNodesList);
+        // Initialize default view
+        UpdateNodeView(NodeType.NoType);
 
         rightPanel.Add(nodeSection);
         return rightPanel;

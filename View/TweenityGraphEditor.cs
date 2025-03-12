@@ -3,11 +3,6 @@ using UnityEngine;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
-import leftPanelView;
-import rightPanelView;
-import bottomToolBar;
-import topToolBar;
-import tweenityGraphView;
 
 public class TweenityGraphEditor : EditorWindow
 {
