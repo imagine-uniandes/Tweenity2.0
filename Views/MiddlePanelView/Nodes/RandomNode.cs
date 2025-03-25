@@ -3,8 +3,8 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace Nodes
-{
+namespace Views.MiddlePanel{
+
     public class RandomNode : TweenityNode
     {
         private ListView pathsList;

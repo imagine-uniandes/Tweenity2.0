@@ -2,9 +2,8 @@ using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
 
-
-namespace Nodes
-{
+namespace Views.RightPanel{
+    
     public class StartView : VisualElement
     {
         public StartView()

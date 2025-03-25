@@ -1,9 +1,10 @@
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using UnityEngine;
+using Models;
 
-namespace Nodes
-{
+namespace Views.MiddlePanel{
+    
     public class TweenityNode : Node
     {
         public string NodeID { get; private set; }

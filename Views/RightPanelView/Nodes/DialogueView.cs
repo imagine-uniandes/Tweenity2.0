@@ -2,8 +2,8 @@ using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
 
-namespace Nodes
-{
+namespace Views.RightPanel{
+
     public class DialogueView : VisualElement
     {
         public DialogueView()
@@ -43,3 +43,4 @@ namespace Nodes
         }
     }
 }
+

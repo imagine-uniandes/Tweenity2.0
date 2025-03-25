@@ -2,8 +2,8 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using UnityEngine;
 
-namespace Nodes
-{
+namespace Views.MiddlePanel{
+
     public class StartNode : TweenityNode
     {
         public StartNode(string nodeID) : base(nodeID)

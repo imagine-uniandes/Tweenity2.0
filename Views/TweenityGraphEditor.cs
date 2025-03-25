@@ -6,8 +6,7 @@ using System.Collections.Generic;
 using Models;
 using Models.Nodes;
 using Controllers;
-using Views.MiddlePanelView;
-
+using Views;
 public class TweenityGraphEditor : EditorWindow
 {
     [MenuItem("Window/Tweenity Graph Editor")]

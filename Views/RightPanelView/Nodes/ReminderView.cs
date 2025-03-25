@@ -2,9 +2,8 @@ using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
 
+namespace Views.RightPanel{
 
-namespace Nodes
-{
     public class ReminderView : VisualElement
     {
         public ReminderView()

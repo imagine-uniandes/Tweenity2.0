@@ -2,7 +2,6 @@ using Models;
 using Models.Nodes;
 using System;
 using Views;
-using Views.MiddlePanelView;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 

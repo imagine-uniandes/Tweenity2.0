@@ -2,8 +2,8 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using UnityEngine;
 
-namespace Nodes
-{
+namespace Views.MiddlePanel{
+
     public class TimeoutNode : TweenityNode
     {
         public TimeoutNode(string nodeID) : base(nodeID)
@@ -24,3 +24,4 @@ namespace Nodes
         }
     }
 }
+

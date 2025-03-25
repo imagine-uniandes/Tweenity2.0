@@ -2,8 +2,8 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using UnityEngine;
 
-namespace Nodes
-{
+namespace Views.MiddlePanel{
+
     public class ReminderNode : TweenityNode
     {
         public ReminderNode(string nodeID) : base(nodeID)
@@ -25,3 +25,4 @@ namespace Nodes
         }
     }
 }
+

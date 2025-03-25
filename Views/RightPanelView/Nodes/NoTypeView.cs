@@ -3,8 +3,8 @@ using UnityEngine.UIElements;
 using UnityEngine;
 
 
-namespace Nodes
-{
+namespace Views.RightPanel{
+    
     public class NoTypeView : VisualElement
     {
         public NoTypeView()

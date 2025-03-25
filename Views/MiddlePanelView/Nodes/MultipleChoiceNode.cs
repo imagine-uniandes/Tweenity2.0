@@ -3,8 +3,7 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace Nodes
-{
+namespace Views.MiddlePanel{
     public class MultipleChoiceNode : TweenityNode
     {
         private ListView choicesList;
@@ -37,3 +36,4 @@ namespace Nodes
         }
     }
 }
+

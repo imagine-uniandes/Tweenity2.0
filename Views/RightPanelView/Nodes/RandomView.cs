@@ -2,8 +2,8 @@ using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
 
-namespace Nodes
-{
+namespace Views.RightPanel{
+
     public class RandomView : VisualElement
     {
         public RandomView()

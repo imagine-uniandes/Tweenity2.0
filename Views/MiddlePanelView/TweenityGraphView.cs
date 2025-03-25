@@ -1,10 +1,12 @@
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Models;
 using Models.Nodes;
+using Views.MiddlePanel;
 
-namespace Views.MiddlePanelView
-{
+namespace Views{
+
     public class TweenityGraphView : GraphView
     {
         public TweenityGraphView()
