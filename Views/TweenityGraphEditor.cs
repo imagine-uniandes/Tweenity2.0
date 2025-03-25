@@ -37,7 +37,7 @@ public class TweenityGraphEditor : EditorWindow
         mainLayout.style.flexGrow = 1;
 
         // Add Left Panel
-        mainLayout.Add(TweenityLeftPanel.CreateLeftPanel());
+        mainLayout.Add(TweenityLeftPanel.CreateLeftPanel(graphController));
 
         // Add Graph View
         mainLayout.Add(graphView);

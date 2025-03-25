@@ -138,5 +138,11 @@ namespace Controllers
             Debug.Log("Current selection: (not implemented yet)");
             // In future: you can read from GraphView.selection and show details
         }
+       public void SearchNodes(string query)
+        {
+            Debug.Log($"Searching nodes for: {query}");
+            // Future: Filter nodes in GraphView or highlight matches
+        }
+ 
     }
 }

@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 namespace Views{
     public static class TweenityLeftPanel
     {
-        public static VisualElement CreateLeftPanel()
+        public static VisualElement CreateLeftPanel(GraphController graphController)
         {
             VisualElement leftPanel = new VisualElement();
             leftPanel.style.width = 200;
@@ -34,6 +34,10 @@ namespace Views{
             searchSection.Add(searchLabel);
 
             TextField searchBar = new TextField();
+            searchBar.RegisterValueChangedCallback(evt =>
+            {
+                graphController.SearchNodes(evt.newValue);
+            });
             searchBar.style.flexGrow = 1;
             searchBar.value = "Search for a node...";
             searchBar.style.width = StyleKeyword.Auto;
