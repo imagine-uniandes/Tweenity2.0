@@ -21,32 +21,70 @@ namespace Views
 
             // File Dropdown Menu
             ToolbarMenu fileMenu = new ToolbarMenu() { text = "File" };
-            fileMenu.menu.AppendAction("Save", action => Debug.Log("Save Clicked"));
-            fileMenu.menu.AppendAction("Export", action => Debug.Log("Export Clicked"));
-            fileMenu.menu.AppendAction("Import", action => Debug.Log("Import Clicked"));
+
+            fileMenu.menu.AppendAction("Save", action =>
+            {
+                _graphController.SaveCurrentGraph(); // Uses stored path or prompts on first save
+            });
+
+            fileMenu.menu.AppendAction("Export", action =>
+            {
+                string path = EditorUtility.SaveFilePanel("Export Graph", "", "tweenity_story.twee", "twee");
+                if (!string.IsNullOrEmpty(path))
+                {
+                    _graphController.ExportGraphTo(path);
+                }
+            });
+
+            fileMenu.menu.AppendAction("Open", action =>
+            {
+                string path = EditorUtility.OpenFilePanel("Open Graph", "", "twee");
+                if (!string.IsNullOrEmpty(path))
+                {
+                    _graphController.LoadGraphFrom(path);
+                }
+            });
+
             toolbar.Add(fileMenu);
 
             // View Dropdown Menu
             ToolbarMenu viewMenu = new ToolbarMenu() { text = "View" };
-            viewMenu.menu.AppendAction("Toggle Grid", action => Debug.Log("Toggle Grid Clicked"));
-            viewMenu.menu.AppendAction("Zoom In", action => Debug.Log("Zoom In Clicked"));
-            viewMenu.menu.AppendAction("Zoom Out", action => Debug.Log("Zoom Out Clicked"));
-            viewMenu.menu.AppendAction("Reset View", action => Debug.Log("Reset View Clicked"));
-            toolbar.Add(viewMenu);
 
-            // Help Button 
-            ToolbarButton helpButton = new ToolbarButton(() => Debug.Log("Help Clicked")) { text = "Help" };
+            viewMenu.menu.AppendAction("Toggle Grid", action =>
+            {
+                _graphController.ToggleGrid();
+            });
+
+            viewMenu.menu.AppendAction("Zoom In", action =>
+            {
+                _graphController.ZoomIn();
+            });
+
+            viewMenu.menu.AppendAction("Zoom Out", action =>
+            {
+                _graphController.ZoomOut();
+            });
+
+            viewMenu.menu.AppendAction("Reset View", action =>
+            {
+                _graphController.ResetView();
+            });
+
+            toolbar.Add(viewMenu);
+            // Help Button
+            ToolbarButton helpButton = new ToolbarButton(() =>
+            {
+                _graphController.ShowHelp();
+            })
+            {
+                text = "Help"
+            };
             toolbar.Add(helpButton);
 
-            // Add Node Button (wired up to controller)
+            // Add Node Button
             ToolbarButton addNodeButton = new ToolbarButton(() =>
             {
-                var newNode = new TweenityNodeModel("New Node", NodeType.NoType);
-                bool added = _graphController.AddNode(newNode);
-                if (!added)
-                {
-                    Debug.LogWarning("Node not added. Maybe a Start node already exists?");
-                }
+                _graphController.CreateNewNode();
             })
             {
                 text = "[ + ]"

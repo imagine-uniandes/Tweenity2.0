@@ -43,5 +43,86 @@ namespace Controllers
         {
             return Graph.Nodes;
         }
+
+        public void SaveCurrentGraph()
+        {
+            if (string.IsNullOrEmpty(lastSavedPath))
+            {
+                lastSavedPath = EditorUtility.SaveFilePanel("Save Graph", "", "tweenity_story.twee", "twee");
+            }
+
+            if (!string.IsNullOrEmpty(lastSavedPath))
+            {
+                ExportGraphTo(lastSavedPath);
+            }
+        }
+
+        public void ExportGraphTo(string path)
+        {
+            string twee = GraphParser.ExportToTwee(Graph.Nodes);
+            File.WriteAllText(path, twee);
+            Debug.Log("Graph exported to: " + path);
+        }
+
+        public void LoadGraphFrom(string path)
+        {
+            string twee = File.ReadAllText(path);
+            var nodes = GraphParser.ImportFromTwee(twee);
+
+            // Clear current graph
+            foreach (var node in Graph.Nodes)
+            {
+                GraphView.RemoveNodeFromView(node.NodeID);
+            }
+
+            Graph = new GraphModel(); // Reset
+            foreach (var node in nodes)
+            {
+                AddNode(node);
+            }
+
+            lastSavedPath = path;
+            Debug.Log("Graph loaded from: " + path);
+        }
+        // View control stubs
+        public void ToggleGrid()
+        {
+            Debug.Log("Toggle Grid clicked (controller)");
+            // Future: toggle visibility of GraphView background grid
+        }
+
+        public void ZoomIn()
+        {
+            Debug.Log("Zoom In clicked (controller)");
+            // Future: increase zoom level in GraphView
+        }
+
+        public void ZoomOut()
+        {
+            Debug.Log("Zoom Out clicked (controller)");
+            // Future: decrease zoom level in GraphView
+        }
+
+        public void ResetView()
+        {
+            Debug.Log("Reset View clicked (controller)");
+            // Future: reset zoom and center position
+        }
+
+        public void ShowHelp()
+        {
+            Debug.Log("Help clicked (controller)");
+            // Future: open documentation window or help dialog
+        }
+
+        public void CreateNewNode()
+        {
+            var newNode = new TweenityNodeModel("New Node", NodeType.NoType);
+            bool added = AddNode(newNode);
+            if (!added)
+            {
+                Debug.LogWarning("Node not added. Maybe a Start node already exists?");
+            }
+        }
     }
 }
