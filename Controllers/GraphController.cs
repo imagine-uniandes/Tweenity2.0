@@ -124,5 +124,19 @@ namespace Controllers
                 Debug.LogWarning("Node not added. Maybe a Start node already exists?");
             }
         }
+        public void DebugGraph()
+        {
+            Debug.Log("=== Graph Debug Info ===");
+            foreach (var node in Graph.Nodes)
+            {
+                Debug.Log($"Node: {node.Title} ({node.Type}) - ID: {node.NodeID}");
+            }
+        }
+
+        public void PrintCurrentSelection()
+        {
+            Debug.Log("Current selection: (not implemented yet)");
+            // In future: you can read from GraphView.selection and show details
+        }
     }
 }

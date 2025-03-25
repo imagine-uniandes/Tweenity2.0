@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 namespace Views{
     public static class TweenityBottomToolbar
     {
-        public static VisualElement CreateBottomToolbar()
+        public static VisualElement CreateBottomToolbar(GraphController graphController)
         {
             VisualElement bottomBar = new VisualElement();
             bottomBar.style.flexDirection = FlexDirection.Row;
@@ -16,8 +16,18 @@ namespace Views{
             bottomBar.style.paddingRight = 5;
             bottomBar.style.alignItems = Align.Center;
             
-            Button debugButton = new Button(() => Debug.Log("Debugging Clicked")) { text = "Debugging" };
-            Button selectionButton = new Button(() => Debug.Log("Current Selection")) { text = "Current Selection" };
+            Button debugButton = new Button(() =>
+            {
+                graphController.DebugGraph();
+            })
+            { text = "Debugging" };
+
+            Button selectionButton = new Button(() =>
+            {
+                graphController.PrintCurrentSelection();
+            })
+            { text = "Current Selection" };
+
             
             debugButton.style.flexGrow = 1;
             selectionButton.style.flexGrow = 1;

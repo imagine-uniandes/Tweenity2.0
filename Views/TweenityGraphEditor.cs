@@ -48,7 +48,7 @@ public class TweenityGraphEditor : EditorWindow
         root.Add(mainLayout);
 
         // Add Bottom Status Bar
-        root.Add(TweenityBottomToolbar.CreateBottomToolbar());
+        root.Add(TweenityBottomToolbar.CreateBottomToolbar(graphController));
     }
 
 }
