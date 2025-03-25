@@ -43,7 +43,10 @@ public class TweenityGraphEditor : EditorWindow
         mainLayout.Add(graphView);
 
         // Add Right Panel
-        mainLayout.Add(TweenityRightPanel.CreateRightPanel());
+        VisualElement rightPanelRoot = TweenityRightPanel.CreateRightPanel();
+        graphController.SetRightPanelRoot(rightPanelRoot);
+        graphView.OnNodeSelected = graphController.OnNodeSelected;
+        mainLayout.Add(rightPanelRoot);
 
         root.Add(mainLayout);
 

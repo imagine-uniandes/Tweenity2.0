@@ -1,14 +1,16 @@
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Models;
 using Models.Nodes;
-using Views.MiddlePanel;
+using System.Linq;
 
-namespace Views{
-
+namespace Views
+{
     public class TweenityGraphView : GraphView
     {
+        public Action<TweenityNodeModel> OnNodeSelected;
+        private GridBackground gridBackground;
+
         public TweenityGraphView()
         {
             this.style.flexGrow = 1;
@@ -16,29 +18,73 @@ namespace Views{
             this.AddManipulator(new ContentDragger());
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new RectangleSelector());
-            this.Insert(0, new GridBackground());
+
+            gridBackground = new GridBackground();
+            this.Insert(0, gridBackground);
         }
 
-        public void AddNodeToView(TweenityNodeModel nodeModel)
+        public void RenderNode(TweenityNodeModel nodeModel)
         {
-            var node = new TweenityNode(nodeModel.NodeID)
+            TweenityNode visualNode;
+
+            switch (nodeModel.Type)
             {
-                title = nodeModel.Title
-            };
-            node.SetPosition(new Rect(200, 200, 150, 200)); // Default position
-            AddElement(node);
+                case NodeType.Dialogue:
+                    visualNode = new DialogueNode(nodeModel.NodeID);
+                    break;
+                default:
+                    visualNode = new TweenityNode(nodeModel.NodeID);
+                    break;
+            }
+
+            visualNode.title = nodeModel.Title;
+            visualNode.userData = nodeModel;
+
+            // Register selection event
+            visualNode.RegisterCallback<MouseDownEvent>(evt =>
+            {
+                if (evt.button == 0)
+                {
+                    OnNodeSelected?.Invoke(nodeModel);
+                }
+            });
+
+            visualNode.SetPosition(new Rect(200, 200, 150, 200));
+            AddElement(visualNode);
         }
 
         public void RemoveNodeFromView(string nodeId)
         {
-            foreach (var element in this.Children())
+            var target = this.Children()
+                .OfType<TweenityNode>()
+                .FirstOrDefault(n => n.NodeID == nodeId);
+
+            if (target != null)
             {
-                if (element is TweenityNode node && node.NodeID == nodeId)
-                {
-                    RemoveElement(node);
-                    break;
-                }
+                RemoveElement(target);
             }
+        }
+
+        // Controller can call this
+        public void ToggleGridVisibility()
+        {
+            gridBackground.visible = !gridBackground.visible;
+        }
+
+        public void ZoomIn()
+        {
+            this.transform.scale *= 1.1f;
+        }
+
+        public void ZoomOut()
+        {
+            this.transform.scale *= 0.9f;
+        }
+
+        public void ResetView()
+        {
+            this.transform.position = Vector3.zero;
+            this.transform.scale = Vector3.one;
         }
     }
 }

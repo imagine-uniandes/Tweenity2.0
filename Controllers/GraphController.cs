@@ -12,6 +12,8 @@ namespace Controllers
         public GraphModel Graph { get; private set; }
         public TweenityGraphView GraphView { get; private set; }
 
+        private VisualElement rightPanelRoot;
+
         public GraphController(TweenityGraphView graphView)
         {
             Graph = new GraphModel();
@@ -22,7 +24,7 @@ namespace Controllers
         {
             if (Graph.AddNode(node))
             {
-                GraphView.AddNodeToView(node);
+                GraphView.RenderNode(node);
                 return true;
             }
             return false;
@@ -42,6 +44,40 @@ namespace Controllers
         public List<TweenityNodeModel> GetAllNodes()
         {
             return Graph.Nodes;
+        }
+
+        public void SetRightPanelRoot(VisualElement rightPanel)
+        {
+            rightPanelRoot = rightPanel;
+        }
+
+        public void OnNodeSelected(TweenityNodeModel node)
+        {
+            Debug.Log($"Selected node: {node.Title}");
+
+            if (rightPanelRoot == null)
+            {
+                Debug.LogWarning("Right panel not set.");
+                return;
+            }
+
+            // Clear previous content
+            rightPanelRoot.Clear();
+
+            // Rebuild right panel based on node type
+            switch (node.Type)
+            {
+                case NodeType.Dialogue:
+                    rightPanelRoot.Add(new Nodes.DialogueView(node));
+                    break;
+                case NodeType.Reminder:
+                    rightPanelRoot.Add(new Nodes.ReminderView(node));
+                    break;
+                // Add other node types as needed
+                default:
+                    rightPanelRoot.Add(new Nodes.NoTypeView(node));
+                    break;
+            }
         }
 
         public void SaveCurrentGraph()
@@ -87,26 +123,22 @@ namespace Controllers
         // View control stubs
         public void ToggleGrid()
         {
-            Debug.Log("Toggle Grid clicked (controller)");
-            // Future: toggle visibility of GraphView background grid
+            GraphView.ToggleGridVisibility();
         }
 
         public void ZoomIn()
         {
-            Debug.Log("Zoom In clicked (controller)");
-            // Future: increase zoom level in GraphView
+            GraphView.ZoomIn();
         }
 
         public void ZoomOut()
         {
-            Debug.Log("Zoom Out clicked (controller)");
-            // Future: decrease zoom level in GraphView
+            GraphView.ZoomOut();
         }
 
         public void ResetView()
         {
-            Debug.Log("Reset View clicked (controller)");
-            // Future: reset zoom and center position
+            GraphView.ResetView();
         }
 
         public void ShowHelp()
