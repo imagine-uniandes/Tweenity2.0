@@ -1,13 +1,22 @@
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
+using Models.Nodes;
+using Controllers;
 
-namespace Views.RightPanel{
-
+namespace Views.RightPanel
+{
     public class RandomView : VisualElement
     {
-        public RandomView()
+        private RandomNodeModel _model;
+        private GraphController _controller;
+        private ListView _pathsList;
+
+        public RandomView(RandomNodeModel model, GraphController controller)
         {
+            _model = model;
+            _controller = controller;
+
             this.style.paddingLeft = 5;
             this.style.paddingRight = 5;
             this.style.paddingTop = 5;
@@ -16,23 +25,29 @@ namespace Views.RightPanel{
             this.style.borderTopRightRadius = 5;
             this.style.borderBottomLeftRadius = 5;
             this.style.borderBottomRightRadius = 5;
-            
-            Label randomLabel = new Label("Random Node");
-            randomLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            this.Add(randomLabel);
+
+            Label header = new Label("Random Node");
+            header.style.unityFontStyleAndWeight = FontStyle.Bold;
+            this.Add(header);
 
             this.Add(new Label("Possible Paths"));
-            Button addPathButton = new Button(() => AddRandomPath()) { text = "+ Add Path" };
-            this.Add(addPathButton);
-            
-            ListView pathsList = new ListView();
-            this.Add(pathsList);
-        }
 
-        private void AddRandomPath()
-        {
-            Debug.Log("Add new random path");
-            // Logic to dynamically add random paths
+            Button addPathButton = new Button(() =>
+            {
+                _controller.AddRandomPath(_model);
+                _pathsList.Rebuild();
+            })
+            {
+                text = "+ Add Path"
+            };
+            this.Add(addPathButton);
+
+            _pathsList = new ListView(_model.PossiblePaths, 20, () => new Label(), (e, i) =>
+            {
+                (e as Label).text = _model.PossiblePaths[i];
+            });
+
+            this.Add(_pathsList);
         }
     }
 }

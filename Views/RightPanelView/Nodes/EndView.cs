@@ -1,14 +1,21 @@
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
+using Models.Nodes;
+using Controllers;
 
-
-namespace Views.RightPanel{
-    
+namespace Views.RightPanel
+{
     public class EndView : VisualElement
     {
-        public EndView()
+        private EndNodeModel _model;
+        private GraphController _controller;
+
+        public EndView(EndNodeModel model, GraphController controller)
         {
+            _model = model;
+            _controller = controller;
+
             this.style.paddingLeft = 5;
             this.style.paddingRight = 5;
             this.style.paddingTop = 5;
@@ -17,13 +24,12 @@ namespace Views.RightPanel{
             this.style.borderTopRightRadius = 5;
             this.style.borderBottomLeftRadius = 5;
             this.style.borderBottomRightRadius = 5;
-            
+
             Label endLabel = new Label("End Node");
             endLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
             this.Add(endLabel);
 
-            // Since End nodes have no special characteristics, just display a label
-            this.Add(new Label("This is an End Node."));
+            this.Add(new Label("This is an End Node. No editable properties."));
         }
     }
 }

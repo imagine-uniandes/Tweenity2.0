@@ -53,32 +53,34 @@ namespace Controllers
 
         public void OnNodeSelected(TweenityNodeModel node)
         {
-            Debug.Log($"Selected node: {node.Title}");
-
             if (rightPanelRoot == null)
             {
-                Debug.LogWarning("Right panel not set.");
+                Debug.LogWarning("Right panel root not set.");
                 return;
             }
 
-            // Clear previous content
             rightPanelRoot.Clear();
 
-            // Rebuild right panel based on node type
-            switch (node.Type)
+            switch (node)
             {
-                case NodeType.Dialogue:
-                    rightPanelRoot.Add(new Nodes.DialogueView(node));
+                case DialogueNodeModel dialogue:
+                    rightPanelRoot.Add(new Views.RightPanel.DialogueView(dialogue));
                     break;
-                case NodeType.Reminder:
-                    rightPanelRoot.Add(new Nodes.ReminderView(node));
+
+                case ReminderNodeModel reminder:
+                    rightPanelRoot.Add(new Views.RightPanel.ReminderView(reminder));
                     break;
-                // Add other node types as needed
+
+                case MultipleChoiceNodeModel multi:
+                    rightPanelRoot.Add(new Views.RightPanel.MultipleChoiceView(multi));
+                    break;
+
                 default:
-                    rightPanelRoot.Add(new Nodes.NoTypeView(node));
+                    rightPanelRoot.Add(new Views.RightPanel.NoTypeView(node));
                     break;
             }
         }
+
 
         public void SaveCurrentGraph()
         {
@@ -167,14 +169,61 @@ namespace Controllers
 
         public void PrintCurrentSelection()
         {
-            Debug.Log("Current selection: (not implemented yet)");
-            // In future: you can read from GraphView.selection and show details
+            var selected = GraphView.selection;
         }
        public void SearchNodes(string query)
         {
             Debug.Log($"Searching nodes for: {query}");
             // Future: Filter nodes in GraphView or highlight matches
         }
- 
+
+        public void UpdateDialogueText(DialogueNodeModel model, string newText)
+        {
+            model.DialogueText = newText;
+        }
+
+        public void AddDialogueResponse(DialogueNodeModel model)
+        {
+            model.AddResponse("Response " + (model.Responses.Count + 1));
+        }
+
+        public void AddChoiceToMultipleChoiceNode(MultipleChoiceNodeModel model)
+        {
+            model.AddChoice("Choice " + (model.Choices.Count + 1));
+        }
+        public void UpdateNoTypeTitle(NoTypeNodeModel model, string newTitle)
+        {
+            model.Title = newTitle;
+        }
+
+        public void UpdateNoTypeDescription(NoTypeNodeModel model, string newDesc)
+        {
+            model.Description = newDesc;
+        }
+        public void AddRandomPath(RandomNodeModel model)
+        {
+            model.AddPath("Path " + (model.PossiblePaths.Count + 1));
+        }
+
+        public void UpdateReminderText(ReminderNodeModel model, string newText)
+        {
+            model.ReminderText = newText;
+        }
+
+        public void UpdateReminderTimer(ReminderNodeModel model, float newTimer)
+        {
+            model.ReminderTimer = newTimer;
+        }
+
+        public void UpdateTimeoutCondition(TimeoutNodeModel model, string newCondition)
+        {
+            model.Condition = newCondition;
+        }
+
+        public void UpdateTimeoutTimer(TimeoutNodeModel model, float newDuration)
+        {
+            model.TimeoutDuration = newDuration;
+        }
+
     }
 }

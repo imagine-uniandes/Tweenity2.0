@@ -1,14 +1,21 @@
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
+using Models.Nodes;
+using Controllers;
 
-
-namespace Views.RightPanel{
-    
+namespace Views.RightPanel
+{
     public class NoTypeView : VisualElement
     {
-        public NoTypeView()
+        private NoTypeNodeModel _model;
+        private GraphController _controller;
+
+        public NoTypeView(NoTypeNodeModel model, GraphController controller)
         {
+            _model = model;
+            _controller = controller;
+
             this.style.paddingLeft = 5;
             this.style.paddingRight = 5;
             this.style.paddingTop = 5;
@@ -17,22 +24,26 @@ namespace Views.RightPanel{
             this.style.borderTopRightRadius = 5;
             this.style.borderBottomLeftRadius = 5;
             this.style.borderBottomRightRadius = 5;
-            
-            Label noTypeLabel = new Label("Basic Node");
-            noTypeLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            this.Add(noTypeLabel);
+
+            Label header = new Label("Basic Node");
+            header.style.unityFontStyleAndWeight = FontStyle.Bold;
+            this.Add(header);
 
             this.Add(new Label("Title"));
-            TextField titleField = new TextField();
+            var titleField = new TextField { value = _model.Title };
+            titleField.RegisterValueChangedCallback(evt =>
+            {
+                _controller.UpdateNoTypeTitle(_model, evt.newValue);
+            });
             this.Add(titleField);
 
             this.Add(new Label("Description"));
-            TextField descriptionField = new TextField();
+            var descriptionField = new TextField { value = _model.Description };
+            descriptionField.RegisterValueChangedCallback(evt =>
+            {
+                _controller.UpdateNoTypeDescription(_model, evt.newValue);
+            });
             this.Add(descriptionField);
-
-            this.Add(new Label("Notes"));
-            TextField notesField = new TextField();
-            this.Add(notesField);
         }
     }
 }
