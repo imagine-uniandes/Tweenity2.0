@@ -64,23 +64,42 @@ namespace Controllers
             switch (node)
             {
                 case DialogueNodeModel dialogue:
-                    rightPanelRoot.Add(new Views.RightPanel.DialogueView(dialogue));
+                    rightPanelRoot.Add(new Views.RightPanel.DialogueView(dialogue, this));
                     break;
 
                 case ReminderNodeModel reminder:
-                    rightPanelRoot.Add(new Views.RightPanel.ReminderView(reminder));
+                    rightPanelRoot.Add(new Views.RightPanel.ReminderView(reminder, this));
                     break;
 
                 case MultipleChoiceNodeModel multi:
-                    rightPanelRoot.Add(new Views.RightPanel.MultipleChoiceView(multi));
+                    rightPanelRoot.Add(new Views.RightPanel.MultipleChoiceView(multi, this));
+                    break;
+
+                case NoTypeNodeModel noType:
+                    rightPanelRoot.Add(new Views.RightPanel.NoTypeView(noType, this));
+                    break;
+
+                case RandomNodeModel random:
+                    rightPanelRoot.Add(new Views.RightPanel.RandomView(random, this));
+                    break;
+
+                case StartNodeModel start:
+                    rightPanelRoot.Add(new Views.RightPanel.StartView(start, this));
+                    break;
+
+                case EndNodeModel end:
+                    rightPanelRoot.Add(new Views.RightPanel.EndView(end, this));
+                    break;
+
+                case TimeoutNodeModel timeout:
+                    rightPanelRoot.Add(new Views.RightPanel.TimeoutView(timeout, this));
                     break;
 
                 default:
-                    rightPanelRoot.Add(new Views.RightPanel.NoTypeView(node));
+                    Debug.LogWarning("Unknown node type selected.");
                     break;
             }
         }
-
 
         public void SaveCurrentGraph()
         {
