@@ -1,78 +1,78 @@
 ## Tweenity Graph Editor - UI Documentation
 
 ### Overview
-The **Tweenity Graph Editor** is a custom Unity Editor Window designed to manage and visualize node-based structures within the Unity Editor. The interface has been modularized into distinct components for maintainability and ease of extension.
+The **Tweenity Graph Editor** is a custom Unity Editor Window designed to manage and visualize node-based structures. The system uses a modular and extensible **Model-View-Controller (MVC)** architecture to promote separation of concerns and maintainability.
+
+### Architecture Pattern: Updated Approach
+As of 2025-03-25, the project enforces a strict separation between UI (View), data (Model), and logic (Controller):
+
+- **Views** are now _purely visual_ and delegate all user interactions to the `GraphController`.
+- The **Controller** receives and handles all logic updates from the views and updates the model accordingly.
+- The **Model** only holds data and exposes it through structured classes.
+
+This ensures that the system is robust, testable, and scalable.
+
+---
 
 ### Project Structure
-The project follows the **Model-View-Controller (MVC) architecture** to separate concerns and ensure scalability.
 
 #### 1. **Models** (`Models/`)
-- **GraphModel.cs**: Manages the overall graph, including nodes and connections.
-- **Node Models (`Models/Nodes/`)**: Contains specific node implementations such as `StartNode`, `EndNode`, `DialogueNode`, etc.
+- **GraphModel.cs**: Holds the full node graph.
+- **Node Models (`Models/Nodes/`)**: Specialized node classes like `StartNodeModel`, `DialogueNodeModel`, etc.
 - **Responsibilities**:
-  - Stores node data and relationships.
-  - Enforces constraints (e.g., only one `StartNode` allowed).
-  - Provides serialization support (future expansion).
+  - Contain and validate node data.
+  - Enforce structural constraints (e.g., only one `StartNode`).
+  - Work with `GraphParser` for `.twee` import/export.
 
 #### 2. **Controllers** (`Controllers/`)
-- **GraphController.cs**: Manages interactions between the model and the view.
-- **Responsibilities**:
-  - Adds, removes, and retrieves nodes.
-  - Updates the view when the model changes.
-  - Ensures business logic is enforced (e.g., node connection validation).
+- **GraphController.cs**:
+  - Manages the entire application state.
+  - Adds/removes nodes and triggers rendering in `GraphView`.
+  - Handles events from the Toolbar, GraphView, and RightPanel views.
+  - Applies all changes made in the UI back into the model.
 
 #### 3. **Views** (`Views/`)
-The UI is divided into multiple sections for modularity and readability.
 
 ##### **Toolbar (TweenityToolbar.cs)**
-- Provides essential file operations and view settings.
-- Buttons include:
-  - **File Menu** (Save, Export, Import)
-  - **View Menu** (Toggle Grid, Zoom In/Out, Reset View)
-  - **Help Button** (Placeholder for documentation/help support)
-  - **Add Node Button** (Future functionality for adding nodes)
+- Hosts UI actions: Save, Export, Import, View tools, Add node.
+- Delegates all actions to the `GraphController`.
 
 ##### **Left Panel (TweenityLeftPanel.cs)**
-- Contains tools for managing the hierarchy and searching nodes.
-- Includes:
-  - **Search Bar** (Filter nodes by name)
-  - **Hierarchy View** (Displays node structure)
+- Search functionality and node hierarchy (planned).
+- Interactions are sent to the controller.
 
 ##### **Graph View (TweenityGraphView.cs)**
-- The core visual representation of nodes and their relationships.
-- Allows interaction with nodes and connections (future development planned).
-- Works closely with `GraphController` to synchronize changes.
+- Renders the current graph visually.
+- Purely a display surface — all interaction (node selection, dragging) notifies the `GraphController`.
 
 ##### **Right Panel (TweenityRightPanel.cs)**
-- Displays details and properties of the selected node.
-- Dynamically updates based on node type.
-- Contains:
-  - **Node Type Dropdown** (Allows selection of node category)
-  - **Title & Description Fields**
-  - **Notes Section**
-  - **Expected User Actions** (For interactive nodes)
-  - **Simulator Actions** (For automation & training sequences)
-  - **Timeout & Reminder Settings** (For timed events)
-  - **Audio & Dialogue Settings** (Visible only for dialogue nodes)
-  - **Connected Nodes List**
+- Updates when a node is selected.
+- Shows the appropriate node details view based on node type.
+- Each detail view is controller-powered (e.g., `DialogueView`, `ReminderView`, etc.).
+- No logic is handled here — all field changes notify the controller.
 
 ##### **Bottom Toolbar (TweenityBottomToolbar.cs)**
-- Displays debugging and selection information.
-- Includes:
-  - **Debugging Button** (Logs debugging information)
-  - **Current Selection Button** (Shows details of the currently selected node)
+- Exposes debugging tools.
+- Buttons notify the controller for deeper functionality.
 
-### Functionality & Behavior
-- The **Toolbar** handles general actions (file management, view controls, node addition).
-- The **Left Panel** organizes nodes in a hierarchical manner and allows searching.
-- The **Graph View** is the interactive space where users manipulate nodes.
-- The **Right Panel** updates dynamically based on the selected node type.
-- The **Bottom Toolbar** is used for debugging and tracking selections.
+---
+
+### Key Concepts & Interaction Flow
+
+- Views (UI) never modify the model directly.
+- All actions (e.g., adding nodes, changing text fields) go through `GraphController`.
+- Right panel views receive both the node model and the controller as parameters.
+- This allows updates to propagate consistently through the system.
+
+---
 
 ### Development Notes
-- The **Model** layer ensures data integrity and enforces rules.
-- The **Controller** acts as the intermediary between the Model and View.
-- The **View** dynamically updates based on user interactions.
-- Future enhancements may include **drag-and-drop connections**, **graph serialization**, and **customizable themes**.
 
-This document provides a structured overview of the Tweenity Graph Editor’s UI components, responsibilities, and functionality as of the current implementation.
+- Consistent **MVC enforcement** across the entire project.
+- Controller is the **only authority** for modifying the graph.
+- Views are modular, composable, and logic-free.
+- Great foundation for adding undo/redo, node linking, or multiplayer collaboration later.
+
+---
+
+_Last updated: 2025-03-25_
