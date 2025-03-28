@@ -4,6 +4,11 @@ using System;
 using Views;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
+using UnityEngine.UIElements;
+using UnityEngine;
+using System.IO;
+using UnityEditor;
+
 
 namespace Controllers
 {
@@ -13,6 +18,8 @@ namespace Controllers
         public TweenityGraphView GraphView { get; private set; }
 
         private VisualElement rightPanelRoot;
+
+        private string lastSavedPath;
 
         public GraphController(TweenityGraphView graphView)
         {

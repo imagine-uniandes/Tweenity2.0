@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Models.Nodes;
 using System.Linq;
+using System;
+using Views.MiddlePanel;
+using Models;
 
 namespace Views
 {
