@@ -40,6 +40,7 @@ namespace Views
                     break;
             }
 
+            visualNode.NodeModel = nodeModel;
             visualNode.title = nodeModel.Title;
             visualNode.userData = nodeModel;
 
@@ -68,7 +69,6 @@ namespace Views
             }
         }
 
-        // Controller can call this
         public void ToggleGridVisibility()
         {
             gridBackground.visible = !gridBackground.visible;

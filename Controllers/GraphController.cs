@@ -66,6 +66,8 @@ namespace Controllers
                 return;
             }
 
+            Debug.Log($"[Selection] Title: {node.Title}, Type: {node.Type}, Actual Type: {node.GetType().Name}");
+
             rightPanelRoot.Clear();
 
             switch (node)
@@ -177,7 +179,8 @@ namespace Controllers
 
         public void CreateNewNode()
         {
-            var newNode = new TweenityNodeModel("New Node", NodeType.NoType);
+            var newNode = new NoTypeNodeModel("New Node");
+
             bool added = AddNode(newNode);
             if (!added)
             {

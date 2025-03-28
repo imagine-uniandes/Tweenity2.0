@@ -2,6 +2,7 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using UnityEngine;
 using Models;
+using Models.Nodes;
 
 namespace Views.MiddlePanel{
     
@@ -11,6 +12,8 @@ namespace Views.MiddlePanel{
         public string TitleText { get; private set; }
         public string DescriptionText { get; private set; }
         public NodeType NodeType { get; private set; }
+
+        public TweenityNodeModel NodeModel { get; set; }
 
         private TextField titleField;
         private TextField descriptionField;

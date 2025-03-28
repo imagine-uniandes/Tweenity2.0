@@ -73,13 +73,40 @@ namespace Controllers
                 // Map tag to enum
                 NodeType nodeType = Enum.TryParse<NodeType>(tag, true, out var parsed) ? parsed : NodeType.NoType;
 
-                var node = new TweenityNodeModel(title, nodeType)
-                {
-                    Description = body
-                };
+                TweenityNodeModel node;
 
+                switch (nodeType)
+                {
+                    case NodeType.Dialogue:
+                        node = new DialogueNodeModel(title);
+                        break;
+                    case NodeType.Reminder:
+                        node = new ReminderNodeModel(title);
+                        break;
+                    case NodeType.MultipleChoice:
+                        node = new MultipleChoiceNodeModel(title);
+                        break;
+                    case NodeType.Random:
+                        node = new RandomNodeModel(title);
+                        break;
+                    case NodeType.Start:
+                        node = new StartNodeModel(title);
+                        break;
+                    case NodeType.End:
+                        node = new EndNodeModel(title);
+                        break;
+                    case NodeType.Timeout:
+                        node = new TimeoutNodeModel(title);
+                        break;
+                    default:
+                        node = new NoTypeNodeModel(title);
+                        break;
+                }
+
+                node.Description = body;
                 nodes.Add(node);
                 titleLookup[title] = node;
+
             }
 
             // Second pass: resolve connections
