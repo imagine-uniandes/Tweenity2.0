@@ -11,16 +11,17 @@ namespace Views.RightPanel
 
         public RandomView(RandomNodeModel model, GraphController controller) : base(model, controller)
         {
-            var title = new Label("Random Node Details");
-            title.style.unityFontStyleAndWeight = FontStyle.Bold;
-            title.style.whiteSpace = WhiteSpace.Normal;
+            var title = new Label("Random Node Details")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Bold, whiteSpace = WhiteSpace.Normal }
+            };
             Add(title);
 
             var typedModel = (RandomNodeModel)_model;
 
-            var pathsLabel = new Label("Possible Paths");
-            pathsLabel.style.whiteSpace = WhiteSpace.Normal;
-            Add(pathsLabel);
+            var label = new Label("Possible Paths");
+            label.style.whiteSpace = WhiteSpace.Normal;
+            Add(label);
 
             var addPathButton = new Button(() =>
             {
@@ -32,9 +33,37 @@ namespace Views.RightPanel
             };
             Add(addPathButton);
 
-            _pathsList = new ListView(typedModel.PossiblePaths, 20, () => new Label(), (e, i) =>
+            _pathsList = new ListView(typedModel.PossiblePaths, 30, () =>
             {
-                (e as Label).text = typedModel.PossiblePaths[i];
+                var container = new VisualElement
+                {
+                    style = { flexDirection = FlexDirection.Row, marginBottom = 4 }
+                };
+
+                var pathField = new TextField { style = { flexGrow = 1, marginRight = 4 } };
+                var connectButton = new Button(() =>
+                {
+                    Debug.Log("Connect path clicked (placeholder)");
+                })
+                {
+                    text = "Connect",
+                    style = { flexShrink = 0 }
+                };
+
+                container.Add(pathField);
+                container.Add(connectButton);
+
+                return container;
+            },
+            (e, i) =>
+            {
+                var container = e as VisualElement;
+                var pathField = container.ElementAt(0) as TextField;
+                pathField.value = typedModel.PossiblePaths[i];
+                pathField.RegisterValueChangedCallback(evt =>
+                {
+                    typedModel.UpdatePath(i, evt.newValue);
+                });
             });
 
             Add(_pathsList);

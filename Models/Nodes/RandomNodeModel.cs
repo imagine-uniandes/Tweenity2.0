@@ -15,5 +15,13 @@ namespace Models.Nodes
         {
             PossiblePaths.Add(path);
         }
+
+        public void UpdatePath(int index, string newValue)
+        {
+            if (index >= 0 && index < PossiblePaths.Count)
+            {
+                PossiblePaths[index] = newValue;
+            }
+        }
     }
 }

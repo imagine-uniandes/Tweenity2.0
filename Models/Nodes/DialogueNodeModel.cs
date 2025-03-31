@@ -17,5 +17,17 @@ namespace Models.Nodes
         {
             Responses.Add(response);
         }
+
+        public void RemoveResponseAt(int index)
+        {
+            if (index >= 0 && index < Responses.Count)
+                Responses.RemoveAt(index);
+        }
+
+        public void UpdateResponse(int index, string newValue)
+        {
+            if (index >= 0 && index < Responses.Count)
+                Responses[index] = newValue;
+        }
     }
 }

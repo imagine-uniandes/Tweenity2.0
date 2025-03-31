@@ -19,8 +19,18 @@ namespace Views.RightPanel
             label.style.marginTop = 10;
             label.style.whiteSpace = WhiteSpace.Normal;
             label.style.flexShrink = 0;
-
             Add(label);
+
+            var connectButton = new Button(() =>
+            {
+                Debug.Log($"[NoTypeView] Connect clicked for NodeID: {model.NodeID}");
+                // Placeholder: invoke connection logic in controller
+            })
+            {
+                text = "Connect"
+            };
+            connectButton.style.marginTop = 10;
+            Add(connectButton);
         }
     }
 }

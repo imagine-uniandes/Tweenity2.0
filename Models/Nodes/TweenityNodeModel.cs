@@ -19,5 +19,23 @@ namespace Models.Nodes
             Description = "";
             ConnectedNodes = new List<string>();
         }
+
+        public void ConnectTo(string targetNodeID)
+        {
+            if (!ConnectedNodes.Contains(targetNodeID))
+            {
+                ConnectedNodes.Add(targetNodeID);
+            }
+        }
+
+        public void DisconnectFrom(string targetNodeID)
+        {
+            ConnectedNodes.Remove(targetNodeID);
+        }
+
+        public bool IsConnectedTo(string targetNodeID)
+        {
+            return ConnectedNodes.Contains(targetNodeID);
+        }
     }
 }

@@ -279,5 +279,47 @@ namespace Controllers
         public void UpdateReminderTimer(ReminderNodeModel model, float newTimer) => model.ReminderTimer = newTimer;
         public void UpdateTimeoutCondition(TimeoutNodeModel model, string newCondition) => model.Condition = newCondition;
         public void UpdateTimeoutTimer(TimeoutNodeModel model, float newDuration) => model.TimeoutDuration = newDuration;
+
+        public void ConnectNodes(string fromNodeId, string toNodeId)
+        {
+            var fromNode = Graph.GetNode(fromNodeId);
+            var toNode = Graph.GetNode(toNodeId);
+
+            if (fromNode == null || toNode == null)
+            {
+                Debug.LogWarning($"[GraphController] Cannot connect nodes. One or both nodes not found. From: {fromNodeId}");
+                return;
+            }
+
+            if (!fromNode.ConnectedNodes.Contains(toNodeId))
+            {
+                fromNode.ConnectedNodes.Add(toNodeId);
+                Debug.Log($"[GraphController] Connected node {fromNodeId} -> {toNodeId}");
+            }
+            else
+            {
+                Debug.LogWarning($"[GraphController] Nodes already connected: {fromNodeId} -> {toNodeId}");
+            }
+        }
+
+        public void DisconnectNodes(string fromNodeId, string toNodeId)
+        {
+            var fromNode = Graph.GetNode(fromNodeId);
+            if (fromNode == null)
+            {
+                Debug.LogWarning($"[GraphController] Cannot disconnect. Node not found: {fromNodeId}");
+                return;
+            }
+
+            if (fromNode.ConnectedNodes.Contains(toNodeId))
+            {
+                fromNode.ConnectedNodes.Remove(toNodeId);
+                Debug.Log($"[GraphController] Disconnected node {fromNodeId} -> {toNodeId}");
+            }
+            else
+            {
+                Debug.LogWarning($"[GraphController] Connection not found: {fromNodeId} -> {toNodeId}");
+            }
+        }
     }
 }

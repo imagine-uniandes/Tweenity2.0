@@ -16,6 +16,7 @@ namespace Views.RightPanel
 
             var typedModel = (TimeoutNodeModel)_model;
 
+            // Timeout Condition
             var conditionLabel = new Label("Timeout Condition");
             conditionLabel.style.whiteSpace = WhiteSpace.Normal;
             Add(conditionLabel);
@@ -27,6 +28,7 @@ namespace Views.RightPanel
             });
             Add(conditionField);
 
+            // Timeout Duration
             var timerLabel = new Label("Timeout Timer (seconds)");
             timerLabel.style.whiteSpace = WhiteSpace.Normal;
             Add(timerLabel);
@@ -37,6 +39,28 @@ namespace Views.RightPanel
                 _controller.UpdateTimeoutTimer(typedModel, evt.newValue);
             });
             Add(timeoutTimerField);
+
+            // Connection buttons
+            var connectTimeoutButton = new Button(() =>
+            {
+                Debug.Log($"[TimeoutView] Connect (On Timeout) clicked for NodeID: {typedModel.NodeID}");
+                // Placeholder logic
+            })
+            {
+                text = "Connect (On Timeout)"
+            };
+            connectTimeoutButton.style.marginTop = 10;
+            Add(connectTimeoutButton);
+
+            var connectSuccessButton = new Button(() =>
+            {
+                Debug.Log($"[TimeoutView] Connect (On Success) clicked for NodeID: {typedModel.NodeID}");
+                // Placeholder logic
+            })
+            {
+                text = "Connect (On Success)"
+            };
+            Add(connectSuccessButton);
         }
     }
 }

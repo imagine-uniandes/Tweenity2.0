@@ -37,6 +37,17 @@ namespace Views.RightPanel
                 _controller.UpdateReminderTimer(typedModel, evt.newValue);
             });
             Add(timerField);
+
+            var connectButton = new Button(() =>
+            {
+                Debug.Log($"[ReminderView] Connect button clicked for NodeID: {model.NodeID}");
+                // Placeholder for connection logic
+            })
+            {
+                text = "Connect"
+            };
+            connectButton.style.marginTop = 15;
+            Add(connectButton);
         }
     }
 }
