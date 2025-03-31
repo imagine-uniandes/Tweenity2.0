@@ -6,6 +6,7 @@ using System.Linq;
 using System;
 using Views.MiddlePanel;
 using Models;
+using UnityEditor;
 
 namespace Views
 {
@@ -28,49 +29,51 @@ namespace Views
 
         public void RenderNode(TweenityNodeModel nodeModel)
         {
-            TweenityNode visualNode;
 
-            switch (nodeModel.Type)
+            EditorApplication.delayCall += () =>
             {
-                case NodeType.Dialogue:
-                    visualNode = new DialogueNode(nodeModel.NodeID);
-                    break;
-                default:
-                    visualNode = new TweenityNode(nodeModel.NodeID);
-                    break;
-            }
+                TweenityNode visualNode = new TweenityNode(nodeModel.NodeID);
 
-            visualNode.NodeModel = nodeModel;
-            visualNode.UpdateFromModel(); // 🔁 ya no seteamos manualmente title aquí
-            visualNode.userData = nodeModel;
+                visualNode.NodeModel = nodeModel;
+                visualNode.UpdateFromModel();
+                visualNode.userData = nodeModel;
 
-            visualNode.RegisterCallback<MouseDownEvent>(evt =>
-            {
-                if (evt.button == 0)
+                visualNode.RegisterCallback<MouseDownEvent>(evt =>
                 {
-                    OnNodeSelected?.Invoke(nodeModel);
-                }
-            });
+                    if (evt.button == 0)
+                    {
+                        OnNodeSelected?.Invoke(nodeModel);
+                    }
+                });
 
-            visualNode.SetPosition(new Rect(200, 200, 150, 200));
-            AddElement(visualNode);
+                visualNode.SetPosition(new Rect(200, 200, 150, 200));
+                AddElement(visualNode);
+
+                var count = this.graphElements.OfType<TweenityNode>().Count();
+                Debug.Log($"[RenderNode] Total visual nodes after AddElement: {count}");
+            };
         }
 
         public void RemoveNodeFromView(string nodeId)
         {
-            var target = this.Children()
+            var target = this.graphElements
                 .OfType<TweenityNode>()
-                .FirstOrDefault(n => n.NodeID == nodeId);
+                .FirstOrDefault(n => string.Equals(n.NodeID, nodeId, StringComparison.Ordinal));
 
             if (target != null)
             {
-                RemoveElement(target);
+                Debug.Log($"[GraphView] Removing node from view: {nodeId}");
+                RemoveElement(target); 
+            }
+            else
+            {
+                Debug.LogWarning($"[GraphView] Node not found in view: {nodeId}");
             }
         }
 
         public void UpdateNodeTitle(string nodeId, string newTitle)
         {
-            var target = this.Children()
+            var target = this.graphElements
                 .OfType<TweenityNode>()
                 .FirstOrDefault(n => n.NodeID == nodeId);
 
@@ -82,13 +85,13 @@ namespace Views
 
         public void RefreshNodeVisual(string nodeId)
         {
-            var target = this.Children()
+            var target = this.graphElements
                 .OfType<TweenityNode>()
                 .FirstOrDefault(n => n.NodeID == nodeId);
 
             if (target != null && target.NodeModel != null)
             {
-                target.UpdateFromModel(); // ✅ refresca toda la UI desde el modelo
+                target.UpdateFromModel();
                 target.RefreshExpandedState();
                 target.RefreshPorts();
             }

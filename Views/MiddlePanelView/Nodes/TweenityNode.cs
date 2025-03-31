@@ -17,7 +17,7 @@ namespace Views.MiddlePanel
         public TweenityNode(string nodeID)
         {
             this.NodeID = nodeID;
-            this.title = "New Node"; // visible en encabezado gris
+            this.title = "New Node"; 
 
             _typeLabel = new Label("Type: NoType")
             {

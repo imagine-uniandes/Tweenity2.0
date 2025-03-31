@@ -11,7 +11,6 @@ using UnityEditor;
 using Views.MiddlePanel;
 using System.Linq;
 
-
 namespace Controllers
 {
     public class GraphController
@@ -20,7 +19,6 @@ namespace Controllers
         public TweenityGraphView GraphView { get; private set; }
 
         private VisualElement rightPanelRoot;
-
         private string lastSavedPath;
 
         public GraphController(TweenityGraphView graphView)
@@ -31,11 +29,17 @@ namespace Controllers
 
         public bool AddNode(TweenityNodeModel node)
         {
+            Debug.Log($"[GraphController]  AddNode called for: {node.Title} | ID: {node.NodeID}");
+
             if (Graph.AddNode(node))
             {
+                Debug.Log($"[GraphController]  Node added to model. Now rendering...");
                 GraphView.RenderNode(node);
+                Debug.Log($"[GraphController]  RenderNode completed for: {node.NodeID}");
                 return true;
             }
+
+            Debug.LogWarning($"[GraphController]  Node not added. It may already exist or conflict (e.g., Start node)");
             return false;
         }
 
@@ -45,15 +49,9 @@ namespace Controllers
             GraphView.RemoveNodeFromView(nodeId);
         }
 
-        public TweenityNodeModel GetNode(string nodeId)
-        {
-            return Graph.GetNode(nodeId);
-        }
+        public TweenityNodeModel GetNode(string nodeId) => Graph.GetNode(nodeId);
 
-        public List<TweenityNodeModel> GetAllNodes()
-        {
-            return Graph.Nodes;
-        }
+        public List<TweenityNodeModel> GetAllNodes() => Graph.Nodes;
 
         public void SetRightPanelRoot(VisualElement rightPanel)
         {
@@ -68,7 +66,28 @@ namespace Controllers
                 return;
             }
 
-            Debug.Log($"[Selection] Title: {node.Title}, Type: {node.Type}, Actual Type: {node.GetType().Name}");
+            Debug.Log($"[Selection] Looking for NodeID: {node.NodeID}");
+
+            // 🔍 Dump all currently rendered nodes
+            var allVisualNodes = GraphView.graphElements.OfType<TweenityNode>().ToList();
+            Debug.Log($"[GraphView] Currently rendered node count: {allVisualNodes.Count}");
+            foreach (var n in allVisualNodes)
+            {
+                Debug.Log($"[GraphView] Node in view: {n.title} | NodeID: {n.NodeID}");
+            }
+
+            var ghostNode = GraphView.graphElements
+                .OfType<TweenityNode>()
+                .FirstOrDefault(n => string.Equals(n.NodeID, node.NodeID, StringComparison.Ordinal));
+
+            if (ghostNode != null)
+            {
+                Debug.Log($"[Selection - View Match] View NodeID: {ghostNode.NodeID} - ModelID: {node.NodeID}");
+            }
+            else
+            {
+                Debug.Log($"[Selection - View Match] No visual node found for model ID: {node.NodeID}");
+            }
 
             rightPanelRoot.Clear();
 
@@ -77,35 +96,27 @@ namespace Controllers
                 case DialogueNodeModel dialogue:
                     rightPanelRoot.Add(new Views.RightPanel.DialogueView(dialogue, this));
                     break;
-
                 case ReminderNodeModel reminder:
                     rightPanelRoot.Add(new Views.RightPanel.ReminderView(reminder, this));
                     break;
-
                 case MultipleChoiceNodeModel multi:
                     rightPanelRoot.Add(new Views.RightPanel.MultipleChoiceView(multi, this));
                     break;
-
                 case NoTypeNodeModel noType:
                     rightPanelRoot.Add(new Views.RightPanel.NoTypeView(noType, this));
                     break;
-
                 case RandomNodeModel random:
                     rightPanelRoot.Add(new Views.RightPanel.RandomView(random, this));
                     break;
-
                 case StartNodeModel start:
                     rightPanelRoot.Add(new Views.RightPanel.StartView(start, this));
                     break;
-
                 case EndNodeModel end:
                     rightPanelRoot.Add(new Views.RightPanel.EndView(end, this));
                     break;
-
                 case TimeoutNodeModel timeout:
                     rightPanelRoot.Add(new Views.RightPanel.TimeoutView(timeout, this));
                     break;
-
                 default:
                     Debug.LogWarning("Unknown node type selected.");
                     break;
@@ -114,73 +125,36 @@ namespace Controllers
 
         public void ChangeNodeType(TweenityNodeModel oldModel, NodeType newType)
         {
-            // Don't do anything if the type hasn't changed
             if (oldModel.Type == newType)
                 return;
 
-            // Log the old and new types for debugging
             Debug.Log($"Changing node type: Old Type = {oldModel.Type}, New Type = {newType}");
 
-            // Create new model of the selected type
-            TweenityNodeModel newModel;
-            string title = oldModel.Title;
-            string description = oldModel.Description;
-            List<string> connections = new List<string>(oldModel.ConnectedNodes);
-
-            switch (newType)
+            TweenityNodeModel newModel = newType switch
             {
-                case NodeType.Dialogue:
-                    newModel = new DialogueNodeModel(title);
-                    break;
-                case NodeType.Reminder:
-                    newModel = new ReminderNodeModel(title);
-                    break;
-                case NodeType.MultipleChoice:
-                    newModel = new MultipleChoiceNodeModel(title);
-                    break;
-                case NodeType.Random:
-                    newModel = new RandomNodeModel(title);
-                    break;
-                case NodeType.Start:
-                    newModel = new StartNodeModel(title);
-                    break;
-                case NodeType.End:
-                    newModel = new EndNodeModel(title);
-                    break;
-                case NodeType.Timeout:
-                    newModel = new TimeoutNodeModel(title);
-                    break;
-                default:
-                    newModel = new NoTypeNodeModel(title);
-                    break;
-            }
+                NodeType.Dialogue => new DialogueNodeModel(oldModel.Title),
+                NodeType.Reminder => new ReminderNodeModel(oldModel.Title),
+                NodeType.MultipleChoice => new MultipleChoiceNodeModel(oldModel.Title),
+                NodeType.Random => new RandomNodeModel(oldModel.Title),
+                NodeType.Start => new StartNodeModel(oldModel.Title),
+                NodeType.End => new EndNodeModel(oldModel.Title),
+                NodeType.Timeout => new TimeoutNodeModel(oldModel.Title),
+                _ => new NoTypeNodeModel(oldModel.Title),
+            };
 
-            newModel.Description = description;
-            newModel.ConnectedNodes = connections;
+            newModel.Description = oldModel.Description;
+            newModel.ConnectedNodes = new List<string>(oldModel.ConnectedNodes);
 
-            // Remove old node from Graph and GraphView
-            Graph.RemoveNode(oldModel.NodeID);
+            Debug.Log($"[GraphController] Removing old node: {oldModel.NodeID}");
             GraphView.RemoveNodeFromView(oldModel.NodeID);
-            Debug.Log($"Removed old node: {oldModel.NodeID}");
+            Graph.RemoveNode(oldModel.NodeID);
 
-            // Add new node to Graph and GraphView
             Graph.AddNode(newModel);
             GraphView.RenderNode(newModel);
-            Debug.Log($"Added new node: {newModel.NodeID}");
+            Debug.Log($"[GraphController] Added new node: {newModel.NodeID}");
 
-            // Re-add visual elements explicitly (if needed)
-            var visualNode = GraphView.Children()
-                .OfType<TweenityNode>()
-                .FirstOrDefault(n => n.NodeID == newModel.NodeID);
-            
-            if (visualNode != null)
-            {
-                // Refresh or update the visual node (force re-rendering)
-               GraphView.RefreshNodeVisual(newModel.NodeID);
-            }
-
-            // Refresh right panel with new node
-            GraphView.RefreshNodeVisual(newModel.NodeID); 
+            GraphView.RefreshNodeVisual(newModel.NodeID);
+            OnNodeSelected(newModel);
         }
 
         public void UpdateNodeTitle(TweenityNodeModel model, string newTitle)
@@ -221,13 +195,12 @@ namespace Controllers
             string twee = File.ReadAllText(path);
             var nodes = GraphParser.ImportFromTwee(twee);
 
-            // Clear current graph
             foreach (var node in Graph.Nodes)
             {
                 GraphView.RemoveNodeFromView(node.NodeID);
             }
 
-            Graph = new GraphModel(); // Reset
+            Graph = new GraphModel();
             foreach (var node in nodes)
             {
                 AddNode(node);
@@ -236,43 +209,23 @@ namespace Controllers
             lastSavedPath = path;
             Debug.Log("Graph loaded from: " + path);
         }
-        // View control stubs
-        public void ToggleGrid()
-        {
-            GraphView.ToggleGridVisibility();
-        }
 
-        public void ZoomIn()
-        {
-            GraphView.ZoomIn();
-        }
+        public void ToggleGrid() => GraphView.ToggleGridVisibility();
+        public void ZoomIn() => GraphView.ZoomIn();
+        public void ZoomOut() => GraphView.ZoomOut();
+        public void ResetView() => GraphView.ResetView();
 
-        public void ZoomOut()
-        {
-            GraphView.ZoomOut();
-        }
-
-        public void ResetView()
-        {
-            GraphView.ResetView();
-        }
-
-        public void ShowHelp()
-        {
-            Debug.Log("Help clicked (controller)");
-            // Future: open documentation window or help dialog
-        }
+        public void ShowHelp() => Debug.Log("Help clicked (controller)");
 
         public void CreateNewNode()
         {
             var newNode = new NoTypeNodeModel("New Node");
-
-            bool added = AddNode(newNode);
-            if (!added)
+            if (!AddNode(newNode))
             {
                 Debug.LogWarning("Node not added. Maybe a Start node already exists?");
             }
         }
+
         public void DebugGraph()
         {
             Debug.Log("=== Graph Debug Info ===");
@@ -286,59 +239,21 @@ namespace Controllers
         {
             var selected = GraphView.selection;
         }
-       public void SearchNodes(string query)
+
+        public void SearchNodes(string query)
         {
             Debug.Log($"Searching nodes for: {query}");
-            // Future: Filter nodes in GraphView or highlight matches
         }
 
-        public void UpdateDialogueText(DialogueNodeModel model, string newText)
-        {
-            model.DialogueText = newText;
-        }
-
-        public void AddDialogueResponse(DialogueNodeModel model)
-        {
-            model.AddResponse("Response " + (model.Responses.Count + 1));
-        }
-
-        public void AddChoiceToMultipleChoiceNode(MultipleChoiceNodeModel model)
-        {
-            model.AddChoice("Choice " + (model.Choices.Count + 1));
-        }
-        public void UpdateNoTypeTitle(NoTypeNodeModel model, string newTitle)
-        {
-            model.Title = newTitle;
-        }
-
-        public void UpdateNoTypeDescription(NoTypeNodeModel model, string newDesc)
-        {
-            model.Description = newDesc;
-        }
-        public void AddRandomPath(RandomNodeModel model)
-        {
-            model.AddPath("Path " + (model.PossiblePaths.Count + 1));
-        }
-
-        public void UpdateReminderText(ReminderNodeModel model, string newText)
-        {
-            model.ReminderText = newText;
-        }
-
-        public void UpdateReminderTimer(ReminderNodeModel model, float newTimer)
-        {
-            model.ReminderTimer = newTimer;
-        }
-
-        public void UpdateTimeoutCondition(TimeoutNodeModel model, string newCondition)
-        {
-            model.Condition = newCondition;
-        }
-
-        public void UpdateTimeoutTimer(TimeoutNodeModel model, float newDuration)
-        {
-            model.TimeoutDuration = newDuration;
-        }
-
+        public void UpdateDialogueText(DialogueNodeModel model, string newText) => model.DialogueText = newText;
+        public void AddDialogueResponse(DialogueNodeModel model) => model.AddResponse("Response " + (model.Responses.Count + 1));
+        public void AddChoiceToMultipleChoiceNode(MultipleChoiceNodeModel model) => model.AddChoice("Choice " + (model.Choices.Count + 1));
+        public void UpdateNoTypeTitle(NoTypeNodeModel model, string newTitle) => model.Title = newTitle;
+        public void UpdateNoTypeDescription(NoTypeNodeModel model, string newDesc) => model.Description = newDesc;
+        public void AddRandomPath(RandomNodeModel model) => model.AddPath("Path " + (model.PossiblePaths.Count + 1));
+        public void UpdateReminderText(ReminderNodeModel model, string newText) => model.ReminderText = newText;
+        public void UpdateReminderTimer(ReminderNodeModel model, float newTimer) => model.ReminderTimer = newTimer;
+        public void UpdateTimeoutCondition(TimeoutNodeModel model, string newCondition) => model.Condition = newCondition;
+        public void UpdateTimeoutTimer(TimeoutNodeModel model, float newDuration) => model.TimeoutDuration = newDuration;
     }
 }
