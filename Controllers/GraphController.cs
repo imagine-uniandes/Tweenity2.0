@@ -130,6 +130,14 @@ namespace Controllers
 
             Debug.Log($"Changing node type: Old Type = {oldModel.Type}, New Type = {newType}");
 
+            // Capture visual node position before deletion
+            var oldVisualNode = GraphView.graphElements
+                .OfType<TweenityNode>()
+                .FirstOrDefault(n => n.NodeID == oldModel.NodeID);
+
+            Rect oldPosition = oldVisualNode != null ? oldVisualNode.GetPosition() : new Rect(200, 200, 150, 200);
+
+            // Create new model with preserved data
             TweenityNodeModel newModel = newType switch
             {
                 NodeType.Dialogue => new DialogueNodeModel(oldModel.Title),
@@ -145,17 +153,20 @@ namespace Controllers
             newModel.Description = oldModel.Description;
             newModel.ConnectedNodes = new List<string>(oldModel.ConnectedNodes);
 
+            // Remove old node
             Debug.Log($"[GraphController] Removing old node: {oldModel.NodeID}");
             GraphView.RemoveNodeFromView(oldModel.NodeID);
             Graph.RemoveNode(oldModel.NodeID);
 
+            // Add new node with preserved position
             Graph.AddNode(newModel);
-            GraphView.RenderNode(newModel);
+            GraphView.RenderNode(newModel, oldPosition);
             Debug.Log($"[GraphController] Added new node: {newModel.NodeID}");
 
             GraphView.RefreshNodeVisual(newModel.NodeID);
             OnNodeSelected(newModel);
         }
+
 
         public void UpdateNodeTitle(TweenityNodeModel model, string newTitle)
         {

@@ -27,9 +27,8 @@ namespace Views
             this.Insert(0, gridBackground);
         }
 
-        public void RenderNode(TweenityNodeModel nodeModel)
+        public void RenderNode(TweenityNodeModel nodeModel, Rect? positionOverride = null)
         {
-
             EditorApplication.delayCall += () =>
             {
                 TweenityNode visualNode = new TweenityNode(nodeModel.NodeID);
@@ -46,10 +45,11 @@ namespace Views
                     }
                 });
 
-                visualNode.SetPosition(new Rect(200, 200, 150, 200));
+                Rect position = positionOverride ?? new Rect(200, 200, 150, 200);
+                visualNode.SetPosition(position);
                 AddElement(visualNode);
 
-                var count = this.graphElements.OfType<TweenityNode>().Count();
+                int count = this.graphElements.OfType<TweenityNode>().Count();
                 Debug.Log($"[RenderNode] Total visual nodes after AddElement: {count}");
             };
         }
