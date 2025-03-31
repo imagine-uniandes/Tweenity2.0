@@ -1,4 +1,3 @@
-using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
 using Models.Nodes;
@@ -6,46 +5,38 @@ using Controllers;
 
 namespace Views.RightPanel
 {
-    public class DialogueView : VisualElement
+    public class DialogueView : TweenityNodeView
     {
         private ListView _responseList;
-        private DialogueNodeModel _model;
-        private GraphController _controller;
 
-        public DialogueView(DialogueNodeModel model, GraphController controller)
+        public DialogueView(DialogueNodeModel model, GraphController controller) : base(model, controller)
         {
-            _model = model;
-            _controller = controller;
+            Add(new Label("Dialogue Node Details") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
 
-            style.paddingLeft = 5;
-            style.paddingRight = 5;
-            style.paddingTop = 5;
-            style.paddingBottom = 5;
+            var dialogueModel = (DialogueNodeModel)_model;
 
-            Label header = new Label("Dialogue Node Details");
-            header.style.unityFontStyleAndWeight = FontStyle.Bold;
-            Add(header);
-
+            // Dialogue Text
             Add(new Label("Dialogue Text"));
-            var dialogueText = new TextField { value = _model.DialogueText };
+            var dialogueText = new TextField { value = dialogueModel.DialogueText, multiline = true };
             dialogueText.RegisterValueChangedCallback(evt =>
             {
-                _controller.UpdateDialogueText(_model, evt.newValue);
+                _controller.UpdateDialogueText(dialogueModel, evt.newValue);
             });
             Add(dialogueText);
 
+            // Responses
             Add(new Label("Responses"));
             var addButton = new Button(() =>
             {
-                _controller.AddDialogueResponse(_model);
+                _controller.AddDialogueResponse(dialogueModel);
                 _responseList.Rebuild();
             })
             { text = "+ Add Response" };
             Add(addButton);
 
-            _responseList = new ListView(_model.Responses, 20, () => new Label(), (e, i) =>
+            _responseList = new ListView(dialogueModel.Responses, 20, () => new Label(), (e, i) =>
             {
-                (e as Label).text = _model.Responses[i];
+                (e as Label).text = dialogueModel.Responses[i];
             });
             Add(_responseList);
         }

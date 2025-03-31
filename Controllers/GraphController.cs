@@ -165,6 +165,18 @@ namespace Controllers
             OnNodeSelected(newModel);
         }
 
+        public void UpdateNodeTitle(TweenityNodeModel model, string newTitle)
+        {
+            model.Title = newTitle;
+            GraphView.UpdateNodeTitle(model.NodeID, newTitle);
+            GraphView.RefreshNodeVisual(model.NodeID);
+        }
+
+        public void UpdateNodeDescription(TweenityNodeModel model, string newDescription)
+        {
+            model.Description = newDescription;
+            GraphView.RefreshNodeVisual(model.NodeID);
+        }
 
         public void SaveCurrentGraph()
         {

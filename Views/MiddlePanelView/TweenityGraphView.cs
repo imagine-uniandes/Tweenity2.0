@@ -41,10 +41,9 @@ namespace Views
             }
 
             visualNode.NodeModel = nodeModel;
-            visualNode.title = nodeModel.Title;
+            visualNode.UpdateFromModel(); // 🔁 ya no seteamos manualmente title aquí
             visualNode.userData = nodeModel;
 
-            // Register selection event
             visualNode.RegisterCallback<MouseDownEvent>(evt =>
             {
                 if (evt.button == 0)
@@ -66,6 +65,32 @@ namespace Views
             if (target != null)
             {
                 RemoveElement(target);
+            }
+        }
+
+        public void UpdateNodeTitle(string nodeId, string newTitle)
+        {
+            var target = this.Children()
+                .OfType<TweenityNode>()
+                .FirstOrDefault(n => n.NodeID == nodeId);
+
+            if (target != null)
+            {
+                target.title = newTitle;
+            }
+        }
+
+        public void RefreshNodeVisual(string nodeId)
+        {
+            var target = this.Children()
+                .OfType<TweenityNode>()
+                .FirstOrDefault(n => n.NodeID == nodeId);
+
+            if (target != null && target.NodeModel != null)
+            {
+                target.UpdateFromModel(); // ✅ refresca toda la UI desde el modelo
+                target.RefreshExpandedState();
+                target.RefreshPorts();
             }
         }
 

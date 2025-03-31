@@ -1,63 +1,21 @@
-using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
 using Models.Nodes;
 using Controllers;
-using Models;
-using System;
 
 namespace Views.RightPanel
 {
-    public class NoTypeView : VisualElement
+    public class NoTypeView : TweenityNodeView
     {
-        private NoTypeNodeModel _model;
-        private GraphController _controller;
-
-        public NoTypeView(NoTypeNodeModel model, GraphController controller)
+        public NoTypeView(NoTypeNodeModel model, GraphController controller) : base(model, controller)
         {
-            _model = model;
-            _controller = controller;
+            Add(new Label("Generic Node Details") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
 
-            this.style.paddingLeft = 5;
-            this.style.paddingRight = 5;
-            this.style.paddingTop = 5;
-            this.style.paddingBottom = 5;
-            this.style.borderTopLeftRadius = 5;
-            this.style.borderTopRightRadius = 5;
-            this.style.borderBottomLeftRadius = 5;
-            this.style.borderBottomRightRadius = 5;
+            Label label = new Label("This node has no specific properties.");
+            label.style.unityFontStyleAndWeight = FontStyle.Italic;
+            label.style.marginTop = 10;
 
-            Label header = new Label("Basic Node");
-            header.style.unityFontStyleAndWeight = FontStyle.Bold;
-            this.Add(header);
-
-            // Node Type Section
-            this.Add(new Label("Node Type"));
-            var typeDropdown = new DropdownField(new System.Collections.Generic.List<string>(Enum.GetNames(typeof(NodeType))), (int)_model.Type);
-            typeDropdown.RegisterValueChangedCallback(evt =>
-            {
-                if (Enum.TryParse<NodeType>(evt.newValue, out var newType))
-                {
-                    _controller.ChangeNodeType(_model, newType);
-                }
-            });
-            this.Add(typeDropdown);
-
-            this.Add(new Label("Title"));
-            var titleField = new TextField { value = _model.Title };
-            titleField.RegisterValueChangedCallback(evt =>
-            {
-                _controller.UpdateNoTypeTitle(_model, evt.newValue);
-            });
-            this.Add(titleField);
-
-            this.Add(new Label("Description"));
-            var descriptionField = new TextField { value = _model.Description };
-            descriptionField.RegisterValueChangedCallback(evt =>
-            {
-                _controller.UpdateNoTypeDescription(_model, evt.newValue);
-            });
-            this.Add(descriptionField);
+            Add(label);
         }
     }
 }

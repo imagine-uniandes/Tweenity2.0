@@ -4,42 +4,47 @@ using UnityEngine;
 using Models;
 using Models.Nodes;
 
-namespace Views.MiddlePanel{
-
+namespace Views.MiddlePanel
+{
     public class TweenityNode : Node
     {
         public string NodeID { get; private set; }
-        public string TitleText { get; private set; }
-        public string DescriptionText { get; private set; }
-        public NodeType NodeType { get; private set; }
-
         public TweenityNodeModel NodeModel { get; set; }
 
-        private TextField titleField;
-        private TextField descriptionField;
+        private Label _typeLabel;
+        private Label _descriptionLabel;
 
         public TweenityNode(string nodeID)
         {
             this.NodeID = nodeID;
-            this.title = "New Node";
+            this.title = "New Node"; // visible en encabezado gris
 
-            // Set up UI Elements
-            titleField = new TextField("Title") { value = "New Node" };
-            descriptionField = new TextField("Description") { value = "" };
-            Label typeLabel = new Label("Type: NoType");
-            typeLabel.style.unityFontStyleAndWeight = FontStyle.Italic;
-            typeLabel.style.marginTop = 4;
-            typeLabel.style.marginBottom = 4;
-            typeLabel.style.marginLeft = 5;
+            _typeLabel = new Label("Type: NoType")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Italic, marginTop = 4, marginLeft = 5 }
+            };
 
-            // Add elements to the node
-            this.extensionContainer.Add(titleField);
-            this.extensionContainer.Add(descriptionField);
-            this.extensionContainer.Add(typeLabel);
+            _descriptionLabel = new Label("(No description)")
+            {
+                style = { whiteSpace = WhiteSpace.Normal, marginLeft = 5, marginTop = 2 }
+            };
 
-            // Refresh node UI
+            this.extensionContainer.Add(_typeLabel);
+            this.extensionContainer.Add(_descriptionLabel);
+
             this.RefreshExpandedState();
             this.RefreshPorts();
+        }
+
+        public void UpdateFromModel()
+        {
+            if (NodeModel == null) return;
+
+            this.title = NodeModel.Title;
+            _typeLabel.text = $"Type: {NodeModel.Type}";
+            _descriptionLabel.text = string.IsNullOrWhiteSpace(NodeModel.Description)
+                ? "(No description)"
+                : NodeModel.Description;
         }
     }
 }

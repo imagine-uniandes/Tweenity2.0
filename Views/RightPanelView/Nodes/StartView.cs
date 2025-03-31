@@ -1,4 +1,3 @@
-using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
 using Models.Nodes;
@@ -6,30 +5,17 @@ using Controllers;
 
 namespace Views.RightPanel
 {
-    public class StartView : VisualElement
+    public class StartView : TweenityNodeView
     {
-        private StartNodeModel _model;
-        private GraphController _controller;
-
-        public StartView(StartNodeModel model, GraphController controller)
+        public StartView(StartNodeModel model, GraphController controller) : base(model, controller)
         {
-            _model = model;
-            _controller = controller;
+            Add(new Label("Start Node Details") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
 
-            this.style.paddingLeft = 5;
-            this.style.paddingRight = 5;
-            this.style.paddingTop = 5;
-            this.style.paddingBottom = 5;
-            this.style.borderTopLeftRadius = 5;
-            this.style.borderTopRightRadius = 5;
-            this.style.borderBottomLeftRadius = 5;
-            this.style.borderBottomRightRadius = 5;
+            Label note = new Label("This is a Start Node. It does not contain any editable properties.");
+            note.style.unityFontStyleAndWeight = FontStyle.Italic;
+            note.style.marginTop = 10;
 
-            Label startLabel = new Label("Start Node");
-            startLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            this.Add(startLabel);
-
-            this.Add(new Label("This is a Start Node. It does not contain any editable properties."));
+            Add(note);
         }
     }
 }

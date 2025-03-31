@@ -1,4 +1,3 @@
-using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
 using Models.Nodes;
@@ -6,47 +5,34 @@ using Controllers;
 
 namespace Views.RightPanel
 {
-    public class MultipleChoiceView : VisualElement
+    public class MultipleChoiceView : TweenityNodeView
     {
         private ListView _choicesList;
-        private MultipleChoiceNodeModel _model;
-        private GraphController _controller;
 
-        public MultipleChoiceView(MultipleChoiceNodeModel model, GraphController controller)
+        public MultipleChoiceView(MultipleChoiceNodeModel model, GraphController controller) : base(model, controller)
         {
-            _model = model;
-            _controller = controller;
+            Add(new Label("Multiple Choice Node Details") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
 
-            this.style.paddingLeft = 5;
-            this.style.paddingRight = 5;
-            this.style.paddingTop = 5;
-            this.style.paddingBottom = 5;
-            this.style.borderTopLeftRadius = 5;
-            this.style.borderTopRightRadius = 5;
-            this.style.borderBottomLeftRadius = 5;
-            this.style.borderBottomRightRadius = 5;
+            var choiceModel = (MultipleChoiceNodeModel)_model;
 
-            Label title = new Label("Multiple Choice Node");
-            title.style.unityFontStyleAndWeight = FontStyle.Bold;
-            this.Add(title);
-
-            this.Add(new Label("Choices"));
+            Add(new Label("Choices"));
 
             Button addChoiceButton = new Button(() =>
             {
-                _controller.AddChoiceToMultipleChoiceNode(_model);
+                _controller.AddChoiceToMultipleChoiceNode(choiceModel);
                 _choicesList.Rebuild();
             })
             {
                 text = "+ Add Choice"
             };
-            this.Add(addChoiceButton);
+            Add(addChoiceButton);
 
-            _choicesList = new ListView(_model.Choices, 20, () => new Label(), (e, i) =>
+            _choicesList = new ListView(choiceModel.Choices, 20, () => new Label(), (e, i) =>
             {
-                (e as Label).text = _model.Choices[i];
+                (e as Label).text = choiceModel.Choices[i];
             });
-            this.Add(_choicesList);
+
+            Add(_choicesList);
         }
     }
 }

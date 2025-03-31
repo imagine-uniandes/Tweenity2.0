@@ -1,4 +1,3 @@
-using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
 using Models.Nodes;
@@ -6,44 +5,29 @@ using Controllers;
 
 namespace Views.RightPanel
 {
-    public class ReminderView : VisualElement
+    public class ReminderView : TweenityNodeView
     {
-        private ReminderNodeModel _model;
-        private GraphController _controller;
-
-        public ReminderView(ReminderNodeModel model, GraphController controller)
+        public ReminderView(ReminderNodeModel model, GraphController controller) : base(model, controller)
         {
-            _model = model;
-            _controller = controller;
+            Add(new Label("Reminder Node Details") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
 
-            this.style.paddingLeft = 5;
-            this.style.paddingRight = 5;
-            this.style.paddingTop = 5;
-            this.style.paddingBottom = 5;
-            this.style.borderTopLeftRadius = 5;
-            this.style.borderTopRightRadius = 5;
-            this.style.borderBottomLeftRadius = 5;
-            this.style.borderBottomRightRadius = 5;
+            var typedModel = (ReminderNodeModel)_model;
 
-            Label header = new Label("Reminder Node");
-            header.style.unityFontStyleAndWeight = FontStyle.Bold;
-            this.Add(header);
-
-            this.Add(new Label("Reminder Text"));
-            TextField reminderTextField = new TextField { value = _model.ReminderText };
+            Add(new Label("Reminder Text"));
+            TextField reminderTextField = new TextField { value = typedModel.ReminderText, multiline = true };
             reminderTextField.RegisterValueChangedCallback(evt =>
             {
-                _controller.UpdateReminderText(_model, evt.newValue);
+                _controller.UpdateReminderText(typedModel, evt.newValue);
             });
-            this.Add(reminderTextField);
+            Add(reminderTextField);
 
-            this.Add(new Label("Reminder Timer (seconds)"));
-            FloatField timerField = new FloatField { value = _model.ReminderTimer };
+            Add(new Label("Reminder Timer (seconds)"));
+            FloatField timerField = new FloatField { value = typedModel.ReminderTimer };
             timerField.RegisterValueChangedCallback(evt =>
             {
-                _controller.UpdateReminderTimer(_model, evt.newValue);
+                _controller.UpdateReminderTimer(typedModel, evt.newValue);
             });
-            this.Add(timerField);
+            Add(timerField);
         }
     }
 }
