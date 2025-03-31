@@ -9,20 +9,29 @@ namespace Views.RightPanel
     {
         public ReminderView(ReminderNodeModel model, GraphController controller) : base(model, controller)
         {
-            Add(new Label("Reminder Node Details") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
+            var title = new Label("Reminder Node Details");
+            title.style.unityFontStyleAndWeight = FontStyle.Bold;
+            title.style.whiteSpace = WhiteSpace.Normal;
+            Add(title);
 
             var typedModel = (ReminderNodeModel)_model;
 
-            Add(new Label("Reminder Text"));
-            TextField reminderTextField = new TextField { value = typedModel.ReminderText, multiline = true };
+            var textLabel = new Label("Reminder Text");
+            textLabel.style.whiteSpace = WhiteSpace.Normal;
+            Add(textLabel);
+
+            var reminderTextField = new TextField { value = typedModel.ReminderText, multiline = true };
             reminderTextField.RegisterValueChangedCallback(evt =>
             {
                 _controller.UpdateReminderText(typedModel, evt.newValue);
             });
             Add(reminderTextField);
 
-            Add(new Label("Reminder Timer (seconds)"));
-            FloatField timerField = new FloatField { value = typedModel.ReminderTimer };
+            var timerLabel = new Label("Reminder Timer (seconds)");
+            timerLabel.style.whiteSpace = WhiteSpace.Normal;
+            Add(timerLabel);
+
+            var timerField = new FloatField { value = typedModel.ReminderTimer };
             timerField.RegisterValueChangedCallback(evt =>
             {
                 _controller.UpdateReminderTimer(typedModel, evt.newValue);

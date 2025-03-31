@@ -11,13 +11,18 @@ namespace Views.RightPanel
 
         public RandomView(RandomNodeModel model, GraphController controller) : base(model, controller)
         {
-            Add(new Label("Random Node Details") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
+            var title = new Label("Random Node Details");
+            title.style.unityFontStyleAndWeight = FontStyle.Bold;
+            title.style.whiteSpace = WhiteSpace.Normal;
+            Add(title);
 
             var typedModel = (RandomNodeModel)_model;
 
-            Add(new Label("Possible Paths"));
+            var pathsLabel = new Label("Possible Paths");
+            pathsLabel.style.whiteSpace = WhiteSpace.Normal;
+            Add(pathsLabel);
 
-            Button addPathButton = new Button(() =>
+            var addPathButton = new Button(() =>
             {
                 _controller.AddRandomPath(typedModel);
                 _pathsList.Rebuild();

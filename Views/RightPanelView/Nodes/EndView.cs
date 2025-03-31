@@ -9,11 +9,16 @@ namespace Views.RightPanel
     {
         public EndView(EndNodeModel model, GraphController controller) : base(model, controller)
         {
-            Add(new Label("End Node Details") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
+            var title = new Label("End Node Details");
+            title.style.unityFontStyleAndWeight = FontStyle.Bold;
+            title.style.whiteSpace = WhiteSpace.Normal;
+            Add(title);
 
-            Label note = new Label("This is an End Node. No editable properties.");
+            var note = new Label("This is an End Node. No editable properties.");
             note.style.unityFontStyleAndWeight = FontStyle.Italic;
             note.style.marginTop = 10;
+            note.style.whiteSpace = WhiteSpace.Normal;
+            note.style.flexShrink = 0;
 
             Add(note);
         }

@@ -257,6 +257,19 @@ namespace Controllers
         }
 
         public void UpdateDialogueText(DialogueNodeModel model, string newText) => model.DialogueText = newText;
+
+        public void UpdateDialogueResponse(DialogueNodeModel model, int index, string newValue)
+        {
+            if (index >= 0 && index < model.Responses.Count)
+            {
+                model.Responses[index] = newValue;
+            }
+            else
+            {
+                Debug.LogWarning($"[GraphController] Invalid response index: {index}");
+            }
+        }
+
         public void AddDialogueResponse(DialogueNodeModel model) => model.AddResponse("Response " + (model.Responses.Count + 1));
         public void AddChoiceToMultipleChoiceNode(MultipleChoiceNodeModel model) => model.AddChoice("Choice " + (model.Choices.Count + 1));
         public void UpdateNoTypeTitle(NoTypeNodeModel model, string newTitle) => model.Title = newTitle;

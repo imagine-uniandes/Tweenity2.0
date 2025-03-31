@@ -9,11 +9,16 @@ namespace Views.RightPanel
     {
         public StartView(StartNodeModel model, GraphController controller) : base(model, controller)
         {
-            Add(new Label("Start Node Details") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
+            var title = new Label("Start Node Details");
+            title.style.unityFontStyleAndWeight = FontStyle.Bold;
+            title.style.whiteSpace = WhiteSpace.Normal;
+            Add(title);
 
-            Label note = new Label("This is a Start Node. It does not contain any editable properties.");
+            var note = new Label("This is a Start Node. It does not contain any editable properties.");
             note.style.unityFontStyleAndWeight = FontStyle.Italic;
             note.style.marginTop = 10;
+            note.style.whiteSpace = WhiteSpace.Normal;
+            note.style.flexShrink = 0;
 
             Add(note);
         }
