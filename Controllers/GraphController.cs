@@ -110,6 +110,62 @@ namespace Controllers
             }
         }
 
+        public void ChangeNodeType(TweenityNodeModel oldModel, NodeType newType)
+        {
+            // Don't do anything if the type hasn't changed
+            if (oldModel.Type == newType)
+                return;
+
+            // Create new model of the selected type
+            TweenityNodeModel newModel;
+            string title = oldModel.Title;
+            string description = oldModel.Description;
+            List<string> connections = new List<string>(oldModel.ConnectedNodes);
+
+            switch (newType)
+            {
+                case NodeType.Dialogue:
+                    newModel = new DialogueNodeModel(title);
+                    break;
+                case NodeType.Reminder:
+                    newModel = new ReminderNodeModel(title);
+                    break;
+                case NodeType.MultipleChoice:
+                    newModel = new MultipleChoiceNodeModel(title);
+                    break;
+                case NodeType.Random:
+                    newModel = new RandomNodeModel(title);
+                    break;
+                case NodeType.Start:
+                    newModel = new StartNodeModel(title);
+                    break;
+                case NodeType.End:
+                    newModel = new EndNodeModel(title);
+                    break;
+                case NodeType.Timeout:
+                    newModel = new TimeoutNodeModel(title);
+                    break;
+                default:
+                    newModel = new NoTypeNodeModel(title);
+                    break;
+            }
+
+            newModel.Description = description;
+            newModel.ConnectedNodes = connections;
+
+            // Replace node in Graph
+            Graph.RemoveNode(oldModel.NodeID);
+            Graph.AddNode(newModel);
+
+            // Replace visual in view
+            GraphView.RemoveNodeFromView(oldModel.NodeID);
+            GraphView.RenderNode(newModel);
+
+            // Refresh right panel with new node
+            OnNodeSelected(newModel);
+        }
+
+
         public void SaveCurrentGraph()
         {
             if (string.IsNullOrEmpty(lastSavedPath))

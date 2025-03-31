@@ -5,7 +5,7 @@ using Models;
 using Models.Nodes;
 
 namespace Views.MiddlePanel{
-    
+
     public class TweenityNode : Node
     {
         public string NodeID { get; private set; }
@@ -17,7 +17,6 @@ namespace Views.MiddlePanel{
 
         private TextField titleField;
         private TextField descriptionField;
-        private DropdownField nodeTypeDropdown;
 
         public TweenityNode(string nodeID)
         {
@@ -27,14 +26,17 @@ namespace Views.MiddlePanel{
             // Set up UI Elements
             titleField = new TextField("Title") { value = "New Node" };
             descriptionField = new TextField("Description") { value = "" };
-            nodeTypeDropdown = new DropdownField("Node Type", new System.Collections.Generic.List<string>(System.Enum.GetNames(typeof(NodeType))), 0);
-            nodeTypeDropdown.value = NodeType.NoType.ToString();
+            Label typeLabel = new Label("Type: NoType");
+            typeLabel.style.unityFontStyleAndWeight = FontStyle.Italic;
+            typeLabel.style.marginTop = 4;
+            typeLabel.style.marginBottom = 4;
+            typeLabel.style.marginLeft = 5;
 
             // Add elements to the node
             this.extensionContainer.Add(titleField);
             this.extensionContainer.Add(descriptionField);
-            this.extensionContainer.Add(nodeTypeDropdown);
-            
+            this.extensionContainer.Add(typeLabel);
+
             // Refresh node UI
             this.RefreshExpandedState();
             this.RefreshPorts();

@@ -3,6 +3,8 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using Models.Nodes;
 using Controllers;
+using Models;
+using System;
 
 namespace Views.RightPanel
 {
@@ -28,6 +30,18 @@ namespace Views.RightPanel
             Label header = new Label("Basic Node");
             header.style.unityFontStyleAndWeight = FontStyle.Bold;
             this.Add(header);
+
+            // Node Type Section
+            this.Add(new Label("Node Type"));
+            var typeDropdown = new DropdownField(new System.Collections.Generic.List<string>(Enum.GetNames(typeof(NodeType))), (int)_model.Type);
+            typeDropdown.RegisterValueChangedCallback(evt =>
+            {
+                if (Enum.TryParse<NodeType>(evt.newValue, out var newType))
+                {
+                    _controller.ChangeNodeType(_model, newType);
+                }
+            });
+            this.Add(typeDropdown);
 
             this.Add(new Label("Title"));
             var titleField = new TextField { value = _model.Title };
