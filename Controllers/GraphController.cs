@@ -8,6 +8,8 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using System.IO;
 using UnityEditor;
+using Views.MiddlePanel;
+using System.Linq;
 
 
 namespace Controllers
@@ -116,6 +118,9 @@ namespace Controllers
             if (oldModel.Type == newType)
                 return;
 
+            // Log the old and new types for debugging
+            Debug.Log($"Changing node type: Old Type = {oldModel.Type}, New Type = {newType}");
+
             // Create new model of the selected type
             TweenityNodeModel newModel;
             string title = oldModel.Title;
@@ -153,16 +158,29 @@ namespace Controllers
             newModel.Description = description;
             newModel.ConnectedNodes = connections;
 
-            // Replace node in Graph
+            // Remove old node from Graph and GraphView
             Graph.RemoveNode(oldModel.NodeID);
-            Graph.AddNode(newModel);
-
-            // Replace visual in view
             GraphView.RemoveNodeFromView(oldModel.NodeID);
+            Debug.Log($"Removed old node: {oldModel.NodeID}");
+
+            // Add new node to Graph and GraphView
+            Graph.AddNode(newModel);
             GraphView.RenderNode(newModel);
+            Debug.Log($"Added new node: {newModel.NodeID}");
+
+            // Re-add visual elements explicitly (if needed)
+            var visualNode = GraphView.Children()
+                .OfType<TweenityNode>()
+                .FirstOrDefault(n => n.NodeID == newModel.NodeID);
+            
+            if (visualNode != null)
+            {
+                // Refresh or update the visual node (force re-rendering)
+               GraphView.RefreshNodeVisual(newModel.NodeID);
+            }
 
             // Refresh right panel with new node
-            OnNodeSelected(newModel);
+            GraphView.RefreshNodeVisual(newModel.NodeID); 
         }
 
         public void UpdateNodeTitle(TweenityNodeModel model, string newTitle)
