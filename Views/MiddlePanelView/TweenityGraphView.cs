@@ -65,8 +65,23 @@ namespace Views
 
             if (target != null)
             {
-                Debug.Log($"[GraphView] Removing node from view: {nodeId}");
-                RemoveElement(target); 
+                Debug.Log($"[GraphView] Removing node and its edges from view: {nodeId}");
+
+                // Remove all edges connected to this node
+                var connectedEdges = this.graphElements
+                    .OfType<Edge>()
+                    .Where(e =>
+                        e.input?.node == target || e.output?.node == target)
+                    .ToList();
+
+                foreach (var edge in connectedEdges)
+                {
+                    edge.input?.Disconnect(edge);
+                    edge.output?.Disconnect(edge);
+                    RemoveElement(edge);
+                }
+
+                RemoveElement(target);
             }
             else
             {

@@ -167,10 +167,10 @@ namespace Controllers
             // Remove old node
             Debug.Log($"[GraphController] Removing old node: {oldModel.NodeID}");
             GraphView.RemoveNodeFromView(oldModel.NodeID);
+            CleanupDanglingConnections(oldModel.NodeID);
             Graph.RemoveNode(oldModel.NodeID);
             GraphView.RemoveNodeFromView(oldModel.NodeID);
-            Graph.RemoveNode(oldModel.NodeID);
-            CleanupDanglingConnections(oldModel.NodeID);
+
 
 
             // Add new node with preserved position
