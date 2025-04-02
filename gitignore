@@ -1,4 +1,3 @@
-
 # ========== Unity Generated Files ==========
 [Ll]ibrary/
 [Tt]emp/
@@ -19,20 +18,7 @@ UserSettings/
 *.suo
 
 # ========== Meta & Cache Files ==========
-*.pidb.meta
-*.sln.meta
-*.csproj.meta
-*.mp4.meta
-*.wav.meta
-*.png.meta
-*.jpg.meta
-*.jpeg.meta
-*.tiff.meta
-*.tga.meta
-*.fbx.meta
-*.prefab.meta
-*.mat.meta
-*.controller.meta
+*.meta
 
 # ========== OS/System Files ==========
 .DS_Store
