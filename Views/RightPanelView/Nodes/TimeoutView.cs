@@ -24,7 +24,7 @@ namespace Views.RightPanel
             var conditionField = new TextField { value = typedModel.Condition };
             conditionField.RegisterValueChangedCallback(evt =>
             {
-                _controller.UpdateTimeoutCondition(typedModel, evt.newValue);
+                controller.UpdateTimeoutCondition(typedModel, evt.newValue);
             });
             Add(conditionField);
 
@@ -36,7 +36,7 @@ namespace Views.RightPanel
             var timeoutTimerField = new FloatField { value = typedModel.TimeoutDuration };
             timeoutTimerField.RegisterValueChangedCallback(evt =>
             {
-                _controller.UpdateTimeoutTimer(typedModel, evt.newValue);
+                controller.UpdateTimeoutTimer(typedModel, evt.newValue);
             });
             Add(timeoutTimerField);
 
@@ -44,7 +44,10 @@ namespace Views.RightPanel
             var connectTimeoutButton = new Button(() =>
             {
                 Debug.Log($"[TimeoutView] Connect (On Timeout) clicked for NodeID: {typedModel.NodeID}");
-                // Placeholder logic
+                controller.StartConnectionFrom(typedModel.NodeID, (targetNodeId) =>
+                {
+                    controller.ConnectNodes(typedModel.NodeID, targetNodeId);
+                });
             })
             {
                 text = "Connect (On Timeout)"
@@ -55,12 +58,27 @@ namespace Views.RightPanel
             var connectSuccessButton = new Button(() =>
             {
                 Debug.Log($"[TimeoutView] Connect (On Success) clicked for NodeID: {typedModel.NodeID}");
-                // Placeholder logic
+                controller.StartConnectionFrom(typedModel.NodeID, (targetNodeId) =>
+                {
+                    controller.ConnectNodes(typedModel.NodeID, targetNodeId);
+                });
             })
             {
                 text = "Connect (On Success)"
             };
             Add(connectSuccessButton);
+
+            Add(new Label("Outgoing Connections")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
+            });
+
+            foreach (var nodeId in typedModel.ConnectedNodes)
+            {
+                var label = new Label($"Connected to: {nodeId}");
+                label.style.whiteSpace = WhiteSpace.Normal;
+                Add(label);
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using Models.Nodes;
 using Controllers;
+using System;
 
 namespace Views.RightPanel
 {
@@ -42,26 +43,38 @@ namespace Views.RightPanel
             {
                 var container = new VisualElement
                 {
-                    style = { flexDirection = FlexDirection.Row, marginBottom = 4 }
+                    style = { flexDirection = FlexDirection.Row, alignItems = Align.Center }
                 };
 
                 var textField = new TextField { style = { flexGrow = 1, marginRight = 4 } };
-                var connectButton = new Button(() => { /* TODO: Handle connect */ }) { text = "Connect" };
+
+                var connectButton = new Button()
+                {
+                    text = "Connect"
+                };
 
                 container.Add(textField);
                 container.Add(connectButton);
-
                 return container;
             },
             (e, i) =>
             {
                 var container = e as VisualElement;
                 var textField = container.ElementAt(0) as TextField;
+                var connectButton = container.ElementAt(1) as Button;
 
                 textField.value = dialogueModel.Responses[i];
                 textField.RegisterValueChangedCallback(evt =>
                 {
                     _controller.UpdateDialogueResponse(dialogueModel, i, evt.newValue);
+                });
+
+                connectButton.clickable = new Clickable(() =>
+                {
+                    _controller.StartConnectionFrom(dialogueModel.NodeID, (targetNodeId) =>
+                    {
+                        _controller.ConnectNodes(dialogueModel.NodeID, targetNodeId);
+                    });
                 });
             });
 

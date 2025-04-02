@@ -41,10 +41,7 @@ namespace Views.RightPanel
                 };
 
                 var pathField = new TextField { style = { flexGrow = 1, marginRight = 4 } };
-                var connectButton = new Button(() =>
-                {
-                    Debug.Log("Connect path clicked (placeholder)");
-                })
+                var connectButton = new Button
                 {
                     text = "Connect",
                     style = { flexShrink = 0 }
@@ -52,21 +49,40 @@ namespace Views.RightPanel
 
                 container.Add(pathField);
                 container.Add(connectButton);
-
                 return container;
             },
             (e, i) =>
             {
                 var container = e as VisualElement;
                 var pathField = container.ElementAt(0) as TextField;
+                var connectButton = container.ElementAt(1) as Button;
+
                 pathField.value = typedModel.PossiblePaths[i];
                 pathField.RegisterValueChangedCallback(evt =>
                 {
                     typedModel.UpdatePath(i, evt.newValue);
                 });
+
+                connectButton.clickable = new Clickable(() =>
+                {
+                    Debug.Log($"[RandomView] Connect clicked for path {i} in NodeID: {typedModel.NodeID}");
+                    _controller.StartConnectionFrom(typedModel.NodeID, (targetNodeId) =>
+                    {
+                        _controller.ConnectNodes(typedModel.NodeID, targetNodeId);
+                    });
+                });
             });
 
             Add(_pathsList);
+
+            Add(new Label("Outgoing Connections") { style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 } });
+
+            foreach (var nodeId in typedModel.ConnectedNodes)
+            {
+                var nodeLabel = new Label($"Connected to: {nodeId}");
+                nodeLabel.style.whiteSpace = WhiteSpace.Normal;
+                Add(nodeLabel);
+            }
         }
     }
 }

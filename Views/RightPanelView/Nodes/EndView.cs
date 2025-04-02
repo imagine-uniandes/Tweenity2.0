@@ -19,8 +19,22 @@ namespace Views.RightPanel
             note.style.marginTop = 10;
             note.style.whiteSpace = WhiteSpace.Normal;
             note.style.flexShrink = 0;
-
             Add(note);
+
+            // Incoming connections (for display only)
+            Add(new Label("Incoming Connections")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
+            });
+
+            foreach (var nodeId in model.ConnectedNodes)
+            {
+                var label = new Label($"Connected from: {nodeId}")
+                {
+                    style = { whiteSpace = WhiteSpace.Normal }
+                };
+                Add(label);
+            }
         }
     }
 }

@@ -47,6 +47,8 @@ namespace Controllers
         {
             Graph.RemoveNode(nodeId);
             GraphView.RemoveNodeFromView(nodeId);
+            CleanupDanglingConnections(nodeId);
+            GraphView.RenderConnections();
         }
 
         public TweenityNodeModel GetNode(string nodeId) => Graph.GetNode(nodeId);
@@ -60,6 +62,15 @@ namespace Controllers
 
         public void OnNodeSelected(TweenityNodeModel node)
         {
+            if (!string.IsNullOrEmpty(pendingSourceNodeId) && onTargetNodeSelected != null)
+            {
+                Debug.Log($"[GraphController] Connecting {pendingSourceNodeId} -> {node.NodeID}");
+                onTargetNodeSelected.Invoke(node.NodeID);
+                pendingSourceNodeId = null;
+                onTargetNodeSelected = null;
+                return; 
+            }
+
             if (rightPanelRoot == null)
             {
                 Debug.LogWarning("Right panel root not set.");
@@ -157,6 +168,10 @@ namespace Controllers
             Debug.Log($"[GraphController] Removing old node: {oldModel.NodeID}");
             GraphView.RemoveNodeFromView(oldModel.NodeID);
             Graph.RemoveNode(oldModel.NodeID);
+            GraphView.RemoveNodeFromView(oldModel.NodeID);
+            Graph.RemoveNode(oldModel.NodeID);
+            CleanupDanglingConnections(oldModel.NodeID);
+
 
             // Add new node with preserved position
             Graph.AddNode(newModel);
@@ -295,6 +310,7 @@ namespace Controllers
             {
                 fromNode.ConnectedNodes.Add(toNodeId);
                 Debug.Log($"[GraphController] Connected node {fromNodeId} -> {toNodeId}");
+                GraphView.RenderConnections();
             }
             else
             {
@@ -319,6 +335,46 @@ namespace Controllers
             else
             {
                 Debug.LogWarning($"[GraphController] Connection not found: {fromNodeId} -> {toNodeId}");
+            }
+        }
+        private string pendingSourceNodeId;
+        private Action<string> onTargetNodeSelected;
+
+        public void StartConnectionFrom(string sourceNodeId, Action<string> onTargetSelected)
+        {
+            pendingSourceNodeId = sourceNodeId;
+            onTargetNodeSelected = onTargetSelected;
+            Debug.Log($"[GraphController] Ready to connect from node: {sourceNodeId}");
+        }
+
+        public void TryConnectTo(string targetId)
+        {
+            if (string.IsNullOrEmpty(pendingSourceNodeId))
+            {
+                Debug.LogWarning("[Connect] No source selected for connection.");
+                return;
+            }
+
+            if (pendingSourceNodeId == targetId)
+            {
+                Debug.LogWarning("[Connect] Cannot connect node to itself.");
+                pendingSourceNodeId = null;
+                return;
+            }
+
+            ConnectNodes(pendingSourceNodeId, targetId);
+            
+            pendingSourceNodeId = null;
+        }
+        private void CleanupDanglingConnections(string removedNodeId)
+        {
+            foreach (var node in Graph.Nodes)
+            {
+                if (node.ConnectedNodes.Contains(removedNodeId))
+                {
+                    node.ConnectedNodes.Remove(removedNodeId);
+                    Debug.Log($"[GraphController] Removed dangling connection to deleted node: {removedNodeId}");
+                }
             }
         }
     }

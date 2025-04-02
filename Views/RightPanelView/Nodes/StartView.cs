@@ -23,14 +23,29 @@ namespace Views.RightPanel
 
             var connectButton = new Button(() =>
             {
-                Debug.Log($"[StartView] Connect button clicked for NodeID: {model.NodeID}");
-                // Placeholder action
+                Debug.Log($"[StartView] Connect clicked for NodeID: {model.NodeID}");
+                controller.StartConnectionFrom(model.NodeID, (targetNodeId) =>
+                {
+                    controller.ConnectNodes(model.NodeID, targetNodeId);
+                });
             })
             {
                 text = "Connect"
             };
             connectButton.style.marginTop = 15;
             Add(connectButton);
+
+            Add(new Label("Outgoing Connections")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
+            });
+
+            foreach (var nodeId in model.ConnectedNodes)
+            {
+                var label = new Label($"Connected to: {nodeId}");
+                label.style.whiteSpace = WhiteSpace.Normal;
+                Add(label);
+            }
         }
     }
 }

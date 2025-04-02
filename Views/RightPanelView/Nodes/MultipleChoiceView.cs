@@ -2,6 +2,7 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using Models.Nodes;
 using Controllers;
+using System;
 
 namespace Views.RightPanel
 {
@@ -48,17 +49,20 @@ namespace Views.RightPanel
 
             _choicesList = new ListView(model.Choices, itemHeight: 50, makeItem: () =>
             {
-                var container = new VisualElement();
-                container.style.flexDirection = FlexDirection.Row;
-                container.style.justifyContent = Justify.SpaceBetween;
-                container.style.alignItems = Align.Center;
-                container.style.marginBottom = 5;
+                var container = new VisualElement
+                {
+                    style =
+                    {
+                        flexDirection = FlexDirection.Row,
+                        justifyContent = Justify.SpaceBetween,
+                        alignItems = Align.Center,
+                        marginBottom = 5
+                    }
+                };
 
                 var answerField = new TextField { style = { flexGrow = 1, marginRight = 5 } };
-                answerField.multiline = false;
-
                 var triggerButton = new Button(() => Debug.Log("[Trigger]")) { text = "Trigger" };
-                var connectButton = new Button(() => Debug.Log("[Connect]")) { text = "Connect" };
+                var connectButton = new Button() { text = "Connect" };
 
                 container.Add(answerField);
                 container.Add(triggerButton);
@@ -72,14 +76,39 @@ namespace Views.RightPanel
                 var choice = model.Choices[i];
 
                 var answerField = container.ElementAt(0) as TextField;
+                var connectButton = container.ElementAt(2) as Button;
+
                 answerField.value = choice.AnswerText;
                 answerField.RegisterValueChangedCallback(evt =>
                 {
                     choice.AnswerText = evt.newValue;
                 });
+
+                connectButton.clickable = new Clickable(() =>
+                {
+                    controller.StartConnectionFrom(model.NodeID, targetId =>
+                    {
+                        controller.ConnectNodes(model.NodeID, targetId);
+                    });
+                });
             });
 
             Add(_choicesList);
+
+            // Show connected nodes (visual reference)
+            Add(new Label("Outgoing Connections")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
+            });
+
+            foreach (var nodeId in model.ConnectedNodes)
+            {
+                var label = new Label($"Connected to: {nodeId}")
+                {
+                    style = { whiteSpace = WhiteSpace.Normal }
+                };
+                Add(label);
+            }
         }
     }
 }

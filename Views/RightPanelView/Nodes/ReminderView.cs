@@ -23,7 +23,7 @@ namespace Views.RightPanel
             var reminderTextField = new TextField { value = typedModel.ReminderText, multiline = true };
             reminderTextField.RegisterValueChangedCallback(evt =>
             {
-                _controller.UpdateReminderText(typedModel, evt.newValue);
+                controller.UpdateReminderText(typedModel, evt.newValue);
             });
             Add(reminderTextField);
 
@@ -34,20 +34,35 @@ namespace Views.RightPanel
             var timerField = new FloatField { value = typedModel.ReminderTimer };
             timerField.RegisterValueChangedCallback(evt =>
             {
-                _controller.UpdateReminderTimer(typedModel, evt.newValue);
+                controller.UpdateReminderTimer(typedModel, evt.newValue);
             });
             Add(timerField);
 
             var connectButton = new Button(() =>
             {
-                Debug.Log($"[ReminderView] Connect button clicked for NodeID: {model.NodeID}");
-                // Placeholder for connection logic
+                Debug.Log($"[ReminderView] Connect clicked for NodeID: {model.NodeID}");
+                controller.StartConnectionFrom(model.NodeID, (targetNodeId) =>
+                {
+                    controller.ConnectNodes(model.NodeID, targetNodeId);
+                });
             })
             {
                 text = "Connect"
             };
             connectButton.style.marginTop = 15;
             Add(connectButton);
+
+            Add(new Label("Outgoing Connections")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
+            });
+
+            foreach (var nodeId in model.ConnectedNodes)
+            {
+                var label = new Label($"Connected to: {nodeId}");
+                label.style.whiteSpace = WhiteSpace.Normal;
+                Add(label);
+            }
         }
     }
 }
