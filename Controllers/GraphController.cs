@@ -45,10 +45,9 @@ namespace Controllers
 
         public void RemoveNode(string nodeId)
         {
-            Graph.RemoveNode(nodeId);
+            CleanupConnectionsTo(nodeId);  
             GraphView.RemoveNodeFromView(nodeId);
-            CleanupDanglingConnections(nodeId);
-            GraphView.RenderConnections();
+            Graph.RemoveNode(nodeId);
         }
 
         public TweenityNodeModel GetNode(string nodeId) => Graph.GetNode(nodeId);
@@ -162,16 +161,13 @@ namespace Controllers
             };
 
             newModel.Description = oldModel.Description;
-            newModel.ConnectedNodes = new List<string>(oldModel.ConnectedNodes);
+            newModel.ConnectedNodes = new List<string>();
 
             // Remove old node
             Debug.Log($"[GraphController] Removing old node: {oldModel.NodeID}");
+            CleanupConnectionsTo(oldModel.NodeID);  
             GraphView.RemoveNodeFromView(oldModel.NodeID);
-            CleanupDanglingConnections(oldModel.NodeID);
             Graph.RemoveNode(oldModel.NodeID);
-            GraphView.RemoveNodeFromView(oldModel.NodeID);
-
-
 
             // Add new node with preserved position
             Graph.AddNode(newModel);
@@ -366,16 +362,17 @@ namespace Controllers
             
             pendingSourceNodeId = null;
         }
-        private void CleanupDanglingConnections(string removedNodeId)
+        private void CleanupConnectionsTo(string deletedNodeId)
         {
             foreach (var node in Graph.Nodes)
             {
-                if (node.ConnectedNodes.Contains(removedNodeId))
+                if (node.ConnectedNodes.Contains(deletedNodeId))
                 {
-                    node.ConnectedNodes.Remove(removedNodeId);
-                    Debug.Log($"[GraphController] Removed dangling connection to deleted node: {removedNodeId}");
+                    node.ConnectedNodes.Remove(deletedNodeId);
+                    Debug.Log($"[GraphController] Removed connection to deleted node: {deletedNodeId} from node: {node.NodeID}");
                 }
             }
         }
+
     }
 }
