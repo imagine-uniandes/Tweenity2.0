@@ -81,31 +81,36 @@ namespace Views.MiddlePanel
         {
             Color color = type switch
             {
-                NodeType.Start => new Color(0.3f, 0.85f, 0.3f),         // Green
-                NodeType.End => new Color(0.85f, 0.3f, 0.3f),           // Red
-                NodeType.Dialogue => new Color(0.3f, 0.6f, 0.85f),      // Light Blue
-                NodeType.MultipleChoice => new Color(1.0f, 0.6f, 0.2f), // Orange
-                NodeType.Reminder => new Color(1.0f, 0.85f, 0.3f),      // Yellow
-                NodeType.Random => new Color(0.7f, 0.4f, 1.0f),         // Purple
-                NodeType.Timeout => new Color(0.75f, 0.75f, 0.75f),     // Light Gray
-                _ => new Color(0.2f, 0.2f, 0.2f)                        // Fallback: Dark Gray
+                NodeType.Start           => new Color32(165, 214, 167, 255), // Soft green
+                NodeType.End             => new Color32(217, 77, 77, 255),   // Red
+                NodeType.Dialogue        => new Color32(77, 153, 217, 255),  // Light blue
+                NodeType.MultipleChoice => new Color32(255, 204, 128, 255), // Peach orange
+                NodeType.Reminder        => new Color32(255, 249, 196, 255), // Pastel yellow
+                NodeType.Random          => new Color32(206, 147, 216, 255), // Soft purple
+                NodeType.Timeout         => new Color32(207, 216, 220, 255), // Light blue gray
+                _                        => new Color32(51, 51, 51, 255)      // Dark gray fallback
             };
 
             this.mainContainer.style.backgroundColor = color;
         }
+
         private void SetTextColorForType(NodeType type)
         {
-            // Use dark text for light backgrounds
-            bool useBlackText = type == NodeType.Start 
-                            || type == NodeType.Reminder 
-                            || type == NodeType.Timeout;
-
-            Color textColor = useBlackText 
-                ? Color.black 
-                : new Color(0.85f, 0.85f, 0.85f); // Light gray default
+            Color textColor = type switch
+            {
+                NodeType.Start           => new Color32(46, 125, 50, 255),   // Forest green
+                NodeType.Reminder        => new Color32(121, 85, 72, 255),   // Warm brown
+                NodeType.MultipleChoice => new Color32(93, 64, 55, 255),     // Chocolate
+                NodeType.Timeout         => new Color32(55, 71, 79, 255),    // Slate blue
+                NodeType.End             => new Color(0.98f, 0.98f, 0.98f),   // Light gray
+                NodeType.Dialogue        => new Color(0.98f, 0.98f, 0.98f),   // Light gray
+                NodeType.Random          => new Color(0.98f, 0.98f, 0.98f),   // Light gray
+                _                        => new Color(0.8f, 0.8f, 0.8f)       // Default light gray
+            };
 
             _typeLabel.style.color = textColor;
             _descriptionLabel.style.color = textColor;
         }
+
     }
 }
