@@ -249,7 +249,38 @@ namespace Controllers
         public void CreateNewNode()
         {
             var newNode = new NoTypeNodeModel("New Node");
-            if (!AddNode(newNode))
+
+            // Starting position
+            Rect baseRect = new Rect(200, 200, 150, 200);
+            Rect position = baseRect;
+
+            // Scan for overlap
+            var existingRects = GraphView.graphElements
+                .OfType<TweenityNode>()
+                .Select(n => n.GetPosition())
+                .ToList();
+
+            int attempts = 0;
+            float offset = 30f;
+
+            // Try shifting right/down until we find an empty space
+            while (existingRects.Any(r => r.Overlaps(position)))
+            {
+                attempts++;
+                position.position += new Vector2(offset, offset);
+                if (attempts > 100)
+                {
+                    Debug.LogWarning("Too many overlapping nodes; giving up on auto-placement.");
+                    break;
+                }
+            }
+
+            if (Graph.AddNode(newNode))
+            {
+                GraphView.RenderNode(newNode, position);
+                Debug.Log($"[GraphController] Created new node at: {position.position}");
+            }
+            else
             {
                 Debug.LogWarning("Node not added. Maybe a Start node already exists?");
             }
