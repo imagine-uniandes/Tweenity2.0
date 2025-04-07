@@ -81,14 +81,14 @@ namespace Views.MiddlePanel
         {
             Color color = type switch
             {
-                NodeType.Start           => new Color32(165, 214, 167, 255), // Soft green
-                NodeType.End             => new Color32(217, 77, 77, 255),   // Red
-                NodeType.Dialogue        => new Color32(77, 153, 217, 255),  // Light blue
-                NodeType.MultipleChoice => new Color32(255, 204, 128, 255), // Peach orange
-                NodeType.Reminder        => new Color32(255, 249, 196, 255), // Pastel yellow
-                NodeType.Random          => new Color32(206, 147, 216, 255), // Soft purple
-                NodeType.Timeout         => new Color32(207, 216, 220, 255), // Light blue gray
-                _                        => new Color32(51, 51, 51, 255)      // Dark gray fallback
+                NodeType.Start           => new Color32(129, 199, 132, 255), // Soft green
+                NodeType.End             => new Color32(239, 83, 80, 255),   // Vivid red
+                NodeType.Dialogue        => new Color32(186, 104, 200, 255), // Soft purple
+                NodeType.MultipleChoice => new Color32(255, 179, 0, 255),    // Bold yellow-orange
+                NodeType.Reminder        => new Color32(100, 181, 246, 255), // Bright neutral blue
+                NodeType.Random          => new Color32(255, 213, 79, 255),  // Amber yellow
+                NodeType.Timeout         => new Color32(144, 202, 249, 255), // Light blue / cyan
+                _                        => new Color32(51, 51, 51, 255)      // Neutral fallback
             };
 
             this.mainContainer.style.backgroundColor = color;
@@ -98,14 +98,14 @@ namespace Views.MiddlePanel
         {
             Color textColor = type switch
             {
-                NodeType.Start           => new Color32(46, 125, 50, 255),   // Forest green
-                NodeType.Reminder        => new Color32(121, 85, 72, 255),   // Warm brown
-                NodeType.MultipleChoice => new Color32(93, 64, 55, 255),     // Chocolate
-                NodeType.Timeout         => new Color32(55, 71, 79, 255),    // Slate blue
-                NodeType.End             => new Color(0.98f, 0.98f, 0.98f),   // Light gray
-                NodeType.Dialogue        => new Color(0.98f, 0.98f, 0.98f),   // Light gray
-                NodeType.Random          => new Color(0.98f, 0.98f, 0.98f),   // Light gray
-                _                        => new Color(0.8f, 0.8f, 0.8f)       // Default light gray
+                NodeType.Start           => new Color32(27, 94, 32, 255),     // Deep green
+                NodeType.End             => new Color32(255, 255, 255, 255),  // White
+                NodeType.Dialogue        => new Color32(250, 250, 250, 255),  // Light gray
+                NodeType.MultipleChoice => new Color32(66, 40, 0, 255),       // Brown
+                NodeType.Reminder        => new Color32(13, 71, 161, 255),    // Indigo/dark blue
+                NodeType.Random          => new Color32(66, 40, 0, 255),       // Brown
+                NodeType.Timeout         => new Color32(30, 60, 80, 255),     // Slate blue
+                _                        => new Color(0.85f, 0.85f, 0.85f)     // Default light gray
             };
 
             _typeLabel.style.color = textColor;
