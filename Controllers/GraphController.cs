@@ -133,12 +133,19 @@ namespace Controllers
             }
         }
 
-        public void ChangeNodeType(TweenityNodeModel oldModel, NodeType newType)
+        public (bool, string) ChangeNodeType(TweenityNodeModel oldModel, NodeType newType)
         {
             if (oldModel.Type == newType)
-                return;
+                return (true, null);
 
             Debug.Log($"Changing node type: Old Type = {oldModel.Type}, New Type = {newType}");
+
+            // Prevent multiple Start nodes
+            if (newType == NodeType.Start && Graph.Nodes.Any(n => n.Type == NodeType.Start && n.NodeID != oldModel.NodeID))
+            {
+                Debug.LogWarning("Cannot change to Start node: another Start node already exists.");
+                return (false, "Only one Start node is allowed in the graph.");
+            }
 
             // Capture visual node position before deletion
             var oldVisualNode = GraphView.graphElements
@@ -176,8 +183,8 @@ namespace Controllers
 
             GraphView.RefreshNodeVisual(newModel.NodeID);
             OnNodeSelected(newModel);
+            return (true, null);
         }
-
 
         public void UpdateNodeTitle(TweenityNodeModel model, string newTitle)
         {

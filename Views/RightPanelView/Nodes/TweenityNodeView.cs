@@ -69,10 +69,18 @@ namespace Views.RightPanel
             {
                 if (Enum.TryParse<NodeType>(evt.newValue, out var newType))
                 {
-                    _controller.ChangeNodeType(_model, newType);
+                    var (success, errorMessage) = _controller.ChangeNodeType(_model, newType);
+                    if (!success)
+                    {
+                        // Reset dropdown to valid type
+                        typeDropdown.SetValueWithoutNotify(_model.Type.ToString());
+
+            #if UNITY_EDITOR
+                        UnityEditor.EditorUtility.DisplayDialog("Invalid Node Type", errorMessage, "OK");
+            #endif
+                    }
                 }
             });
-
             Add(new Label("Base Node Info") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
             Add(titleLabel);
             Add(titleField);
