@@ -42,17 +42,6 @@ namespace Views.MiddlePanel
             this.RefreshPorts();
         }
 
-        public void UpdateFromModel()
-        {
-            if (NodeModel == null) return;
-
-            this.title = NodeModel.Title;
-            _typeLabel.text = $"Type: {NodeModel.Type}";
-            _descriptionLabel.text = string.IsNullOrWhiteSpace(NodeModel.Description)
-                ? "(No description)"
-                : NodeModel.Description;
-        }
-
         private void CreateMinimalConnectionPorts()
         {
             InputPort = Port.Create<Edge>(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(float));
@@ -73,6 +62,50 @@ namespace Views.MiddlePanel
 
             inputContainer.Add(InputPort);
             outputContainer.Add(OutputPort);
+        }
+        public void UpdateFromModel()
+        {
+            if (NodeModel == null) return;
+
+            this.title = NodeModel.Title;
+            _typeLabel.text = $"Type: {NodeModel.Type}";
+            _descriptionLabel.text = string.IsNullOrWhiteSpace(NodeModel.Description)
+                ? "(No description)"
+                : NodeModel.Description;
+
+            SetBackgroundColorForType(NodeModel.Type);
+            SetTextColorForType(NodeModel.Type);
+        }
+
+        private void SetBackgroundColorForType(NodeType type)
+        {
+            Color color = type switch
+            {
+                NodeType.Start => new Color(0.3f, 0.85f, 0.3f),         // Green
+                NodeType.End => new Color(0.85f, 0.3f, 0.3f),           // Red
+                NodeType.Dialogue => new Color(0.3f, 0.6f, 0.85f),      // Light Blue
+                NodeType.MultipleChoice => new Color(1.0f, 0.6f, 0.2f), // Orange
+                NodeType.Reminder => new Color(1.0f, 0.85f, 0.3f),      // Yellow
+                NodeType.Random => new Color(0.7f, 0.4f, 1.0f),         // Purple
+                NodeType.Timeout => new Color(0.75f, 0.75f, 0.75f),     // Light Gray
+                _ => new Color(0.2f, 0.2f, 0.2f)                        // Fallback: Dark Gray
+            };
+
+            this.mainContainer.style.backgroundColor = color;
+        }
+        private void SetTextColorForType(NodeType type)
+        {
+            // Use dark text for light backgrounds
+            bool useBlackText = type == NodeType.Start 
+                            || type == NodeType.Reminder 
+                            || type == NodeType.Timeout;
+
+            Color textColor = useBlackText 
+                ? Color.black 
+                : new Color(0.85f, 0.85f, 0.85f); // Light gray default
+
+            _typeLabel.style.color = textColor;
+            _descriptionLabel.style.color = textColor;
         }
     }
 }
