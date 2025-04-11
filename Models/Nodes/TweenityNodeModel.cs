@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Models.Nodes
 {
@@ -9,6 +10,9 @@ namespace Models.Nodes
         public string Title { get; set; }
         public string Description { get; set; }
         public NodeType Type { get; set; }
+
+        // Nuevo: posición del nodo en el grafo
+        public Vector2 Position { get; set; }
 
         // Nuevo: todas las salidas ahora son PathData
         public List<PathData> OutgoingPaths { get; set; }
@@ -20,6 +24,7 @@ namespace Models.Nodes
             Type = type;
             Description = "";
             OutgoingPaths = new List<PathData>();
+            Position = Vector2.zero;
         }
 
         public void ConnectTo(string targetNodeID, string label = "Next", string trigger = "")

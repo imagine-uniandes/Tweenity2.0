@@ -76,11 +76,17 @@ namespace Views
                     }
                 });
 
-                Rect position = positionOverride ?? new Rect(200, 200, 150, 200);
+                Rect position = positionOverride ?? new Rect(nodeModel.Position.x, nodeModel.Position.y, 150, 200);
                 visualNode.SetPosition(position);
+
+                visualNode.RegisterCallback<GeometryChangedEvent>(_ =>
+                {
+                    var currentPosition = visualNode.GetPosition().position;
+                    nodeModel.Position = currentPosition;
+                });
+
                 AddElement(visualNode);
 
-                // Wait one frame to ensure all nodes are ready before drawing edges
                 EditorApplication.delayCall += RenderConnections;
 
                 int count = this.graphElements.OfType<TweenityNode>().Count();
