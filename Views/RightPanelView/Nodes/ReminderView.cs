@@ -38,14 +38,16 @@ namespace Views.RightPanel
             });
             Add(timerField);
 
-            if (model.ConnectedNodes.Count == 0)
+            // Solo se permite una conexión
+            if (typedModel.OutgoingPaths.Count == 0)
             {
                 var connectButton = new Button(() =>
                 {
-                    Debug.Log($"[ReminderView] Connect clicked for NodeID: {model.NodeID}");
-                    controller.StartConnectionFrom(model.NodeID, (targetNodeId) =>
+                    Debug.Log($"[ReminderView] Connect clicked for NodeID: {typedModel.NodeID}");
+                    controller.StartConnectionFrom(typedModel.NodeID, targetNodeId =>
                     {
-                        controller.ConnectNodes(model.NodeID, targetNodeId);
+                        typedModel.ConnectTo(targetNodeId, "Next");
+                        controller.GraphView.RenderConnections();
                     });
                 })
                 {
@@ -61,7 +63,8 @@ namespace Views.RightPanel
                     style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
                 });
 
-                var connectedModel = controller.GetNode(model.ConnectedNodes[0]);
+                var connection = typedModel.OutgoingPaths[0];
+                var connectedModel = controller.GetNode(connection.TargetNodeID);
                 var label = new Label($"→ {connectedModel?.Title ?? "(Unknown)"}");
                 label.style.whiteSpace = WhiteSpace.Normal;
                 Add(label);

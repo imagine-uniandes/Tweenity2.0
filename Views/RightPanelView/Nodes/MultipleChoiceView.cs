@@ -88,22 +88,30 @@ namespace Views.RightPanel
                 {
                     controller.StartConnectionFrom(model.NodeID, targetId =>
                     {
-                        controller.ConnectNodes(model.NodeID, targetId);
+                        if (i >= model.OutgoingPaths.Count)
+                        {
+                            model.OutgoingPaths.Add(new PathData(choice.AnswerText, "", targetId));
+                        }
+                        else
+                        {
+                            model.OutgoingPaths[i].TargetNodeID = targetId;
+                        }
+
+                        controller.GraphView.RenderConnections();
                     });
                 });
             });
 
             Add(_choicesList);
 
-            // Show connected nodes (visual reference)
-            Add(new Label("Outgoing Connections")
+            Add(new Label("Outgoing Paths")
             {
                 style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
             });
 
-            foreach (var nodeId in model.ConnectedNodes)
+            foreach (var path in model.OutgoingPaths)
             {
-                var label = new Label($"Connected to: {nodeId}")
+                var label = new Label($"Path to: {path.TargetNodeID} (Label: {path.Label})")
                 {
                     style = { whiteSpace = WhiteSpace.Normal }
                 };

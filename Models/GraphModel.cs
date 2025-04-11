@@ -15,17 +15,26 @@ namespace Models
 
         public bool AddNode(TweenityNodeModel node)
         {
+            // Solo permitir un nodo de inicio
             if (node.Type == NodeType.Start && Nodes.Any(n => n.Type == NodeType.Start))
             {
-                return false; // Prevent adding more than one Start node
+                return false;
             }
+
             Nodes.Add(node);
             return true;
         }
 
         public void RemoveNode(string nodeId)
         {
+            // Eliminar el nodo
             Nodes.RemoveAll(n => n.NodeID == nodeId);
+
+            // Eliminar cualquier conexión hacia ese nodo desde otros
+            foreach (var node in Nodes)
+            {
+                node.DisconnectFrom(nodeId);
+            }
         }
 
         public TweenityNodeModel GetNode(string nodeId)

@@ -21,14 +21,15 @@ namespace Views.RightPanel
             note.style.flexShrink = 0;
             Add(note);
 
-            if (model.ConnectedNodes.Count == 0)
+            if (model.OutgoingPaths.Count == 0)
             {
                 var connectButton = new Button(() =>
                 {
                     Debug.Log($"[StartView] Connect clicked for NodeID: {model.NodeID}");
                     controller.StartConnectionFrom(model.NodeID, (targetNodeId) =>
                     {
-                        controller.ConnectNodes(model.NodeID, targetNodeId);
+                        model.ConnectTo(targetNodeId, "Start");
+                        controller.GraphView.RenderConnections();
                     });
                 })
                 {
@@ -44,7 +45,8 @@ namespace Views.RightPanel
                     style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
                 });
 
-                var connectedModel = controller.GetNode(model.ConnectedNodes[0]);
+                var connection = model.OutgoingPaths[0];
+                var connectedModel = controller.GetNode(connection.TargetNodeID);
                 var label = new Label($"→ {connectedModel?.Title ?? "(Unknown)"}");
                 label.style.whiteSpace = WhiteSpace.Normal;
                 Add(label);

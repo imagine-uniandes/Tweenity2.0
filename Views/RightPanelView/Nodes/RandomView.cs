@@ -25,7 +25,7 @@ namespace Views.RightPanel
 
             var addPathButton = new Button(() =>
             {
-                _controller.AddRandomPath(typedModel);
+                controller.AddRandomPath(typedModel);
                 _pathsList.Rebuild();
             })
             {
@@ -33,7 +33,7 @@ namespace Views.RightPanel
             };
             Add(addPathButton);
 
-            _pathsList = new ListView(typedModel.PossiblePaths, 30, () =>
+            _pathsList = new ListView(typedModel.OutgoingPaths, 30, () =>
             {
                 var container = new VisualElement
                 {
@@ -57,30 +57,36 @@ namespace Views.RightPanel
                 var pathField = container.ElementAt(0) as TextField;
                 var connectButton = container.ElementAt(1) as Button;
 
-                pathField.value = typedModel.PossiblePaths[i];
+                pathField.value = typedModel.OutgoingPaths[i].Label;
                 pathField.RegisterValueChangedCallback(evt =>
                 {
-                    typedModel.UpdatePath(i, evt.newValue);
+                    typedModel.UpdatePathLabel(typedModel.OutgoingPaths[i].TargetNodeID, evt.newValue);
                 });
 
                 connectButton.clickable = new Clickable(() =>
                 {
                     Debug.Log($"[RandomView] Connect clicked for path {i} in NodeID: {typedModel.NodeID}");
-                    _controller.StartConnectionFrom(typedModel.NodeID, (targetNodeId) =>
+                    controller.StartConnectionFrom(typedModel.NodeID, (targetNodeId) =>
                     {
-                        _controller.ConnectNodes(typedModel.NodeID, targetNodeId);
+                        typedModel.UpdatePathTarget(typedModel.OutgoingPaths[i].TargetNodeID, targetNodeId);
+                        controller.GraphView.RenderConnections();
                     });
                 });
             });
 
             Add(_pathsList);
 
-            Add(new Label("Outgoing Connections") { style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 } });
-
-            foreach (var nodeId in typedModel.ConnectedNodes)
+            Add(new Label("Outgoing Connections")
             {
-                var nodeLabel = new Label($"Connected to: {nodeId}");
-                nodeLabel.style.whiteSpace = WhiteSpace.Normal;
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
+            });
+
+            foreach (var path in typedModel.OutgoingPaths)
+            {
+                var nodeLabel = new Label($"→ {path.Label} → {path.TargetNodeID}")
+                {
+                    style = { whiteSpace = WhiteSpace.Normal }
+                };
                 Add(nodeLabel);
             }
         }

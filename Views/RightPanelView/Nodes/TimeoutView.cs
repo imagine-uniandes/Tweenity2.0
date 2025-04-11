@@ -40,13 +40,14 @@ namespace Views.RightPanel
             });
             Add(timeoutTimerField);
 
-            // Connection buttons
+            // Connect buttons
             var connectTimeoutButton = new Button(() =>
             {
                 Debug.Log($"[TimeoutView] Connect (On Timeout) clicked for NodeID: {typedModel.NodeID}");
                 controller.StartConnectionFrom(typedModel.NodeID, (targetNodeId) =>
                 {
-                    controller.ConnectNodes(typedModel.NodeID, targetNodeId);
+                    typedModel.ConnectTo(targetNodeId, "Timeout", "onTimeout");
+                    controller.GraphView.RenderConnections();
                 });
             })
             {
@@ -60,7 +61,8 @@ namespace Views.RightPanel
                 Debug.Log($"[TimeoutView] Connect (On Success) clicked for NodeID: {typedModel.NodeID}");
                 controller.StartConnectionFrom(typedModel.NodeID, (targetNodeId) =>
                 {
-                    controller.ConnectNodes(typedModel.NodeID, targetNodeId);
+                    typedModel.ConnectTo(targetNodeId, "Success", "onSuccess");
+                    controller.GraphView.RenderConnections();
                 });
             })
             {
@@ -68,15 +70,19 @@ namespace Views.RightPanel
             };
             Add(connectSuccessButton);
 
+            // Show connections
             Add(new Label("Outgoing Connections")
             {
                 style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
             });
 
-            foreach (var nodeId in typedModel.ConnectedNodes)
+            foreach (var path in typedModel.OutgoingPaths)
             {
-                var label = new Label($"Connected to: {nodeId}");
-                label.style.whiteSpace = WhiteSpace.Normal;
+                var connectedModel = controller.GetNode(path.TargetNodeID);
+                var label = new Label($"→ {path.Label} ({path.Trigger}) → {connectedModel?.Title ?? "(Unknown)"}")
+                {
+                    style = { whiteSpace = WhiteSpace.Normal }
+                };
                 Add(label);
             }
         }

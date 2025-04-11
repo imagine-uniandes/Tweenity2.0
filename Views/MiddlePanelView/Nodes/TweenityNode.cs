@@ -63,6 +63,7 @@ namespace Views.MiddlePanel
             inputContainer.Add(InputPort);
             outputContainer.Add(OutputPort);
         }
+
         public void UpdateFromModel()
         {
             if (NodeModel == null) return;
@@ -111,6 +112,5 @@ namespace Views.MiddlePanel
             _typeLabel.style.color = textColor;
             _descriptionLabel.style.color = textColor;
         }
-
     }
 }

@@ -4,6 +4,7 @@ using Models.Nodes;
 using System.Text.RegularExpressions;
 using Models;
 using System;
+using UnityEngine;
 
 namespace Controllers
 {
@@ -21,8 +22,10 @@ namespace Controllers
                 // Add tag
                 twee.Append(" [").Append(node.Type.ToString().ToLower()).Append("]");
 
-                // Add metadata placeholder
-                twee.Append(" {\"position\":\"0,0\",\"size\":\"100,100\"}");
+                // Add metadata with position
+                string pos = node.Position != null ?
+                    $"{node.Position.x},{node.Position.y}" : "0,0";
+                twee.Append($" {{\"position\":\"{pos}\",\"size\":\"100,100\"}}");
 
                 // Newline
                 twee.AppendLine();
@@ -33,13 +36,20 @@ namespace Controllers
                 // Add divider (optional)
                 twee.AppendLine("@");
 
-                // Add connections
-                foreach (var connectedId in node.ConnectedNodes)
+                // Add connections from OutgoingPaths
+                foreach (var path in node.OutgoingPaths)
                 {
-                    var connectedNode = nodes.Find(n => n.NodeID == connectedId);
-                    if (connectedNode != null)
+                    var targetNode = nodes.Find(n => n.NodeID == path.TargetNodeID);
+                    if (targetNode != null)
                     {
-                        twee.Append("[[").Append(connectedNode.Title).Append("]]").AppendLine();
+                        twee.Append("[[").Append(path.Label ?? targetNode.Title);
+
+                        if (!string.IsNullOrEmpty(path.Trigger))
+                        {
+                            twee.Append($":{path.Trigger}");
+                        }
+
+                        twee.Append(":" + targetNode.Title).AppendLine("]]");
                     }
                 }
 
@@ -51,16 +61,14 @@ namespace Controllers
 
             return twee.ToString();
         }
+
         public static List<TweenityNodeModel> ImportFromTwee(string tweeContent)
         {
             var nodes = new List<TweenityNodeModel>();
-
-            // Match each passage block
             var passageRegex = new Regex(@":: (.*?)\s*(\[(.*?)\])?\s*(\{.*?\})?\s*\n(.*?)(?=(?:^::|\Z))", RegexOptions.Singleline | RegexOptions.Multiline);
-            var linkRegex = new Regex(@"\[\[(.*?)\]\]");
+            var linkRegex = new Regex(@"\[\[(.*?)(?::(.*?))?(?::(.*?))?\]\]");
 
             var matches = passageRegex.Matches(tweeContent);
-
             Dictionary<string, TweenityNodeModel> titleLookup = new();
 
             // First pass: create all nodes
@@ -68,45 +76,37 @@ namespace Controllers
             {
                 string title = match.Groups[1].Value.Trim();
                 string tag = match.Groups[3].Success ? match.Groups[3].Value.Trim() : "notype";
+                string metadata = match.Groups[4].Value.Trim();
                 string body = match.Groups[5].Value.Trim();
 
-                // Map tag to enum
                 NodeType nodeType = Enum.TryParse<NodeType>(tag, true, out var parsed) ? parsed : NodeType.NoType;
 
-                TweenityNodeModel node;
-
-                switch (nodeType)
+                TweenityNodeModel node = nodeType switch
                 {
-                    case NodeType.Dialogue:
-                        node = new DialogueNodeModel(title);
-                        break;
-                    case NodeType.Reminder:
-                        node = new ReminderNodeModel(title);
-                        break;
-                    case NodeType.MultipleChoice:
-                        node = new MultipleChoiceNodeModel(title);
-                        break;
-                    case NodeType.Random:
-                        node = new RandomNodeModel(title);
-                        break;
-                    case NodeType.Start:
-                        node = new StartNodeModel(title);
-                        break;
-                    case NodeType.End:
-                        node = new EndNodeModel(title);
-                        break;
-                    case NodeType.Timeout:
-                        node = new TimeoutNodeModel(title);
-                        break;
-                    default:
-                        node = new NoTypeNodeModel(title);
-                        break;
-                }
+                    NodeType.Dialogue => new DialogueNodeModel(title),
+                    NodeType.Reminder => new ReminderNodeModel(title),
+                    NodeType.MultipleChoice => new MultipleChoiceNodeModel(title),
+                    NodeType.Random => new RandomNodeModel(title),
+                    NodeType.Start => new StartNodeModel(title),
+                    NodeType.End => new EndNodeModel(title),
+                    NodeType.Timeout => new TimeoutNodeModel(title),
+                    _ => new NoTypeNodeModel(title),
+                };
 
                 node.Description = body;
+
+                // Parse position from metadata
+                if (!string.IsNullOrEmpty(metadata))
+                {
+                    var posMatch = Regex.Match(metadata, "\\\"position\\\":\\\"(\\d+),(\\d+)\\\"");
+                    if (posMatch.Success && float.TryParse(posMatch.Groups[1].Value, out float x) && float.TryParse(posMatch.Groups[2].Value, out float y))
+                    {
+                        node.Position = new Vector2(x, y);
+                    }
+                }
+
                 nodes.Add(node);
                 titleLookup[title] = node;
-
             }
 
             // Second pass: resolve connections
@@ -121,10 +121,13 @@ namespace Controllers
                 var linkMatches = linkRegex.Matches(body);
                 foreach (Match link in linkMatches)
                 {
-                    string linkedTitle = link.Groups[1].Value.Trim();
-                    if (titleLookup.TryGetValue(linkedTitle, out var linkedNode))
+                    string label = link.Groups[1].Value.Trim();
+                    string trigger = link.Groups[2].Success ? link.Groups[2].Value.Trim() : "";
+                    string targetTitle = link.Groups[3].Success ? link.Groups[3].Value.Trim() : label;
+
+                    if (titleLookup.TryGetValue(targetTitle, out var targetNode))
                     {
-                        currentNode.ConnectedNodes.Add(linkedNode.NodeID);
+                        currentNode.OutgoingPaths.Add(new PathData(label, trigger, targetNode.NodeID));
                     }
                 }
             }

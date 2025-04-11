@@ -76,29 +76,6 @@ namespace Controllers
                 return;
             }
 
-            Debug.Log($"[Selection] Looking for NodeID: {node.NodeID}");
-
-            // 🔍 Dump all currently rendered nodes
-            var allVisualNodes = GraphView.graphElements.OfType<TweenityNode>().ToList();
-            Debug.Log($"[GraphView] Currently rendered node count: {allVisualNodes.Count}");
-            foreach (var n in allVisualNodes)
-            {
-                Debug.Log($"[GraphView] Node in view: {n.title} | NodeID: {n.NodeID}");
-            }
-
-            var ghostNode = GraphView.graphElements
-                .OfType<TweenityNode>()
-                .FirstOrDefault(n => string.Equals(n.NodeID, node.NodeID, StringComparison.Ordinal));
-
-            if (ghostNode != null)
-            {
-                Debug.Log($"[Selection - View Match] View NodeID: {ghostNode.NodeID} - ModelID: {node.NodeID}");
-            }
-            else
-            {
-                Debug.Log($"[Selection - View Match] No visual node found for model ID: {node.NodeID}");
-            }
-
             rightPanelRoot.Clear();
 
             switch (node)
@@ -131,59 +108,6 @@ namespace Controllers
                     Debug.LogWarning("Unknown node type selected.");
                     break;
             }
-        }
-
-        public (bool, string) ChangeNodeType(TweenityNodeModel oldModel, NodeType newType)
-        {
-            if (oldModel.Type == newType)
-                return (true, null);
-
-            Debug.Log($"Changing node type: Old Type = {oldModel.Type}, New Type = {newType}");
-
-            // Prevent multiple Start nodes
-            if (newType == NodeType.Start && Graph.Nodes.Any(n => n.Type == NodeType.Start && n.NodeID != oldModel.NodeID))
-            {
-                Debug.LogWarning("Cannot change to Start node: another Start node already exists.");
-                return (false, "Only one Start node is allowed in the graph.");
-            }
-
-            // Capture visual node position before deletion
-            var oldVisualNode = GraphView.graphElements
-                .OfType<TweenityNode>()
-                .FirstOrDefault(n => n.NodeID == oldModel.NodeID);
-
-            Rect oldPosition = oldVisualNode != null ? oldVisualNode.GetPosition() : new Rect(200, 200, 150, 200);
-
-            // Create new model with preserved data
-            TweenityNodeModel newModel = newType switch
-            {
-                NodeType.Dialogue => new DialogueNodeModel(oldModel.Title),
-                NodeType.Reminder => new ReminderNodeModel(oldModel.Title),
-                NodeType.MultipleChoice => new MultipleChoiceNodeModel(oldModel.Title),
-                NodeType.Random => new RandomNodeModel(oldModel.Title),
-                NodeType.Start => new StartNodeModel(oldModel.Title),
-                NodeType.End => new EndNodeModel(oldModel.Title),
-                NodeType.Timeout => new TimeoutNodeModel(oldModel.Title),
-                _ => new NoTypeNodeModel(oldModel.Title),
-            };
-
-            newModel.Description = oldModel.Description;
-            newModel.ConnectedNodes = new List<string>();
-
-            // Remove old node
-            Debug.Log($"[GraphController] Removing old node: {oldModel.NodeID}");
-            CleanupConnectionsTo(oldModel.NodeID);  
-            GraphView.RemoveNodeFromView(oldModel.NodeID);
-            Graph.RemoveNode(oldModel.NodeID);
-
-            // Add new node with preserved position
-            Graph.AddNode(newModel);
-            GraphView.RenderNode(newModel, oldPosition);
-            Debug.Log($"[GraphController] Added new node: {newModel.NodeID}");
-
-            GraphView.RefreshNodeVisual(newModel.NodeID);
-            OnNodeSelected(newModel);
-            return (true, null);
         }
 
         public void UpdateNodeTitle(TweenityNodeModel model, string newTitle)
@@ -250,11 +174,9 @@ namespace Controllers
         {
             var newNode = new NoTypeNodeModel("New Node");
 
-            // Starting position
             Rect baseRect = new Rect(200, 200, 150, 200);
             Rect position = baseRect;
 
-            // Scan for overlap
             var existingRects = GraphView.graphElements
                 .OfType<TweenityNode>()
                 .Select(n => n.GetPosition())
@@ -263,7 +185,6 @@ namespace Controllers
             int attempts = 0;
             float offset = 30f;
 
-            // Try shifting right/down until we find an empty space
             while (existingRects.Any(r => r.Overlaps(position)))
             {
                 attempts++;
@@ -274,6 +195,8 @@ namespace Controllers
                     break;
                 }
             }
+
+            newNode.PositionInGraph = position.position;
 
             if (Graph.AddNode(newNode))
             {
@@ -286,49 +209,6 @@ namespace Controllers
             }
         }
 
-        public void DebugGraph()
-        {
-            Debug.Log("=== Graph Debug Info ===");
-            foreach (var node in Graph.Nodes)
-            {
-                Debug.Log($"Node: {node.Title} ({node.Type}) - ID: {node.NodeID}");
-            }
-        }
-
-        public void PrintCurrentSelection()
-        {
-            var selected = GraphView.selection;
-        }
-
-        public void SearchNodes(string query)
-        {
-            Debug.Log($"Searching nodes for: {query}");
-        }
-
-        public void UpdateDialogueText(DialogueNodeModel model, string newText) => model.DialogueText = newText;
-
-        public void UpdateDialogueResponse(DialogueNodeModel model, int index, string newValue)
-        {
-            if (index >= 0 && index < model.Responses.Count)
-            {
-                model.Responses[index] = newValue;
-            }
-            else
-            {
-                Debug.LogWarning($"[GraphController] Invalid response index: {index}");
-            }
-        }
-
-        public void AddDialogueResponse(DialogueNodeModel model) => model.AddResponse("Response " + (model.Responses.Count + 1));
-        public void AddChoiceToMultipleChoiceNode(MultipleChoiceNodeModel model) => model.AddChoice("Choice " + (model.Choices.Count + 1));
-        public void UpdateNoTypeTitle(NoTypeNodeModel model, string newTitle) => model.Title = newTitle;
-        public void UpdateNoTypeDescription(NoTypeNodeModel model, string newDesc) => model.Description = newDesc;
-        public void AddRandomPath(RandomNodeModel model) => model.AddPath("Path " + (model.PossiblePaths.Count + 1));
-        public void UpdateReminderText(ReminderNodeModel model, string newText) => model.ReminderText = newText;
-        public void UpdateReminderTimer(ReminderNodeModel model, float newTimer) => model.ReminderTimer = newTimer;
-        public void UpdateTimeoutCondition(TimeoutNodeModel model, string newCondition) => model.Condition = newCondition;
-        public void UpdateTimeoutTimer(TimeoutNodeModel model, float newDuration) => model.TimeoutDuration = newDuration;
-
         public void ConnectNodes(string fromNodeId, string toNodeId)
         {
             var fromNode = Graph.GetNode(fromNodeId);
@@ -340,38 +220,32 @@ namespace Controllers
                 return;
             }
 
-            // --- RULES ENFORCEMENT WITH POPUPS ---
-
             if (fromNode.Type is NodeType.End)
             {
                 string msg = "End nodes cannot have outgoing connections.";
                 Debug.LogWarning($"[GraphController] {msg}");
-
-        #if UNITY_EDITOR
+    #if UNITY_EDITOR
                 EditorUtility.DisplayDialog("Invalid Connection", msg, "OK");
-        #endif
+    #endif
                 return;
             }
 
             if (fromNode.Type is NodeType.Start or NodeType.NoType or NodeType.Reminder)
             {
-                if (fromNode.ConnectedNodes.Count >= 1)
+                if (fromNode.OutgoingPaths.Count >= 1)
                 {
                     string msg = $"{fromNode.Type} nodes can only have one outgoing connection.";
                     Debug.LogWarning($"[GraphController] {msg}");
-
-        #if UNITY_EDITOR
+    #if UNITY_EDITOR
                     EditorUtility.DisplayDialog("Connection Limit Reached", msg, "OK");
-        #endif
+    #endif
                     return;
                 }
             }
 
-            // --- CONNECTION ---
-
-            if (!fromNode.ConnectedNodes.Contains(toNodeId))
+            if (!fromNode.IsConnectedTo(toNodeId))
             {
-                fromNode.ConnectedNodes.Add(toNodeId);
+                fromNode.ConnectTo(toNodeId);
                 Debug.Log($"[GraphController] Connected node {fromNodeId} -> {toNodeId}");
                 GraphView.RenderConnections();
             }
@@ -390,9 +264,9 @@ namespace Controllers
                 return;
             }
 
-            if (fromNode.ConnectedNodes.Contains(toNodeId))
+            if (fromNode.IsConnectedTo(toNodeId))
             {
-                fromNode.ConnectedNodes.Remove(toNodeId);
+                fromNode.DisconnectFrom(toNodeId);
                 Debug.Log($"[GraphController] Disconnected node {fromNodeId} -> {toNodeId}");
             }
             else
@@ -400,6 +274,7 @@ namespace Controllers
                 Debug.LogWarning($"[GraphController] Connection not found: {fromNodeId} -> {toNodeId}");
             }
         }
+
         private string pendingSourceNodeId;
         private Action<string> onTargetNodeSelected;
 
@@ -426,20 +301,147 @@ namespace Controllers
             }
 
             ConnectNodes(pendingSourceNodeId, targetId);
-            
             pendingSourceNodeId = null;
         }
+
         private void CleanupConnectionsTo(string deletedNodeId)
         {
             foreach (var node in Graph.Nodes)
             {
-                if (node.ConnectedNodes.Contains(deletedNodeId))
+                if (node.IsConnectedTo(deletedNodeId))
                 {
-                    node.ConnectedNodes.Remove(deletedNodeId);
+                    node.DisconnectFrom(deletedNodeId);
                     Debug.Log($"[GraphController] Removed connection to deleted node: {deletedNodeId} from node: {node.NodeID}");
                 }
             }
         }
+        public (bool, string) ChangeNodeType(TweenityNodeModel oldModel, NodeType newType)
+        {
+            if (oldModel.Type == newType)
+                return (true, null);
+
+            Debug.Log($"Changing node type: Old Type = {oldModel.Type}, New Type = {newType}");
+
+            // Solo se permite un nodo de tipo Start
+            if (newType == NodeType.Start && Graph.Nodes.Any(n => n.Type == NodeType.Start && n.NodeID != oldModel.NodeID))
+            {
+                Debug.LogWarning("Cannot change to Start node: another Start node already exists.");
+                return (false, "Only one Start node is allowed in the graph.");
+            }
+
+            // Capturar la posición del nodo visual
+            var visualNode = GraphView.graphElements
+                .OfType<TweenityNode>()
+                .FirstOrDefault(n => n.NodeID == oldModel.NodeID);
+
+            Vector2 pos = visualNode?.GetPosition().position ?? new Vector2(200, 200);
+
+            // Crear nuevo modelo del tipo deseado
+            TweenityNodeModel newModel = newType switch
+            {
+                NodeType.Dialogue        => new DialogueNodeModel(oldModel.Title),
+                NodeType.Reminder        => new ReminderNodeModel(oldModel.Title),
+                NodeType.MultipleChoice  => new MultipleChoiceNodeModel(oldModel.Title),
+                NodeType.Random          => new RandomNodeModel(oldModel.Title),
+                NodeType.Start           => new StartNodeModel(oldModel.Title),
+                NodeType.End             => new EndNodeModel(oldModel.Title),
+                NodeType.Timeout         => new TimeoutNodeModel(oldModel.Title),
+                _                        => new NoTypeNodeModel(oldModel.Title)
+            };
+
+            newModel.Description   = oldModel.Description;
+            newModel.Position      = pos;
+            newModel.OutgoingPaths = new List<PathData>(oldModel.OutgoingPaths);
+
+            // Actualizar conexiones entrantes: redirigir nodos que apuntaban al viejo al nuevo
+            foreach (var node in Graph.Nodes)
+            {
+                foreach (var path in node.OutgoingPaths)
+                {
+                    if (path.TargetNodeID == oldModel.NodeID)
+                    {
+                        path.TargetNodeID = newModel.NodeID;
+                    }
+                }
+            }
+
+            // Reemplazo en modelo y vista
+            Graph.RemoveNode(oldModel.NodeID);
+            GraphView.RemoveNodeFromView(oldModel.NodeID);
+
+            Graph.AddNode(newModel);
+            GraphView.RenderNode(newModel, new UnityEngine.Rect(pos, new Vector2(150, 200)));
+
+            GraphView.RefreshNodeVisual(newModel.NodeID);
+            OnNodeSelected(newModel);
+
+            return (true, null);
+        }
+        public void DebugGraph()
+        {
+            Debug.Log("=== Graph Debug Info ===");
+
+            foreach (var node in Graph.Nodes)
+            {
+                Debug.Log($"Node: {node.Title} ({node.Type}) - ID: {node.NodeID} - Pos: {node.Position}");
+
+                foreach (var path in node.OutgoingPaths)
+                {
+                    Debug.Log($"  ↳ Path: Label='{path.Label}' | Trigger='{path.Trigger}' → TargetID: {path.TargetNodeID}");
+                }
+            }
+        }
+        public void PrintCurrentSelection()
+        {
+            var selected = GraphView.selection;
+
+            if (selected == null || selected.Count == 0)
+            {
+                Debug.Log("[PrintSelection] No nodes selected.");
+                return;
+            }
+
+            Debug.Log($"[PrintSelection] Selected {selected.Count} element(s):");
+
+            foreach (var item in selected)
+            {
+                if (item is Views.MiddlePanel.TweenityNode node && node.NodeModel != null)
+                {
+                    Debug.Log($"→ NodeID: {node.NodeID}, Title: {node.NodeModel.Title}, Type: {node.NodeModel.Type}");
+                }
+                else
+                {
+                    Debug.Log($"→ Non-node element selected: {item}");
+                }
+            }
+        }
+        public void SearchNodes(string query)
+        {
+            Debug.Log($"[SearchNodes] Searching nodes for query: {query}");
+
+            var lowerQuery = query.ToLowerInvariant();
+
+            var results = Graph.Nodes
+                .Where(n =>
+                    (!string.IsNullOrEmpty(n.Title) && n.Title.ToLowerInvariant().Contains(lowerQuery)) ||
+                    (!string.IsNullOrEmpty(n.Description) && n.Description.ToLowerInvariant().Contains(lowerQuery)))
+                .ToList();
+
+            Debug.Log($"[SearchNodes] Found {results.Count} matching node(s):");
+
+            foreach (var node in results)
+            {
+                Debug.Log($"→ {node.Title} ({node.Type}) - ID: {node.NodeID}");
+            }
+
+        #if UNITY_EDITOR
+            if (results.Count == 0)
+            {
+                UnityEditor.EditorUtility.DisplayDialog("Search", "No matching nodes found.", "OK");
+            }
+        #endif
+        }
+
 
     }
 }

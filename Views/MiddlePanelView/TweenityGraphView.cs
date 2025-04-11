@@ -27,6 +27,7 @@ namespace Views
             gridBackground.StretchToParentSize();
             this.style.backgroundColor = new Color(0.1f, 0.1f, 0.1f); 
             this.Insert(0, gridBackground);
+
             this.graphViewChanged = (GraphViewChange change) =>
             {
                 if (change.elementsToRemove != null)
@@ -43,11 +44,10 @@ namespace Views
 
                                 Debug.Log($"[GraphView] Removing edge from {fromId} to {toId}");
 
-                                // 🔁 Remove from model
                                 var fromModel = outputNode.NodeModel;
-                                if (fromModel != null && fromModel.ConnectedNodes.Contains(toId))
+                                if (fromModel != null)
                                 {
-                                    fromModel.ConnectedNodes.Remove(toId);
+                                    fromModel.DisconnectFrom(toId);
                                     Debug.Log($"[GraphView] Removed model connection: {fromId} -> {toId}");
                                 }
                             }
@@ -104,7 +104,6 @@ namespace Views
             {
                 Debug.Log($"[GraphView] Removing node and its edges from view: {nodeId}");
 
-                // Remove all edges connected to this node
                 var connectedEdges = this.graphElements
                     .OfType<Edge>()
                     .Where(e =>
@@ -165,8 +164,10 @@ namespace Views
                     continue;
                 }
 
-                foreach (var targetId in sourceNode.NodeModel.ConnectedNodes)
+                foreach (var path in sourceNode.NodeModel.OutgoingPaths)
                 {
+                    string targetId = path.TargetNodeID;
+
                     Debug.Log($"[RenderConnections] {sourceNode.NodeID} trying to connect to {targetId}");
 
                     var targetNode = allNodes.FirstOrDefault(n => n.NodeID == targetId);
@@ -199,7 +200,6 @@ namespace Views
                 }
             }
         }
-
 
         public void ToggleGridVisibility()
         {

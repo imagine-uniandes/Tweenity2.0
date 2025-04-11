@@ -21,15 +21,15 @@ namespace Views.RightPanel
             note.style.flexShrink = 0;
             Add(note);
 
-            // Incoming connections (for display only)
-            Add(new Label("Incoming Connections")
+            // Outgoing connections are not expected on End nodes, but show if present
+            Add(new Label("Outgoing Connections")
             {
                 style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
             });
 
-            foreach (var nodeId in model.ConnectedNodes)
+            foreach (var path in model.OutgoingPaths)
             {
-                var label = new Label($"Connected from: {nodeId}")
+                var label = new Label($"Connected to: {path.TargetNodeID}")
                 {
                     style = { whiteSpace = WhiteSpace.Normal }
                 };

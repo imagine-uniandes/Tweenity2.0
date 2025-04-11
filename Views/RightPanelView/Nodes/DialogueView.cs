@@ -3,6 +3,7 @@ using UnityEngine;
 using Models.Nodes;
 using Controllers;
 using System;
+using System.Linq;
 
 namespace Views.RightPanel
 {
@@ -47,11 +48,7 @@ namespace Views.RightPanel
                 };
 
                 var textField = new TextField { style = { flexGrow = 1, marginRight = 4 } };
-
-                var connectButton = new Button()
-                {
-                    text = "Connect"
-                };
+                var connectButton = new Button() { text = "Connect" };
 
                 container.Add(textField);
                 container.Add(connectButton);
@@ -73,7 +70,17 @@ namespace Views.RightPanel
                 {
                     _controller.StartConnectionFrom(dialogueModel.NodeID, (targetNodeId) =>
                     {
-                        _controller.ConnectNodes(dialogueModel.NodeID, targetNodeId);
+                        if (i >= dialogueModel.OutgoingPaths.Count)
+                        {
+                            // Ensure path exists
+                            dialogueModel.OutgoingPaths.Add(new PathData($"Response {i + 1}", "", targetNodeId));
+                        }
+                        else
+                        {
+                            dialogueModel.OutgoingPaths[i].TargetNodeID = targetNodeId;
+                        }
+
+                        Debug.Log($"[DialogueView] Connected response {i} to {targetNodeId}");
                     });
                 });
             });
