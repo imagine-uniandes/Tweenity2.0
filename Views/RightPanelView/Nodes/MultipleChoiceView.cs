@@ -2,29 +2,23 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using Models.Nodes;
 using Controllers;
-using System;
+using System.Linq;
 
 namespace Views.RightPanel
 {
     public class MultipleChoiceView : TweenityNodeView
     {
         private ListView _choicesList;
+        private const int MaxChoiceLength = 39;
 
         public MultipleChoiceView(MultipleChoiceNodeModel model, GraphController controller) : base(model, controller)
         {
-            var title = new Label("Multiple Choice Node Details")
+            Add(new Label("Multiple Choice Node Details")
             {
-                style =
-                {
-                    unityFontStyleAndWeight = FontStyle.Bold,
-                    whiteSpace = WhiteSpace.Normal
-                }
-            };
-            Add(title);
+                style = { unityFontStyleAndWeight = FontStyle.Bold, whiteSpace = WhiteSpace.Normal }
+            });
 
-            var questionLabel = new Label("Question");
-            questionLabel.style.whiteSpace = WhiteSpace.Normal;
-            Add(questionLabel);
+            Add(new Label("Question"));
 
             var questionField = new TextField { value = model.Question, multiline = true };
             questionField.RegisterValueChangedCallback(evt =>
@@ -33,9 +27,7 @@ namespace Views.RightPanel
             });
             Add(questionField);
 
-            var choicesLabel = new Label("Answers");
-            choicesLabel.style.whiteSpace = WhiteSpace.Normal;
-            Add(choicesLabel);
+            Add(new Label("Answers"));
 
             var addChoiceButton = new Button(() =>
             {
@@ -48,68 +40,122 @@ namespace Views.RightPanel
             };
             Add(addChoiceButton);
 
-            _choicesList = new ListView(model.OutgoingPaths, itemHeight: 50, makeItem: () =>
+            _choicesList = new ListView(model.OutgoingPaths, 90, () =>
             {
                 var container = new VisualElement
                 {
-                    style =
-                    {
-                        flexDirection = FlexDirection.Row,
-                        justifyContent = Justify.SpaceBetween,
-                        alignItems = Align.Center,
-                        marginBottom = 5
+                    style = {
+                        flexDirection = FlexDirection.Column,
+                        marginBottom = 10
                     }
                 };
 
-                var answerField = new TextField { style = { flexGrow = 1, marginRight = 5 } };
-                var triggerButton = new Button(() => Debug.Log("[Trigger]")) { text = "Trigger" };
-                var connectButton = new Button() { text = "Connect" };
+                var answerField = new TextField
+                {
+                    multiline = true,
+                    maxLength = MaxChoiceLength,
+                    style = {
+                        whiteSpace = WhiteSpace.Normal,
+                        flexGrow = 0,
+                        overflow = Overflow.Visible,
+                        marginBottom = 2,
+                        minHeight = 20,
+                        backgroundColor = Color.clear,
+                        borderBottomWidth = 0,
+                        borderTopWidth = 0,
+                        borderLeftWidth = 0,
+                        borderRightWidth = 0
+                    }
+                };
+
+                answerField.RegisterCallback<ChangeEvent<string>>(evt =>
+                {
+                    int lineCount = evt.newValue.Count(c => c == '\n') + 1;
+                    answerField.style.height = Mathf.Max(20, lineCount * 18);
+                });
+
+                var buttonRow = new VisualElement
+                {
+                    style = {
+                        flexDirection = FlexDirection.Row,
+                        justifyContent = Justify.SpaceBetween
+                    }
+                };
+
+                var triggerButton = new Button(() => Debug.Log("[Trigger]"))
+                {
+                    text = "Trigger",
+                    style = {
+                        flexGrow = 1,
+                        marginRight = 4
+                    }
+                };
+
+                var connectButton = new Button
+                {
+                    text = "Connect",
+                    style = { flexGrow = 1 }
+                };
+
+                buttonRow.Add(triggerButton);
+                buttonRow.Add(connectButton);
 
                 container.Add(answerField);
-                container.Add(triggerButton);
-                container.Add(connectButton);
+                container.Add(buttonRow);
 
                 return container;
             },
-            bindItem: (element, i) =>
+            (element, i) =>
             {
                 var container = element as VisualElement;
-
                 var answerField = container.ElementAt(0) as TextField;
-                var connectButton = container.ElementAt(2) as Button;
+                var buttonRow = container.ElementAt(1) as VisualElement;
+                var triggerButton = buttonRow.ElementAt(0) as Button;
+                var connectButton = buttonRow.ElementAt(1) as Button;
 
-                answerField.value = model.OutgoingPaths[i].Label;
+                var path = model.OutgoingPaths[i];
+                answerField.value = path.Label;
+
                 answerField.RegisterValueChangedCallback(evt =>
                 {
-                    model.OutgoingPaths[i].Label = evt.newValue;
+                    path.Label = evt.newValue.Length > MaxChoiceLength ? evt.newValue.Substring(0, MaxChoiceLength) : evt.newValue;
+                    answerField.SetValueWithoutNotify(path.Label);
                     controller.GraphView.RefreshNodeVisual(model.NodeID);
                 });
 
-                connectButton.clickable = new Clickable(() =>
+                if (!string.IsNullOrEmpty(path.TargetNodeID))
                 {
-                    controller.StartConnectionFrom(model.NodeID, targetId =>
+                    var targetName = controller.GetNode(path.TargetNodeID)?.Title ?? "(Unknown)";
+                    connectButton.text = $"→ {targetName}";
+                    connectButton.SetEnabled(false);
+                }
+                else
+                {
+                    connectButton.text = "Connect";
+                    connectButton.SetEnabled(true);
+                    connectButton.clickable = new Clickable(() =>
                     {
-                        model.OutgoingPaths[i].TargetNodeID = targetId;
-                        controller.GraphView.RenderConnections();
+                        controller.StartConnectionFrom(model.NodeID, targetId =>
+                        {
+                            model.OutgoingPaths[i].TargetNodeID = targetId;
+                            controller.GraphView.RenderConnections();
+                            _choicesList.Rebuild();
+                        });
                     });
-                });
+                }
             });
+
+            _choicesList.selectionType = SelectionType.None;
+            _choicesList.style.flexGrow = 0;
+            _choicesList.style.flexShrink = 1;
+            _choicesList.style.height = StyleKeyword.Auto;
+            _choicesList.style.borderBottomWidth = 0;
+            _choicesList.style.borderTopWidth = 0;
+            _choicesList.style.borderLeftWidth = 0;
+            _choicesList.style.borderRightWidth = 0;
+            _choicesList.style.backgroundColor = Color.clear;
 
             Add(_choicesList);
-
-            Add(new Label("Outgoing Paths")
-            {
-                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
-            });
-
-            foreach (var path in model.OutgoingPaths)
-            {
-                var label = new Label($"Path to: {path.TargetNodeID} (Label: {path.Label})")
-                {
-                    style = { whiteSpace = WhiteSpace.Normal }
-                };
-                Add(label);
-            }
         }
     }
 }

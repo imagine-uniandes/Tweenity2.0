@@ -45,10 +45,51 @@ namespace Controllers
 
         public void RemoveNode(string nodeId)
         {
-            CleanupConnectionsTo(nodeId);  
+            // 1. Quitar conexiones entrantes desde otros nodos
+            CleanupConnectionsTo(nodeId);
+
+            // 2. Quitar conexiones salientes desde el nodo eliminado
+            var node = Graph.GetNode(nodeId);
+            if (node != null)
+            {
+                foreach (var path in node.OutgoingPaths.ToList()) // copia para edición segura
+                {
+                    var targetId = path.TargetNodeID;
+                    if (!string.IsNullOrEmpty(targetId))
+                    {
+                        Debug.Log($"[GraphController] Removing outgoing connection: {nodeId} -> {targetId}");
+                        node.DisconnectFrom(targetId);
+                    }
+                }
+            }
+
+            // 3. Eliminar visual del nodo y sus edges
             GraphView.RemoveNodeFromView(nodeId);
+
+            // 4. Eliminar del modelo
             Graph.RemoveNode(nodeId);
+
+            // 5. Redibujar conexiones y refrescar todos los nodos
+            GraphView.RenderConnections();
+            foreach (var n in Graph.Nodes)
+            {
+                GraphView.RefreshNodeVisual(n.NodeID);
+            }
         }
+
+        private void CleanupConnectionsTo(string deletedNodeId)
+        {
+            foreach (var node in Graph.Nodes)
+            {
+                if (node.IsConnectedTo(deletedNodeId))
+                {
+                    node.DisconnectFrom(deletedNodeId);
+                    Debug.Log($"[GraphController] Removed incoming connection to deleted node: {deletedNodeId} from node: {node.NodeID}");
+                    GraphView.RefreshNodeVisual(node.NodeID); // actualiza visual del nodo que perdió conexión
+                }
+            }
+        }
+
 
         public TweenityNodeModel GetNode(string nodeId) => Graph.GetNode(nodeId);
 
@@ -304,17 +345,6 @@ namespace Controllers
             pendingSourceNodeId = null;
         }
 
-        private void CleanupConnectionsTo(string deletedNodeId)
-        {
-            foreach (var node in Graph.Nodes)
-            {
-                if (node.IsConnectedTo(deletedNodeId))
-                {
-                    node.DisconnectFrom(deletedNodeId);
-                    Debug.Log($"[GraphController] Removed connection to deleted node: {deletedNodeId} from node: {node.NodeID}");
-                }
-            }
-        }
         public (bool, string) ChangeNodeType(TweenityNodeModel oldModel, NodeType newType)
         {
             if (oldModel.Type == newType)
@@ -329,14 +359,17 @@ namespace Controllers
                 return (false, "Only one Start node is allowed in the graph.");
             }
 
-            // Capturar la posición del nodo visual
+            // Capturar posición antes de eliminar
             var visualNode = GraphView.graphElements
                 .OfType<TweenityNode>()
                 .FirstOrDefault(n => n.NodeID == oldModel.NodeID);
 
             Vector2 pos = visualNode?.GetPosition().position ?? new Vector2(200, 200);
 
-            // Crear nuevo modelo del tipo deseado
+            // Eliminar nodo viejo completamente, junto con conexiones
+            RemoveNode(oldModel.NodeID); // <- esto ya limpia modelo + view
+
+            // Crear modelo nuevo SIN copiar conexiones
             TweenityNodeModel newModel = newType switch
             {
                 NodeType.Dialogue        => new DialogueNodeModel(oldModel.Title),
@@ -349,34 +382,18 @@ namespace Controllers
                 _                        => new NoTypeNodeModel(oldModel.Title)
             };
 
-            newModel.Description   = oldModel.Description;
-            newModel.Position      = pos;
-            newModel.OutgoingPaths = new List<PathData>(oldModel.OutgoingPaths);
+            newModel.Description = oldModel.Description;
+            newModel.Position    = pos;
 
-            // Actualizar conexiones entrantes: redirigir nodos que apuntaban al viejo al nuevo
-            foreach (var node in Graph.Nodes)
-            {
-                foreach (var path in node.OutgoingPaths)
-                {
-                    if (path.TargetNodeID == oldModel.NodeID)
-                    {
-                        path.TargetNodeID = newModel.NodeID;
-                    }
-                }
-            }
-
-            // Reemplazo en modelo y vista
-            Graph.RemoveNode(oldModel.NodeID);
-            GraphView.RemoveNodeFromView(oldModel.NodeID);
-
+            // Agregar a modelo y vista
             Graph.AddNode(newModel);
             GraphView.RenderNode(newModel, new UnityEngine.Rect(pos, new Vector2(150, 200)));
 
-            GraphView.RefreshNodeVisual(newModel.NodeID);
             OnNodeSelected(newModel);
 
             return (true, null);
         }
+
         public void DebugGraph()
         {
             Debug.Log("=== Graph Debug Info ===");
