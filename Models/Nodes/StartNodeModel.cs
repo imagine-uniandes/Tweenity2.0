@@ -4,7 +4,19 @@ namespace Models.Nodes
     {
         public StartNodeModel(string title) : base(title, NodeType.Start)
         {
-            // No additional properties needed for Start Node
+        }
+
+        public void SetStartPath(string label, string targetNodeID)
+        {
+            if (OutgoingPaths.Count == 0)
+            {
+                OutgoingPaths.Add(new PathData(label, "", targetNodeID));
+            }
+            else
+            {
+                OutgoingPaths[0].Label = label;
+                OutgoingPaths[0].TargetNodeID = targetNodeID;
+            }
         }
     }
 }

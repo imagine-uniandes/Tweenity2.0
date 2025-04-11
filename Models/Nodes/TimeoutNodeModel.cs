@@ -10,5 +10,33 @@ namespace Models.Nodes
             Condition = "";
             TimeoutDuration = 0f;
         }
+
+        public void SetTimeoutPath(string label, string targetNodeID)
+        {
+            var existing = OutgoingPaths.Find(p => p.Trigger == "timeout");
+            if (existing != null)
+            {
+                existing.Label = label;
+                existing.TargetNodeID = targetNodeID;
+            }
+            else
+            {
+                OutgoingPaths.Add(new PathData(label, "timeout", targetNodeID));
+            }
+        }
+
+        public void SetSuccessPath(string label, string targetNodeID)
+        {
+            var existing = OutgoingPaths.Find(p => p.Trigger == "success");
+            if (existing != null)
+            {
+                existing.Label = label;
+                existing.TargetNodeID = targetNodeID;
+            }
+            else
+            {
+                OutgoingPaths.Add(new PathData(label, "success", targetNodeID));
+            }
+        }
     }
 }

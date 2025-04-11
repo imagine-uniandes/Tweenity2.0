@@ -5,29 +5,33 @@ namespace Models.Nodes
     public class DialogueNodeModel : TweenityNodeModel
     {
         public string DialogueText { get; set; }
-        public List<string> Responses { get; private set; }
 
         public DialogueNodeModel(string title) : base(title, NodeType.Dialogue)
         {
             DialogueText = "";
-            Responses = new List<string>();
         }
 
-        public void AddResponse(string response)
+        public void AddResponse(string responseText)
         {
-            Responses.Add(response);
+            OutgoingPaths.Add(new PathData(label: responseText));
         }
 
         public void RemoveResponseAt(int index)
         {
-            if (index >= 0 && index < Responses.Count)
-                Responses.RemoveAt(index);
+            if (index >= 0 && index < OutgoingPaths.Count)
+                OutgoingPaths.RemoveAt(index);
         }
 
         public void UpdateResponse(int index, string newValue)
         {
-            if (index >= 0 && index < Responses.Count)
-                Responses[index] = newValue;
+            if (index >= 0 && index < OutgoingPaths.Count)
+                OutgoingPaths[index].Label = newValue;
+        }
+
+        public void ConnectResponseTo(int index, string targetNodeID)
+        {
+            if (index >= 0 && index < OutgoingPaths.Count)
+                OutgoingPaths[index].TargetNodeID = targetNodeID;
         }
     }
 }

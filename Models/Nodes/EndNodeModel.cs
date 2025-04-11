@@ -4,7 +4,12 @@ namespace Models.Nodes
     {
         public EndNodeModel(string title) : base(title, NodeType.End)
         {
-            // No additional properties needed for End Node
+        }
+
+        // Por claridad, se puede prevenir explícitamente agregar caminos
+        public void ClearOutgoingPaths()
+        {
+            OutgoingPaths.Clear();
         }
     }
 }

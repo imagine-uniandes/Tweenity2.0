@@ -4,7 +4,19 @@ namespace Models.Nodes
     {
         public NoTypeNodeModel(string title) : base(title, NodeType.NoType)
         {
-            // No additional properties needed
+        }
+
+        public void SetConnection(string label, string targetNodeID)
+        {
+            if (OutgoingPaths.Count == 0)
+            {
+                OutgoingPaths.Add(new PathData(label, "", targetNodeID));
+            }
+            else
+            {
+                OutgoingPaths[0].Label = label;
+                OutgoingPaths[0].TargetNodeID = targetNodeID;
+            }
         }
     }
 }

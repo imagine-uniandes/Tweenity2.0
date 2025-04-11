@@ -21,28 +21,31 @@ namespace Views.RightPanel
             note.style.flexShrink = 0;
             Add(note);
 
-            var connectButton = new Button(() =>
+            if (model.ConnectedNodes.Count == 0)
             {
-                Debug.Log($"[StartView] Connect clicked for NodeID: {model.NodeID}");
-                controller.StartConnectionFrom(model.NodeID, (targetNodeId) =>
+                var connectButton = new Button(() =>
                 {
-                    controller.ConnectNodes(model.NodeID, targetNodeId);
+                    Debug.Log($"[StartView] Connect clicked for NodeID: {model.NodeID}");
+                    controller.StartConnectionFrom(model.NodeID, (targetNodeId) =>
+                    {
+                        controller.ConnectNodes(model.NodeID, targetNodeId);
+                    });
+                })
+                {
+                    text = "Connect"
+                };
+                connectButton.style.marginTop = 15;
+                Add(connectButton);
+            }
+            else
+            {
+                Add(new Label("Outgoing Connection")
+                {
+                    style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
                 });
-            })
-            {
-                text = "Connect"
-            };
-            connectButton.style.marginTop = 15;
-            Add(connectButton);
 
-            Add(new Label("Outgoing Connections")
-            {
-                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
-            });
-
-            foreach (var nodeId in model.ConnectedNodes)
-            {
-                var label = new Label($"Connected to: {nodeId}");
+                var connectedModel = controller.GetNode(model.ConnectedNodes[0]);
+                var label = new Label($"→ {connectedModel?.Title ?? "(Unknown)"}");
                 label.style.whiteSpace = WhiteSpace.Normal;
                 Add(label);
             }

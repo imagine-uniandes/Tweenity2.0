@@ -9,33 +9,49 @@ namespace Models.Nodes
         public string Title { get; set; }
         public string Description { get; set; }
         public NodeType Type { get; set; }
-        public List<string> ConnectedNodes { get; set; }
+
+        // Nuevo: todas las salidas ahora son PathData
+        public List<PathData> OutgoingPaths { get; set; }
 
         public TweenityNodeModel(string title, NodeType type)
         {
-            NodeID = Guid.NewGuid().ToString(); // Unique ID for each node
+            NodeID = Guid.NewGuid().ToString();
             Title = title;
             Type = type;
             Description = "";
-            ConnectedNodes = new List<string>();
+            OutgoingPaths = new List<PathData>();
         }
 
-        public void ConnectTo(string targetNodeID)
+        public void ConnectTo(string targetNodeID, string label = "Next", string trigger = "")
         {
-            if (!ConnectedNodes.Contains(targetNodeID))
+            if (!IsConnectedTo(targetNodeID))
             {
-                ConnectedNodes.Add(targetNodeID);
+                OutgoingPaths.Add(new PathData(label, trigger, targetNodeID));
             }
         }
 
         public void DisconnectFrom(string targetNodeID)
         {
-            ConnectedNodes.Remove(targetNodeID);
+            OutgoingPaths.RemoveAll(p => p.TargetNodeID == targetNodeID);
         }
 
         public bool IsConnectedTo(string targetNodeID)
         {
-            return ConnectedNodes.Contains(targetNodeID);
+            return OutgoingPaths.Exists(p => p.TargetNodeID == targetNodeID);
+        }
+
+        public void UpdatePathTarget(string oldTargetId, string newTargetId)
+        {
+            var path = OutgoingPaths.Find(p => p.TargetNodeID == oldTargetId);
+            if (path != null)
+                path.TargetNodeID = newTargetId;
+        }
+
+        public void UpdatePathLabel(string targetId, string newLabel)
+        {
+            var path = OutgoingPaths.Find(p => p.TargetNodeID == targetId);
+            if (path != null)
+                path.Label = newLabel;
         }
     }
 }

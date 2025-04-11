@@ -24,7 +24,38 @@ namespace Views
             this.AddManipulator(new RectangleSelector());
 
             gridBackground = new GridBackground();
+            gridBackground.StretchToParentSize();
+            this.style.backgroundColor = new Color(0.1f, 0.1f, 0.1f); 
             this.Insert(0, gridBackground);
+            this.graphViewChanged = (GraphViewChange change) =>
+            {
+                if (change.elementsToRemove != null)
+                {
+                    foreach (var element in change.elementsToRemove)
+                    {
+                        if (element is Edge edge)
+                        {
+                            if (edge.output?.node is TweenityNode outputNode &&
+                                edge.input?.node is TweenityNode inputNode)
+                            {
+                                string fromId = outputNode.NodeID;
+                                string toId = inputNode.NodeID;
+
+                                Debug.Log($"[GraphView] Removing edge from {fromId} to {toId}");
+
+                                // 🔁 Remove from model
+                                var fromModel = outputNode.NodeModel;
+                                if (fromModel != null && fromModel.ConnectedNodes.Contains(toId))
+                                {
+                                    fromModel.ConnectedNodes.Remove(toId);
+                                    Debug.Log($"[GraphView] Removed model connection: {fromId} -> {toId}");
+                                }
+                            }
+                        }
+                    }
+                }
+                return change;
+            };
         }
 
         public void RenderNode(TweenityNodeModel nodeModel, Rect? positionOverride = null)

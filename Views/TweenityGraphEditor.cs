@@ -20,6 +20,7 @@ public class TweenityGraphEditor : EditorWindow
     {
         VisualElement root = rootVisualElement;
         root.style.flexDirection = FlexDirection.Column;
+        root.style.flexGrow = 1; 
 
         // Graph View (Center Area)
         TweenityGraphView graphView = new TweenityGraphView();

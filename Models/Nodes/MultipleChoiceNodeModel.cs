@@ -4,27 +4,28 @@ namespace Models.Nodes
 {
     public class MultipleChoiceNodeModel : TweenityNodeModel
     {
-        // New inner class for detailed choice info
-        public class ChoiceData
-        {
-            public string AnswerText;
-            // Future expansion:
-            // public string TriggerName;
-            // public string ConnectedNodeID;
-        }
-
         public string Question { get; set; }
-        public List<ChoiceData> Choices { get; private set; }
 
         public MultipleChoiceNodeModel(string title) : base(title, NodeType.MultipleChoice)
         {
             Question = "";
-            Choices = new List<ChoiceData>();
         }
 
-        public void AddChoice(string answer)
+        public void AddChoice(string answerText)
         {
-            Choices.Add(new ChoiceData { AnswerText = answer });
+            OutgoingPaths.Add(new PathData(label: answerText));
+        }
+
+        public void UpdateChoice(int index, string newLabel)
+        {
+            if (index >= 0 && index < OutgoingPaths.Count)
+                OutgoingPaths[index].Label = newLabel;
+        }
+
+        public void ConnectChoiceTo(int index, string targetNodeID)
+        {
+            if (index >= 0 && index < OutgoingPaths.Count)
+                OutgoingPaths[index].TargetNodeID = targetNodeID;
         }
     }
 }

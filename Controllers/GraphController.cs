@@ -340,6 +340,35 @@ namespace Controllers
                 return;
             }
 
+            // --- RULES ENFORCEMENT WITH POPUPS ---
+
+            if (fromNode.Type is NodeType.End)
+            {
+                string msg = "End nodes cannot have outgoing connections.";
+                Debug.LogWarning($"[GraphController] {msg}");
+
+        #if UNITY_EDITOR
+                EditorUtility.DisplayDialog("Invalid Connection", msg, "OK");
+        #endif
+                return;
+            }
+
+            if (fromNode.Type is NodeType.Start or NodeType.NoType or NodeType.Reminder)
+            {
+                if (fromNode.ConnectedNodes.Count >= 1)
+                {
+                    string msg = $"{fromNode.Type} nodes can only have one outgoing connection.";
+                    Debug.LogWarning($"[GraphController] {msg}");
+
+        #if UNITY_EDITOR
+                    EditorUtility.DisplayDialog("Connection Limit Reached", msg, "OK");
+        #endif
+                    return;
+                }
+            }
+
+            // --- CONNECTION ---
+
             if (!fromNode.ConnectedNodes.Contains(toNodeId))
             {
                 fromNode.ConnectedNodes.Add(toNodeId);

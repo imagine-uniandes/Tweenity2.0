@@ -4,23 +4,28 @@ namespace Models.Nodes
 {
     public class RandomNodeModel : TweenityNodeModel
     {
-        public List<string> PossiblePaths { get; private set; }
-
         public RandomNodeModel(string title) : base(title, NodeType.Random)
         {
-            PossiblePaths = new List<string>();
         }
 
-        public void AddPath(string path)
+        public void AddPath(string label = null)
         {
-            PossiblePaths.Add(path);
+            OutgoingPaths.Add(new PathData(label ?? $"Path {OutgoingPaths.Count + 1}"));
         }
 
         public void UpdatePath(int index, string newValue)
         {
-            if (index >= 0 && index < PossiblePaths.Count)
+            if (index >= 0 && index < OutgoingPaths.Count)
             {
-                PossiblePaths[index] = newValue;
+                OutgoingPaths[index].Label = newValue;
+            }
+        }
+
+        public void ConnectPathTo(int index, string targetNodeID)
+        {
+            if (index >= 0 && index < OutgoingPaths.Count)
+            {
+                OutgoingPaths[index].TargetNodeID = targetNodeID;
             }
         }
     }
