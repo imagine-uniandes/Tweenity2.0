@@ -196,7 +196,7 @@ namespace Controllers
                 }
             }
 
-            newNode.PositionInGraph = position.position;
+            newNode.Position = position.position;
 
             if (Graph.AddNode(newNode))
             {
@@ -440,6 +440,34 @@ namespace Controllers
                 UnityEditor.EditorUtility.DisplayDialog("Search", "No matching nodes found.", "OK");
             }
         #endif
+        }
+        public void UpdateReminderText(ReminderNodeModel model, string newText)
+        {
+            model.ReminderText = newText;
+            GraphView.RefreshNodeVisual(model.NodeID);
+        }
+
+        public void UpdateReminderTimer(ReminderNodeModel model, float newTimer)
+        {
+            model.ReminderTimer = newTimer;
+            GraphView.RefreshNodeVisual(model.NodeID);
+        }
+        public void AddRandomPath(RandomNodeModel model)
+        {
+            int count = model.OutgoingPaths.Count;
+            model.OutgoingPaths.Add(new PathData($"Path {count + 1}"));
+            GraphView.RefreshNodeVisual(model.NodeID);
+        }
+        public void UpdateDialogueText(DialogueNodeModel model, string newText)
+        {
+            model.DialogueText = newText;
+            GraphView.RefreshNodeVisual(model.NodeID);
+        }
+        public void AddDialogueResponse(DialogueNodeModel model)
+        {
+            int count = model.OutgoingPaths.Count;
+            model.AddResponse("Response " + (count + 1));
+            GraphView.RefreshNodeVisual(model.NodeID);
         }
 
 

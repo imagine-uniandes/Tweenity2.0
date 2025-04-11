@@ -3,7 +3,6 @@ using UnityEngine;
 using Models.Nodes;
 using Controllers;
 using System;
-using System.Linq;
 
 namespace Views.RightPanel
 {
@@ -25,7 +24,8 @@ namespace Views.RightPanel
             var dialogueText = new TextField { value = dialogueModel.DialogueText, multiline = true };
             dialogueText.RegisterValueChangedCallback(evt =>
             {
-                _controller.UpdateDialogueText(dialogueModel, evt.newValue);
+                dialogueModel.DialogueText = evt.newValue;
+                controller.GraphView.RefreshNodeVisual(dialogueModel.NodeID);
             });
             Add(dialogueText);
 
@@ -34,13 +34,14 @@ namespace Views.RightPanel
 
             var addButton = new Button(() =>
             {
-                _controller.AddDialogueResponse(dialogueModel);
+                dialogueModel.AddResponse("New Response");
                 _responseList.Rebuild();
+                controller.GraphView.RefreshNodeVisual(dialogueModel.NodeID);
             })
             { text = "+ Add Response" };
             Add(addButton);
 
-            _responseList = new ListView(dialogueModel.Responses, 30, () =>
+            _responseList = new ListView(dialogueModel.OutgoingPaths, 30, () =>
             {
                 var container = new VisualElement
                 {
@@ -60,27 +61,20 @@ namespace Views.RightPanel
                 var textField = container.ElementAt(0) as TextField;
                 var connectButton = container.ElementAt(1) as Button;
 
-                textField.value = dialogueModel.Responses[i];
+                textField.value = dialogueModel.OutgoingPaths[i].Label;
                 textField.RegisterValueChangedCallback(evt =>
                 {
-                    _controller.UpdateDialogueResponse(dialogueModel, i, evt.newValue);
+                    dialogueModel.UpdateResponse(i, evt.newValue);
+                    controller.GraphView.RefreshNodeVisual(dialogueModel.NodeID);
                 });
 
                 connectButton.clickable = new Clickable(() =>
                 {
-                    _controller.StartConnectionFrom(dialogueModel.NodeID, (targetNodeId) =>
+                    controller.StartConnectionFrom(dialogueModel.NodeID, (targetNodeId) =>
                     {
-                        if (i >= dialogueModel.OutgoingPaths.Count)
-                        {
-                            // Ensure path exists
-                            dialogueModel.OutgoingPaths.Add(new PathData($"Response {i + 1}", "", targetNodeId));
-                        }
-                        else
-                        {
-                            dialogueModel.OutgoingPaths[i].TargetNodeID = targetNodeId;
-                        }
-
-                        Debug.Log($"[DialogueView] Connected response {i} to {targetNodeId}");
+                        dialogueModel.ConnectResponseTo(i, targetNodeId);
+                        controller.GraphView.RenderConnections();
+                        controller.GraphView.RefreshNodeVisual(dialogueModel.NodeID);
                     });
                 });
             });

@@ -39,15 +39,16 @@ namespace Views.RightPanel
 
             var addChoiceButton = new Button(() =>
             {
-                controller.AddChoiceToMultipleChoiceNode(model);
+                model.OutgoingPaths.Add(new PathData($"Choice {model.OutgoingPaths.Count + 1}"));
                 _choicesList.Rebuild();
+                controller.GraphView.RefreshNodeVisual(model.NodeID);
             })
             {
                 text = "+ Add Answer"
             };
             Add(addChoiceButton);
 
-            _choicesList = new ListView(model.Choices, itemHeight: 50, makeItem: () =>
+            _choicesList = new ListView(model.OutgoingPaths, itemHeight: 50, makeItem: () =>
             {
                 var container = new VisualElement
                 {
@@ -73,30 +74,22 @@ namespace Views.RightPanel
             bindItem: (element, i) =>
             {
                 var container = element as VisualElement;
-                var choice = model.Choices[i];
 
                 var answerField = container.ElementAt(0) as TextField;
                 var connectButton = container.ElementAt(2) as Button;
 
-                answerField.value = choice.AnswerText;
+                answerField.value = model.OutgoingPaths[i].Label;
                 answerField.RegisterValueChangedCallback(evt =>
                 {
-                    choice.AnswerText = evt.newValue;
+                    model.OutgoingPaths[i].Label = evt.newValue;
+                    controller.GraphView.RefreshNodeVisual(model.NodeID);
                 });
 
                 connectButton.clickable = new Clickable(() =>
                 {
                     controller.StartConnectionFrom(model.NodeID, targetId =>
                     {
-                        if (i >= model.OutgoingPaths.Count)
-                        {
-                            model.OutgoingPaths.Add(new PathData(choice.AnswerText, "", targetId));
-                        }
-                        else
-                        {
-                            model.OutgoingPaths[i].TargetNodeID = targetId;
-                        }
-
+                        model.OutgoingPaths[i].TargetNodeID = targetId;
                         controller.GraphView.RenderConnections();
                     });
                 });

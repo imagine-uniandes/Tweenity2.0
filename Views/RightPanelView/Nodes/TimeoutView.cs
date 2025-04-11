@@ -24,7 +24,8 @@ namespace Views.RightPanel
             var conditionField = new TextField { value = typedModel.Condition };
             conditionField.RegisterValueChangedCallback(evt =>
             {
-                controller.UpdateTimeoutCondition(typedModel, evt.newValue);
+                typedModel.Condition = evt.newValue;
+                controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
             });
             Add(conditionField);
 
@@ -36,7 +37,8 @@ namespace Views.RightPanel
             var timeoutTimerField = new FloatField { value = typedModel.TimeoutDuration };
             timeoutTimerField.RegisterValueChangedCallback(evt =>
             {
-                controller.UpdateTimeoutTimer(typedModel, evt.newValue);
+                typedModel.TimeoutDuration = evt.newValue;
+                controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
             });
             Add(timeoutTimerField);
 
