@@ -187,17 +187,34 @@ namespace Controllers
         public void LoadGraphFrom(string path)
         {
             string twee = File.ReadAllText(path);
-            var nodes = GraphParser.ImportFromTwee(twee);
+            var importedNodes = GraphParser.ImportFromTwee(twee);
 
+            // Limpiar vista y modelo actuales
             foreach (var node in Graph.Nodes)
             {
                 GraphView.RemoveNodeFromView(node.NodeID);
             }
 
             Graph = new GraphModel();
-            foreach (var node in nodes)
+            var titleToId = new Dictionary<string, string>();
+
+            // Primero: agregar nodos al modelo y a la vista
+            foreach (var node in importedNodes)
             {
-                AddNode(node);
+                AddNode(node); // Esto renderiza y agrega al modelo
+                titleToId[node.Title] = node.NodeID;
+            }
+
+            // Segundo: corregir los TargetNodeID usando los nuevos IDs
+            foreach (var node in importedNodes)
+            {
+                foreach (var pathData in node.OutgoingPaths)
+                {
+                    if (titleToId.TryGetValue(pathData.TargetNodeID, out string newId))
+                    {
+                        pathData.TargetNodeID = newId;
+                    }
+                }
             }
 
             lastSavedPath = path;

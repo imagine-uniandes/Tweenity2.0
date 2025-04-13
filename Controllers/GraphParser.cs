@@ -5,6 +5,17 @@ using System.Text.RegularExpressions;
 using Models;
 using System;
 using UnityEngine;
+using System.Linq;
+
+// Schema
+// :: Title [type] {"position":"x,y","id":"node-id"}
+// <descripción>                   ← Texto libre opcional (puede ser vacío)
+// @
+// <campo especial 1 o null>      ← e.g. DialogueText, Question, ReminderText, TimeoutCondition
+// <campo especial 2 o null>      ← e.g. ReminderTimer, TimeoutDuration
+// [{"label":"...", "trigger":"...", "target":"..."}, ...] ← lista JSON de paths salientes
+
+
 
 namespace Controllers
 {
@@ -16,123 +27,157 @@ namespace Controllers
 
             foreach (var node in nodes)
             {
-                // Add passage header
-                twee.Append(":: ").Append(node.Title);
+                // Header: Title, Type, Metadata (position + id)
+                string pos = $"{node.Position.x},{node.Position.y}";
+                string id = node.NodeID;
+                twee.Append(":: ").Append(node.Title)
+                    .Append(" [").Append(node.Type.ToString().ToLower()).Append("]")
+                    .Append($" {{\"position\":\"{pos}\",\"id\":\"{id}\"}}")
+                    .AppendLine();
 
-                // Add tag
-                twee.Append(" [").Append(node.Type.ToString().ToLower()).Append("]");
+                // Body text (description)
+                twee.AppendLine(node.Description ?? "");
 
-                // Add metadata with position
-                string pos = node.Position != null ?
-                    $"{node.Position.x},{node.Position.y}" : "0,0";
-                twee.Append($" {{\"position\":\"{pos}\",\"size\":\"100,100\"}}");
-
-                // Newline
-                twee.AppendLine();
-
-                // Add node description (as body)
-                twee.AppendLine(node.Description);
-
-                // Add divider (optional)
+                // Separator
                 twee.AppendLine("@");
 
-                // Add connections from OutgoingPaths
-                foreach (var path in node.OutgoingPaths)
+                // Special field 1 (question, dialogue, reminder text, timeout condition)
+                string specialField1 = "null";
+                switch (node)
                 {
-                    var targetNode = nodes.Find(n => n.NodeID == path.TargetNodeID);
-                    if (targetNode != null)
-                    {
-                        twee.Append("[[").Append(path.Label ?? targetNode.Title);
-
-                        if (!string.IsNullOrEmpty(path.Trigger))
-                        {
-                            twee.Append($":{path.Trigger}");
-                        }
-
-                        twee.Append(":" + targetNode.Title).AppendLine("]]");
-                    }
+                    case MultipleChoiceNodeModel multi:
+                        specialField1 = multi.Question;
+                        break;
+                    case DialogueNodeModel dialogue:
+                        specialField1 = dialogue.DialogueText;
+                        break;
+                    case ReminderNodeModel reminder:
+                        specialField1 = reminder.ReminderText;
+                        break;
+                    case TimeoutNodeModel timeout:
+                        specialField1 = timeout.Condition;
+                        break;
                 }
+                twee.AppendLine(specialField1 ?? "null");
 
-                // Add simulator/action blocks (placeholder for now)
-                twee.AppendLine("{}");
-                twee.AppendLine("<>");
+                // Special field 2 (reminder timer or timeout duration)
+                string specialField2 = "null";
+                switch (node)
+                {
+                    case ReminderNodeModel reminder:
+                        specialField2 = reminder.ReminderTimer.ToString();
+                        break;
+                    case TimeoutNodeModel timeout:
+                        specialField2 = timeout.TimeoutDuration.ToString();
+                        break;
+                }
+                twee.AppendLine(specialField2);
+
+                // Outgoing paths as JSON list
+                var pathJsons = node.OutgoingPaths.Select(path =>
+                    $"{{\"label\":\"{path.Label}\",\"trigger\":\"{path.Trigger}\",\"target\":\"{path.TargetNodeID}\"}}"
+                );
+                twee.AppendLine("[" + string.Join(",", pathJsons) + "]");
+
+                // Separate nodes
                 twee.AppendLine();
             }
 
             return twee.ToString();
         }
 
+
         public static List<TweenityNodeModel> ImportFromTwee(string tweeContent)
         {
             var nodes = new List<TweenityNodeModel>();
-            var passageRegex = new Regex(@":: (.*?)\s*(\[(.*?)\])?\s*(\{.*?\})?\s*\n(.*?)(?=(?:^::|\Z))", RegexOptions.Singleline | RegexOptions.Multiline);
-            var linkRegex = new Regex(@"\[\[(.*?)(?::(.*?))?(?::(.*?))?\]\]");
+            var passageRegex = new Regex(@":: (.*?) \[(.*?)\] \{\""position\"":\""(.*?),(.*?)\"".*?\""id\"":\""(.*?)\""\}", RegexOptions.Multiline);
+            var allPassages = tweeContent.Split(new[] { ":: " }, StringSplitOptions.RemoveEmptyEntries);
 
-            var matches = passageRegex.Matches(tweeContent);
-            Dictionary<string, TweenityNodeModel> titleLookup = new();
-
-            // First pass: create all nodes
-            foreach (Match match in matches)
+            foreach (var rawPassage in allPassages)
             {
-                string title = match.Groups[1].Value.Trim();
-                string tag = match.Groups[3].Success ? match.Groups[3].Value.Trim() : "notype";
-                string metadata = match.Groups[4].Value.Trim();
-                string body = match.Groups[5].Value.Trim();
+                var lines = rawPassage.Split('\n').ToList();
+                if (lines.Count == 0) continue;
 
-                NodeType nodeType = Enum.TryParse<NodeType>(tag, true, out var parsed) ? parsed : NodeType.NoType;
+                // Parse header
+                var headerMatch = passageRegex.Match(":: " + lines[0]);
+                if (!headerMatch.Success) continue;
 
-                TweenityNodeModel node = nodeType switch
+                string title = headerMatch.Groups[1].Value.Trim();
+                string typeStr = headerMatch.Groups[2].Value.Trim();
+                string x = headerMatch.Groups[3].Value.Trim();
+                string y = headerMatch.Groups[4].Value.Trim();
+                string nodeId = headerMatch.Groups[5].Value.Trim();
+
+                Enum.TryParse(typeStr, true, out NodeType type);
+                Vector2 pos = new Vector2(float.Parse(x), float.Parse(y));
+
+                // Break passage into blocks
+                var bodySplit = rawPassage.Substring(lines[0].Length).Split(new[] { "\n@" }, StringSplitOptions.None);
+                string description = bodySplit.Length > 0 ? bodySplit[0].Trim() : "";
+                string special1 = "null";
+                string special2 = "null";
+                string pathJson = "[]";
+
+                if (bodySplit.Length > 1)
                 {
-                    NodeType.Dialogue => new DialogueNodeModel(title),
-                    NodeType.Reminder => new ReminderNodeModel(title),
+                    var afterAtLines = bodySplit[1].Split('\n');
+
+                    if (afterAtLines.Length > 0)
+                        special1 = afterAtLines[0].Trim();
+
+                    if (afterAtLines.Length > 1)
+                        special2 = afterAtLines[1].Trim();
+
+                    if (afterAtLines.Length > 2)
+                        pathJson = string.Join("\n", afterAtLines.Skip(2)).Trim();
+                }
+
+                // Parse paths
+                var paths = new List<PathData>();
+                var pathRegex = new Regex(@"\{""label"":""(.*?)"",""trigger"":""(.*?)"",""target"":""(.*?)""\}");
+                foreach (Match m in pathRegex.Matches(pathJson))
+                {
+                    paths.Add(new PathData(m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value));
+                }
+
+                // Create model
+                TweenityNodeModel node = type switch
+                {
+                    NodeType.Dialogue       => new DialogueNodeModel(title),
                     NodeType.MultipleChoice => new MultipleChoiceNodeModel(title),
-                    NodeType.Random => new RandomNodeModel(title),
-                    NodeType.Start => new StartNodeModel(title),
-                    NodeType.End => new EndNodeModel(title),
-                    NodeType.Timeout => new TimeoutNodeModel(title),
-                    _ => new NoTypeNodeModel(title),
+                    NodeType.Random         => new RandomNodeModel(title),
+                    NodeType.Reminder       => new ReminderNodeModel(title),
+                    NodeType.Timeout        => new TimeoutNodeModel(title),
+                    NodeType.Start          => new StartNodeModel(title),
+                    NodeType.End            => new EndNodeModel(title),
+                    _                       => new NoTypeNodeModel(title),
                 };
 
-                node.Description = body;
+                node.NodeID = nodeId;
+                node.Position = pos;
+                node.Description = description;
+                node.OutgoingPaths = paths;
 
-                // Parse position from metadata
-                if (!string.IsNullOrEmpty(metadata))
+                // Parse special fields
+                if (node is DialogueNodeModel d && special1 != "null") d.DialogueText = special1;
+                if (node is MultipleChoiceNodeModel mc && special1 != "null") mc.Question = special1;
+                if (node is ReminderNodeModel r)
                 {
-                    var posMatch = Regex.Match(metadata, "\\\"position\\\":\\\"(\\d+),(\\d+)\\\"");
-                    if (posMatch.Success && float.TryParse(posMatch.Groups[1].Value, out float x) && float.TryParse(posMatch.Groups[2].Value, out float y))
-                    {
-                        node.Position = new Vector2(x, y);
-                    }
+                    if (special1 != "null") r.ReminderText = special1;
+                    if (float.TryParse(special2, out var timer)) r.ReminderTimer = timer;
+                }
+                if (node is TimeoutNodeModel to)
+                {
+                    if (special1 != "null") to.Condition = special1;
+                    if (float.TryParse(special2, out var timer)) to.TimeoutDuration = timer;
                 }
 
                 nodes.Add(node);
-                titleLookup[title] = node;
-            }
-
-            // Second pass: resolve connections
-            foreach (Match match in matches)
-            {
-                string currentTitle = match.Groups[1].Value.Trim();
-                string body = match.Groups[5].Value;
-
-                if (!titleLookup.TryGetValue(currentTitle, out var currentNode))
-                    continue;
-
-                var linkMatches = linkRegex.Matches(body);
-                foreach (Match link in linkMatches)
-                {
-                    string label = link.Groups[1].Value.Trim();
-                    string trigger = link.Groups[2].Success ? link.Groups[2].Value.Trim() : "";
-                    string targetTitle = link.Groups[3].Success ? link.Groups[3].Value.Trim() : label;
-
-                    if (titleLookup.TryGetValue(targetTitle, out var targetNode))
-                    {
-                        currentNode.OutgoingPaths.Add(new PathData(label, trigger, targetNode.NodeID));
-                    }
-                }
             }
 
             return nodes;
         }
+
+
     }
 }

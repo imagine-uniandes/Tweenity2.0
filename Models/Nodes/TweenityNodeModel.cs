@@ -6,7 +6,7 @@ namespace Models.Nodes
 {
     public class TweenityNodeModel
     {
-        public string NodeID { get; private set; }
+        public string NodeID { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
         public NodeType Type { get; set; }

@@ -41,5 +41,12 @@ namespace Models
         {
             return Nodes.FirstOrDefault(n => n.NodeID == nodeId);
         }
+        
+        public void SetNodes(List<TweenityNodeModel> nodes)
+        {
+            Nodes.Clear();
+            Nodes.AddRange(nodes);
+        }
+
     }
 }
