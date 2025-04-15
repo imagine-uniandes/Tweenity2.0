@@ -2,11 +2,11 @@ using UnityEditor;
 using UnityEngine;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
-using System.Collections.Generic;
 using Models;
 using Models.Nodes;
 using Controllers;
 using Views;
+
 public class TweenityGraphEditor : EditorWindow
 {
     [MenuItem("Window/Tweenity Graph Editor")]
@@ -20,39 +20,41 @@ public class TweenityGraphEditor : EditorWindow
     {
         VisualElement root = rootVisualElement;
         root.style.flexDirection = FlexDirection.Column;
-        root.style.flexGrow = 1; 
+        root.style.flexGrow = 1;
 
-        // Graph View (Center Area)
+        // Create GraphController
+        GraphController graphController = new GraphController();
+
+        // Create GraphView 
         TweenityGraphView graphView = new TweenityGraphView();
-        graphView.style.backgroundColor = EditorGUIUtility.isProSkin ? new Color(0.18f, 0.18f, 0.18f) : new Color(0.82f, 0.82f, 0.82f);
+        graphView.style.backgroundColor = EditorGUIUtility.isProSkin
+            ? new Color(0.18f, 0.18f, 0.18f)
+            : new Color(0.82f, 0.82f, 0.82f);
 
-        // Initialize GraphController with the Graph View
-        GraphController graphController = new GraphController(graphView);
+        // Bind controller <-> view
+        graphController.SetGraphView(graphView);
+        graphView.SetController(graphController); // <- 💡 Nuevo binding
+        graphView.OnNodeSelected = graphController.OnNodeSelected;
 
-        // Add Toolbar and pass the GraphController
+        // Add toolbar
         root.Add(TweenityToolbar.CreateToolbar(graphController));
 
-        // Main Layout (Left Panel, GraphView, Right Panel)
-        VisualElement mainLayout = new VisualElement();
-        mainLayout.style.flexDirection = FlexDirection.Row;
-        mainLayout.style.flexGrow = 1;
+        // Layout: Left - Center - Right
+        VisualElement mainLayout = new VisualElement
+        {
+            style = { flexDirection = FlexDirection.Row, flexGrow = 1 }
+        };
 
-        // Add Left Panel
         mainLayout.Add(TweenityLeftPanel.CreateLeftPanel(graphController));
-
-        // Add Graph View
         mainLayout.Add(graphView);
 
-        // Add Right Panel
         VisualElement rightPanelRoot = TweenityRightPanel.CreateRightPanel();
         graphController.SetRightPanelRoot(rightPanelRoot);
-        graphView.OnNodeSelected = graphController.OnNodeSelected;
         mainLayout.Add(rightPanelRoot);
 
         root.Add(mainLayout);
 
-        // Add Bottom Status Bar
+        // Bottom bar
         root.Add(TweenityBottomToolbar.CreateBottomToolbar(graphController));
     }
-
 }

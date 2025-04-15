@@ -15,6 +15,8 @@ namespace Views
         public Action<TweenityNodeModel> OnNodeSelected;
         private GridBackground gridBackground;
 
+        private GraphController _controller;
+
         public TweenityGraphView()
         {
             this.style.flexGrow = 1;
@@ -56,6 +58,33 @@ namespace Views
                 }
                 return change;
             };
+
+            RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode is KeyCode.Delete or KeyCode.Backspace)
+                {
+                    var selectedNodes = selection.OfType<TweenityNode>().ToList();
+
+                    if (selectedNodes.Count == 0)
+                    {
+                        Debug.Log("[DeleteKey] No node selected.");
+                        return;
+                    }
+
+                    foreach (var node in selectedNodes)
+                    {
+                        Debug.Log($"[DeleteKey] Removing node: {node.NodeID}");
+                        _controller?.RemoveNode(node.NodeID);
+                    }
+
+                    evt.StopPropagation();
+                }
+            });
+        }
+
+        public void SetController(GraphController controller)
+        {
+            _controller = controller;
         }
 
         public void RenderNode(TweenityNodeModel nodeModel, Rect? positionOverride = null)
