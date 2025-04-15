@@ -192,10 +192,9 @@ namespace Controllers
             Rect baseRect = new Rect(200, 200, 150, 200);
             Rect position = baseRect;
 
-            var existingRects = GraphView?.graphElements?
-                .OfType<TweenityNode>()
-                .Select(n => n.GetPosition())
-                .ToList() ?? new List<Rect>();
+            var existingRects = (GraphView != null)
+                ? GraphView.graphElements.OfType<TweenityNode>().Select(n => n.GetPosition()).ToList()
+                : new List<Rect>();
 
             int attempts = 0;
             while (existingRects.Any(r => r.Overlaps(position)))
@@ -268,6 +267,12 @@ namespace Controllers
             ConnectNodes(pendingSourceNodeId, targetId);
             pendingSourceNodeId = null;
         }
+        public void CancelConnection()
+        {
+            pendingSourceNodeId = null;
+            onTargetNodeSelected = null;
+        }
+
 
         public (bool, string) ChangeNodeType(TweenityNodeModel oldModel, NodeType newType)
         {

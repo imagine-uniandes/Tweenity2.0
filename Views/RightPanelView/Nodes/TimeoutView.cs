@@ -59,11 +59,13 @@ namespace Views.RightPanel
             {
                 var timeoutBtn = new Button(() =>
                 {
-                    controller.StartConnectionFrom(typedModel.NodeID, (targetId) =>
+                    controller.StartConnectionFrom(typedModel.NodeID, targetId =>
                     {
                         typedModel.ConnectTo(targetId, "Timeout", "onTimeout");
                         controller.GraphView.RenderConnections();
-                        controller.OnNodeSelected(typedModel); // refresh panel
+
+                        controller.CancelConnection();               
+                        controller.OnNodeSelected(typedModel);    
                     });
                 })
                 {
@@ -78,11 +80,13 @@ namespace Views.RightPanel
             {
                 var successBtn = new Button(() =>
                 {
-                    controller.StartConnectionFrom(typedModel.NodeID, (targetId) =>
+                    controller.StartConnectionFrom(typedModel.NodeID, targetId =>
                     {
                         typedModel.ConnectTo(targetId, "Success", "onSuccess");
                         controller.GraphView.RenderConnections();
-                        controller.OnNodeSelected(typedModel);
+
+                        controller.CancelConnection();             
+                        controller.OnNodeSelected(typedModel);       
                     });
                 })
                 {

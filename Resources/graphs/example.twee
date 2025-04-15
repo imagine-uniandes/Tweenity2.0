@@ -1,0 +1,170 @@
+:: Emergency Meeting [start] {"position":"-242,95","id":"start-001"}
+Welcome to the Skeld
+@
+null
+null
+[{"label":"Head to Electrical","trigger":"","target":"reminder-001"}]
+
+:: Nuclear  Meltdown [reminder] {"position":"36,96","id":"reminder-001"}
+Wires are fried. Power fluctuations 
+are affecting the entire ship.
+@
+
+0
+[{"label":"Wires fixed","trigger":"","target":"choice-001"}]
+
+:: Decide Where to Go [multiplechoice] {"position":"318,97","id":"choice-001"}
+Where should you investigate next?
+@
+
+null
+[{"label":"Check Security cameras","trigger":"","target":"dialogue-001"},{"label":"Head to Reactor","trigger":"","target":"timeout-001"},{"label":"Ask crew to split up","trigger":"","target":"random-001"}]
+
+:: Camera Clues [dialogue] {"position":"564,-164","id":"dialogue-001"}
+You spot Red loitering near a vent. Cyan joins you.
+@
+Cyan asks you waht you saw?
+null
+[{"label":"Tell Cyan what you saw","trigger":"","target":"notype-001"},{"label":"Keep it to yourself","trigger":"","target":"choice-002"}]
+
+:: Reactor Meltdown [timeout] {"position":"561,98","id":"timeout-001"}
+Reactor is unstable. 
+Complete the meltdown protocol in time!
+@
+
+0
+[{"label":"Stabilized","trigger":"onSuccess","target":"choice-003"},{"label":"Meltdown","trigger":"onTimeout","target":"end-fail-001"}]
+
+:: Assign Crew Tasks [random] {"position":"563,424","id":"random-001"}
+The crew splits up to do tasks.
+@
+null
+null
+[{"label":"Assigned to Medbay","trigger":"","target":"choice-002"},{"label":"Assigned to Navigation","trigger":"","target":"dialogue-002"},{"label":"Assigned to Shields","trigger":"","target":"reminder-002"}]
+
+:: Talk to Cyan [multiplechoice] {"position":"976,-28","id":"choice-002"}
+Cyan seems unsure. What do you suggest?
+@
+
+null
+[{"label":"Let’s stick together","trigger":"","target":"end-fail-002"},{"label":"Let’s split up and cover more ground","trigger":"","target":"notype-001"}]
+
+:: Navigation Logs [dialogue] {"position":"867,269","id":"dialogue-002"}
+You find a suspicious log in Navigation. Green says it’s a glitch.
+@
+
+null
+[{"label":"Believe Green","trigger":"","target":"end-success-001"},{"label":"Report Green","trigger":"","target":"choice-004"}]
+
+:: Shield Repairs [reminder] {"position":"869,562","id":"reminder-002"}
+Fix the broken shields to protect the ship from asteroids.
+@
+
+0
+[{"label":"Return to Cafeteria","trigger":"","target":"choice-004"}]
+
+:: Plan With Cyan [notype] {"position":"1136,-165","id":"notype-001"}
+You and Cyan agree to keep an eye on Red next round.
+@
+null
+null
+[{"label":"Watch Red together","trigger":"","target":"end-success-002"}]
+
+:: Choose Exit Path [multiplechoice] {"position":"866,100","id":"choice-003"}
+Which path will you take to escape Reactor?
+@
+
+null
+[{"label":"Back through Cafeteria","trigger":"","target":"end-success-003"},{"label":"Vents (risky)","trigger":"","target":"timeout-002"}]
+
+:: Cafeteria Choices [multiplechoice] {"position":"1312,331","id":"choice-004"}
+Everyone gathers in Cafeteria. What now?
+@
+
+null
+[{"label":"Call another meeting","trigger":"","target":"timeout-003"},{"label":"Finish tasks","trigger":"","target":"end-success-003"},{"label":"Vote Green","trigger":"","target":"end-success-004"}]
+
+:: Risky Vent Route [timeout] {"position":"1283,102","id":"timeout-002"}
+You sneak into a vent. Hope no impostor catches you.
+@
+
+0
+[{"label":"Caught in the vent","trigger":"onTimeout","target":"end-fail-003"},{"label":"Success","trigger":"onSuccess","target":"3e08ad8c-a614-4608-adb0-767d2e31b1f0"}]
+
+:: Meeting Interrupted [timeout] {"position":"1467,623","id":"timeout-003"}
+Trying to call a meeting... wait, the lights go out!
+@
+
+0
+[{"label":"Meeting called","trigger":"onSuccess","target":"end-success-006"},{"label":"Too late","trigger":"onTimeout","target":"end-fail-004"}]
+
+:: Reactor Meltdown [end] {"position":"688,-22","id":"end-fail-001"}
+Reactor exploded. You were too late.
+@
+null
+null
+[]
+
+:: Cyan Betrays You [end] {"position":"1256,-31","id":"end-fail-002"}
+Cyan was the impostor. You trusted the wrong crewmate.
+@
+null
+null
+[]
+
+:: Impostor Gets You [end] {"position":"1769,92","id":"end-fail-003"}
+You were caught alone in the vent. Game over.
+@
+null
+null
+[]
+
+:: Blackout Ambush [end] {"position":"1931,481","id":"end-fail-004"}
+The lights went out, and you were taken out.
+@
+null
+null
+[]
+
+:: Trusted Green [end] {"position":"874,406","id":"end-success-001"}
+Green was innocent. You kept the ship stable.
+@
+null
+null
+[]
+
+:: Surveillance Wins [end] {"position":"1601,-162","id":"end-success-002"}
+You caught Red in the act on cams. Good call.
+@
+null
+null
+[]
+
+:: Tasks Complete [end] {"position":"1472,213","id":"end-success-003"}
+Everyone finished their tasks. Impostors failed.
+@
+null
+null
+[]
+
+:: Emergency Eject [end] {"position":"1634,330","id":"end-success-004"}
+Green was the impostor. Well spotted.
+@
+null
+null
+[]
+
+:: Meeting Saved Everyone [end] {"position":"1927,626","id":"end-success-006"}
+Your emergency meeting prevented a disaster.
+@
+null
+null
+[]
+
+:: Screen fade to black [notype] {"position":"1809,-28","id":"3e08ad8c-a614-4608-adb0-767d2e31b1f0"}
+The simulation restarts
+@
+null
+null
+[{"label":"Next","trigger":"","target":"choice-001"}]
+

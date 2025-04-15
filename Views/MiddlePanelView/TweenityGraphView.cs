@@ -7,6 +7,7 @@ using System;
 using Views.MiddlePanel;
 using Models;
 using UnityEditor;
+using Controllers;
 
 namespace Views
 {
@@ -36,29 +37,32 @@ namespace Views
                 {
                     foreach (var element in change.elementsToRemove)
                     {
-                        if (element is Edge edge)
+                        switch (element)
                         {
-                            if (edge.output?.node is TweenityNode outputNode &&
-                                edge.input?.node is TweenityNode inputNode)
-                            {
-                                string fromId = outputNode.NodeID;
-                                string toId = inputNode.NodeID;
-
-                                Debug.Log($"[GraphView] Removing edge from {fromId} to {toId}");
-
-                                var fromModel = outputNode.NodeModel;
-                                if (fromModel != null)
+                            case Edge edge:
+                                if (edge.output?.node is TweenityNode outputNode &&
+                                    edge.input?.node is TweenityNode inputNode)
                                 {
-                                    fromModel.DisconnectFrom(toId);
-                                    Debug.Log($"[GraphView] Removed model connection: {fromId} -> {toId}");
+                                    string fromId = outputNode.NodeID;
+                                    string toId = inputNode.NodeID;
+
+                                    outputNode.NodeModel?.DisconnectFrom(toId);
+                                    Debug.Log($"[GraphViewChanged] Removed model connection: {fromId} -> {toId}");
                                 }
-                            }
+                                break;
+
+                            case TweenityNode node:
+                                string nodeId = node.NodeID;
+                                Debug.Log($"[GraphViewChanged] Removing node: {nodeId}");
+                                _controller?.RemoveNode(nodeId); 
+                                break;
                         }
                     }
                 }
+
                 return change;
             };
-
+            
             RegisterCallback<KeyDownEvent>(evt =>
             {
                 if (evt.keyCode is KeyCode.Delete or KeyCode.Backspace)
