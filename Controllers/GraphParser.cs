@@ -7,16 +7,6 @@ using System;
 using UnityEngine;
 using System.Linq;
 
-// Schema
-// :: Title [type] {"position":"x,y","id":"node-id"}
-// <descripción>                   ← Texto libre opcional (puede ser vacío)
-// @
-// <campo especial 1 o null>      ← e.g. DialogueText, Question, ReminderText, TimeoutCondition
-// <campo especial 2 o null>      ← e.g. ReminderTimer, TimeoutDuration
-// [{"label":"...", "trigger":"...", "target":"..."}, ...] ← lista JSON de paths salientes
-
-
-
 namespace Controllers
 {
     public static class GraphParser
@@ -27,21 +17,16 @@ namespace Controllers
 
             foreach (var node in nodes)
             {
-                // Header: Title, Type, Metadata (position + id)
                 string pos = $"{node.Position.x},{node.Position.y}";
                 string id = node.NodeID;
                 twee.Append(":: ").Append(node.Title)
-                    .Append(" [").Append(node.Type.ToString().ToLower()).Append("]")
-                    .Append($" {{\"position\":\"{pos}\",\"id\":\"{id}\"}}")
+                    .Append(" [").Append(node.Type.ToString().ToLower()).Append("] ")
+                    .Append($"{{\"position\":\"{pos}\",\"id\":\"{id}\"}}")
                     .AppendLine();
 
-                // Body text (description)
                 twee.AppendLine(node.Description ?? "");
-
-                // Separator
                 twee.AppendLine("@");
 
-                // Special field 1 (question, dialogue, reminder text, timeout condition)
                 string specialField1 = "null";
                 switch (node)
                 {
@@ -58,9 +43,8 @@ namespace Controllers
                         specialField1 = timeout.Condition;
                         break;
                 }
-                twee.AppendLine(specialField1 ?? "null");
+                twee.AppendLine($"- {specialField1 ?? "null"}");
 
-                // Special field 2 (reminder timer or timeout duration)
                 string specialField2 = "null";
                 switch (node)
                 {
@@ -71,68 +55,70 @@ namespace Controllers
                         specialField2 = timeout.TimeoutDuration.ToString();
                         break;
                 }
-                twee.AppendLine(specialField2);
+                twee.AppendLine($"- {specialField2}");
 
-                // Outgoing paths as JSON list
                 var pathJsons = node.OutgoingPaths.Select(path =>
                     $"{{\"label\":\"{path.Label}\",\"trigger\":\"{path.Trigger}\",\"target\":\"{path.TargetNodeID}\"}}"
                 );
                 twee.AppendLine("[" + string.Join(",", pathJsons) + "]");
-
-                // Separate nodes
                 twee.AppendLine();
             }
 
             return twee.ToString();
         }
 
-
         public static List<TweenityNodeModel> ImportFromTwee(string tweeContent)
         {
             var nodes = new List<TweenityNodeModel>();
-            var passageRegex = new Regex(@":: (.*?) \[(.*?)\] \{\""position\"":\""(.*?),(.*?)\"".*?\""id\"":\""(.*?)\""\}", RegexOptions.Multiline);
-            var allPassages = tweeContent.Split(new[] { ":: " }, StringSplitOptions.RemoveEmptyEntries);
+            var nodeBlocks = tweeContent.Split(new[] { ":: " }, StringSplitOptions.RemoveEmptyEntries);
+            var headerRegex = new Regex(@"^(.*?) \[(.*?)\] \{\""position\"":\""(.*?),(.*?)\"".*?\""id\"":\""(.*?)\""\}");
 
-            foreach (var rawPassage in allPassages)
+            foreach (var rawBlock in nodeBlocks)
             {
-                var lines = rawPassage.Split('\n').ToList();
+                var lines = rawBlock.Split('\n').ToList();
                 if (lines.Count == 0) continue;
 
-                // Parse header
-                var headerMatch = passageRegex.Match(":: " + lines[0]);
+                var headerMatch = headerRegex.Match(lines[0]);
                 if (!headerMatch.Success) continue;
 
                 string title = headerMatch.Groups[1].Value.Trim();
                 string typeStr = headerMatch.Groups[2].Value.Trim();
-                string x = headerMatch.Groups[3].Value.Trim();
-                string y = headerMatch.Groups[4].Value.Trim();
+                float x = float.Parse(headerMatch.Groups[3].Value.Trim());
+                float y = float.Parse(headerMatch.Groups[4].Value.Trim());
                 string nodeId = headerMatch.Groups[5].Value.Trim();
 
                 Enum.TryParse(typeStr, true, out NodeType type);
-                Vector2 pos = new Vector2(float.Parse(x), float.Parse(y));
+                Vector2 position = new Vector2(x, y);
 
-                // Break passage into blocks
-                var bodySplit = rawPassage.Substring(lines[0].Length).Split(new[] { "\n@" }, StringSplitOptions.None);
-                string description = bodySplit.Length > 0 ? bodySplit[0].Trim() : "";
+                int atIndex = lines.FindIndex(l => l.Trim() == "@");
+                string description = atIndex >= 1
+                    ? string.Join("\n", lines.Skip(1).Take(atIndex - 1)).Trim()
+                    : "";
+
                 string special1 = "null";
                 string special2 = "null";
                 string pathJson = "[]";
 
-                if (bodySplit.Length > 1)
+                for (int i = atIndex + 1; i < lines.Count; i++)
                 {
-                    var afterAtLines = bodySplit[1].Split('\n');
-
-                    if (afterAtLines.Length > 0)
-                        special1 = afterAtLines[0].Trim();
-
-                    if (afterAtLines.Length > 1)
-                        special2 = afterAtLines[1].Trim();
-
-                    if (afterAtLines.Length > 2)
-                        pathJson = string.Join("\n", afterAtLines.Skip(2)).Trim();
+                    string line = lines[i].Trim();
+                    if (line.StartsWith("- "))
+                    {
+                        if (special1 == "null") special1 = line.Substring(2).Trim();
+                        else if (special2 == "null") special2 = line.Substring(2).Trim();
+                    }
+                    else if (line.StartsWith("{") || line.StartsWith("["))
+                    {
+                        pathJson = string.Join("\n", lines.Skip(i)).Trim();
+                        break;
+                    }
+                    else
+                    {
+                        if (special2 != "null") special2 += "\n" + line;
+                        else if (special1 != "null") special1 += "\n" + line;
+                    }
                 }
 
-                // Parse paths
                 var paths = new List<PathData>();
                 var pathRegex = new Regex(@"\{""label"":""(.*?)"",""trigger"":""(.*?)"",""target"":""(.*?)""\}");
                 foreach (Match m in pathRegex.Matches(pathJson))
@@ -140,7 +126,6 @@ namespace Controllers
                     paths.Add(new PathData(m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value));
                 }
 
-                // Create model
                 TweenityNodeModel node = type switch
                 {
                     NodeType.Dialogue       => new DialogueNodeModel(title),
@@ -154,18 +139,22 @@ namespace Controllers
                 };
 
                 node.NodeID = nodeId;
-                node.Position = pos;
+                node.Position = position;
                 node.Description = description;
                 node.OutgoingPaths = paths;
 
-                // Parse special fields
-                if (node is DialogueNodeModel d && special1 != "null") d.DialogueText = special1;
-                if (node is MultipleChoiceNodeModel mc && special1 != "null") mc.Question = special1;
+                if (node is DialogueNodeModel d && special1 != "null")
+                    d.DialogueText = special1;
+
+                if (node is MultipleChoiceNodeModel mc && special1 != "null")
+                    mc.Question = special1;
+
                 if (node is ReminderNodeModel r)
                 {
                     if (special1 != "null") r.ReminderText = special1;
                     if (float.TryParse(special2, out var timer)) r.ReminderTimer = timer;
                 }
+
                 if (node is TimeoutNodeModel to)
                 {
                     if (special1 != "null") to.Condition = special1;
@@ -177,7 +166,5 @@ namespace Controllers
 
             return nodes;
         }
-
-
     }
 }

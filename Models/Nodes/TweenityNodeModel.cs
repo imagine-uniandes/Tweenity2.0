@@ -11,11 +11,11 @@ namespace Models.Nodes
         public string Description { get; set; }
         public NodeType Type { get; set; }
 
-        // Nuevo: posición del nodo en el grafo
         public Vector2 Position { get; set; }
 
-        // Nuevo: todas las salidas ahora son PathData
         public List<PathData> OutgoingPaths { get; set; }
+
+        public List<string> RuntimeInstructions { get; set; }
 
         public TweenityNodeModel(string title, NodeType type)
         {
@@ -25,6 +25,7 @@ namespace Models.Nodes
             Description = "";
             OutgoingPaths = new List<PathData>();
             Position = Vector2.zero;
+            RuntimeInstructions = new List<string>();
         }
 
         public void ConnectTo(string targetNodeID, string label = "Next", string trigger = "")

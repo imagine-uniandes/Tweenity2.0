@@ -18,6 +18,14 @@ namespace Views
 
         private GraphController _controller;
 
+        public bool _editingEnabled = true;
+        private ContentDragger _contentDragger;
+        private SelectionDragger _selectionDragger;
+        private RectangleSelector _rectangleSelector;
+
+        private Label _runtimeLabel;
+
+
         public TweenityGraphView()
         {
             this.style.flexGrow = 1;
@@ -53,7 +61,7 @@ namespace Views
 
                             case TweenityNode node:
                                 string nodeId = node.NodeID;
-                                Debug.Log($"[GraphViewChanged] Removing node: {nodeId}");
+                                Debug.Log($"[GraphViewChanged] Removing node: {nodeId}"); 
                                 _controller?.RemoveNode(nodeId); 
                                 break;
                         }
@@ -62,9 +70,10 @@ namespace Views
 
                 return change;
             };
-            
             RegisterCallback<KeyDownEvent>(evt =>
             {
+                if (!_editingEnabled) return; // ← PROTECCIÓN
+
                 if (evt.keyCode is KeyCode.Delete or KeyCode.Backspace)
                 {
                     var selectedNodes = selection.OfType<TweenityNode>().ToList();
@@ -84,6 +93,14 @@ namespace Views
                     evt.StopPropagation();
                 }
             });
+
+            _contentDragger = new ContentDragger();
+            _selectionDragger = new SelectionDragger();
+            _rectangleSelector = new RectangleSelector();
+
+            this.AddManipulator(_contentDragger);
+            this.AddManipulator(_selectionDragger);
+            this.AddManipulator(_rectangleSelector);
         }
 
         public void SetController(GraphController controller)
@@ -103,7 +120,7 @@ namespace Views
 
                 visualNode.RegisterCallback<MouseDownEvent>(evt =>
                 {
-                    if (evt.button == 0)
+                    if (_editingEnabled && evt.button == 0)
                     {
                         OnNodeSelected?.Invoke(nodeModel);
                     }
@@ -254,5 +271,44 @@ namespace Views
             this.transform.position = Vector3.zero;
             this.transform.scale = Vector3.one;
         }
+        public void SetEditingEnabled(bool enabled)
+        {
+            _editingEnabled = enabled;
+
+            // Toggle manipulators
+            if (_contentDragger != null) this.RemoveManipulator(_contentDragger);
+            if (_selectionDragger != null) this.RemoveManipulator(_selectionDragger);
+            if (_rectangleSelector != null) this.RemoveManipulator(_rectangleSelector);
+
+            if (enabled)
+            {
+                _contentDragger = new ContentDragger();
+                _selectionDragger = new SelectionDragger();
+                _rectangleSelector = new RectangleSelector();
+
+                this.AddManipulator(_contentDragger);
+                this.AddManipulator(_selectionDragger);
+                this.AddManipulator(_rectangleSelector);
+            }
+
+            // Mostrar u ocultar mensaje de runtime
+            if (_runtimeLabel == null)
+            {
+                _runtimeLabel = new Label("⚠ La edición está deshabilitada durante la ejecución de la simulación.");
+                _runtimeLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                _runtimeLabel.style.color = Color.yellow;
+                _runtimeLabel.style.marginTop = 4;
+                _runtimeLabel.style.marginBottom = 4;
+                _runtimeLabel.style.alignSelf = Align.Center;
+                _runtimeLabel.style.display = DisplayStyle.None;
+                _runtimeLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+
+                // Lo insertamos después del fondo
+                this.Insert(1, _runtimeLabel);
+            }
+
+            _runtimeLabel.style.display = enabled ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
     }
 }

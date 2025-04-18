@@ -21,6 +21,11 @@ namespace Controllers
         private VisualElement rightPanelRoot;
         private string lastSavedPath;
 
+        public bool IsEditingEnabled => _editingEnabled;
+
+        private SimulationRuntimeEngine runtimeEngine;
+        private bool isSimulationRunning = false;
+
         public GraphController() {}
 
         public void SetGraphView(TweenityGraphView graphView)
@@ -46,6 +51,8 @@ namespace Controllers
 
         public void RemoveNode(string nodeId)
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+
             CleanupConnectionsTo(nodeId);
 
             var node = Graph.GetNode(nodeId);
@@ -57,12 +64,12 @@ namespace Controllers
                 }
             }
 
-            GraphView?.RemoveNodeFromView(nodeId);
+            GraphView.RemoveNodeFromView(nodeId);
             Graph.RemoveNode(nodeId);
 
-            GraphView?.RenderConnections();
+            GraphView.RenderConnections();
             foreach (var n in Graph.Nodes)
-                GraphView?.RefreshNodeVisual(n.NodeID);
+                GraphView.RefreshNodeVisual(n.NodeID);
         }
 
         private void CleanupConnectionsTo(string deletedNodeId)
@@ -119,15 +126,19 @@ namespace Controllers
 
         public void UpdateNodeTitle(TweenityNodeModel model, string newTitle)
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+
             model.Title = newTitle;
-            GraphView?.UpdateNodeTitle(model.NodeID, newTitle);
-            GraphView?.RefreshNodeVisual(model.NodeID);
+            GraphView.UpdateNodeTitle(model.NodeID, newTitle);
+            GraphView.RefreshNodeVisual(model.NodeID);
         }
 
         public void UpdateNodeDescription(TweenityNodeModel model, string newDescription)
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+
             model.Description = newDescription;
-            GraphView?.RefreshNodeVisual(model.NodeID);
+            GraphView.RefreshNodeVisual(model.NodeID);
         }
 
         public void SaveCurrentGraph()
@@ -188,13 +199,14 @@ namespace Controllers
 
         public void CreateNewNode()
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+
             var newNode = new NoTypeNodeModel("New Node");
             Rect baseRect = new Rect(200, 200, 150, 200);
             Rect position = baseRect;
 
-            var existingRects = (GraphView != null)
-                ? GraphView.graphElements.OfType<TweenityNode>().Select(n => n.GetPosition()).ToList()
-                : new List<Rect>();
+            var existingRects = GraphView.graphElements.OfType<TweenityNode>()
+                .Select(n => n.GetPosition()).ToList();
 
             int attempts = 0;
             while (existingRects.Any(r => r.Overlaps(position)))
@@ -206,11 +218,13 @@ namespace Controllers
             newNode.Position = position.position;
 
             if (Graph.AddNode(newNode))
-                GraphView?.RenderNode(newNode, position);
+                GraphView.RenderNode(newNode, position);
         }
 
         public void ConnectNodes(string fromNodeId, string toNodeId)
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+
             var fromNode = Graph.GetNode(fromNodeId);
             var toNode = Graph.GetNode(toNodeId);
 
@@ -219,30 +233,32 @@ namespace Controllers
 
             if (fromNode.Type == NodeType.End)
             {
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
                 EditorUtility.DisplayDialog("Invalid Connection", "End nodes cannot have outgoing connections.", "OK");
-#endif
+        #endif
                 return;
             }
 
             if ((fromNode.Type == NodeType.Start || fromNode.Type == NodeType.NoType || fromNode.Type == NodeType.Reminder) &&
                 fromNode.OutgoingPaths.Count >= 1)
             {
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
                 EditorUtility.DisplayDialog("Connection Limit Reached", $"{fromNode.Type} nodes can only have one outgoing connection.", "OK");
-#endif
+        #endif
                 return;
             }
 
             if (!fromNode.IsConnectedTo(toNodeId))
             {
                 fromNode.ConnectTo(toNodeId);
-                GraphView?.RenderConnections();
+                GraphView.RenderConnections();
             }
         }
 
         public void DisconnectNodes(string fromNodeId, string toNodeId)
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+
             var fromNode = Graph.GetNode(fromNodeId);
             if (fromNode != null && fromNode.IsConnectedTo(toNodeId))
             {
@@ -276,12 +292,14 @@ namespace Controllers
 
         public (bool, string) ChangeNodeType(TweenityNodeModel oldModel, NodeType newType)
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return (false, "Editing is disabled.");
+
             if (oldModel.Type == newType) return (true, null);
 
             if (newType == NodeType.Start && Graph.Nodes.Any(n => n.Type == NodeType.Start && n.NodeID != oldModel.NodeID))
                 return (false, "Only one Start node is allowed in the graph.");
 
-            Vector2 pos = GraphView?.graphElements
+            Vector2 pos = GraphView.graphElements
                 .OfType<TweenityNode>()
                 .FirstOrDefault(n => n.NodeID == oldModel.NodeID)
                 ?.GetPosition().position ?? new Vector2(200, 200);
@@ -304,11 +322,10 @@ namespace Controllers
             newModel.Position = pos;
 
             Graph.AddNode(newModel);
-            GraphView?.RenderNode(newModel, new Rect(pos, new Vector2(150, 200)));
+            GraphView.RenderNode(newModel, new Rect(pos, new Vector2(150, 200)));
             OnNodeSelected(newModel);
             return (true, null);
         }
-
         public void DebugGraph()
         {
             foreach (var node in Graph.Nodes)
@@ -348,32 +365,75 @@ namespace Controllers
 
         public void UpdateReminderText(ReminderNodeModel model, string newText)
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+
             model.ReminderText = newText;
-            GraphView?.RefreshNodeVisual(model.NodeID);
+            GraphView.RefreshNodeVisual(model.NodeID);
         }
 
         public void UpdateReminderTimer(ReminderNodeModel model, float newTimer)
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+
             model.ReminderTimer = newTimer;
-            GraphView?.RefreshNodeVisual(model.NodeID);
+            GraphView.RefreshNodeVisual(model.NodeID);
         }
 
         public void AddRandomPath(RandomNodeModel model)
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+
             model.OutgoingPaths.Add(new PathData($"Path {model.OutgoingPaths.Count + 1}"));
-            GraphView?.RefreshNodeVisual(model.NodeID);
+            GraphView.RefreshNodeVisual(model.NodeID);
         }
 
         public void UpdateDialogueText(DialogueNodeModel model, string newText)
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+
             model.DialogueText = newText;
-            GraphView?.RefreshNodeVisual(model.NodeID);
+            GraphView.RefreshNodeVisual(model.NodeID);
         }
 
         public void AddDialogueResponse(DialogueNodeModel model)
         {
+            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+
             model.AddResponse($"Response {model.OutgoingPaths.Count + 1}");
-            GraphView?.RefreshNodeVisual(model.NodeID);
+            GraphView.RefreshNodeVisual(model.NodeID);
         }
+        public void StartRuntime()
+        {
+            if (isSimulationRunning || GraphView == null)
+            {
+                Debug.LogWarning("Runtime already running or graphView not set.");
+                return;
+            }
+
+            isSimulationRunning = true;
+
+            // Bloquear edición y mostrar mensaje
+            GraphView.SetEditingEnabled(false);
+
+            // Buscar nodo de inicio
+            var startNode = Graph.Nodes.FirstOrDefault(n => n.Type == NodeType.Start);
+            if (startNode == null)
+            {
+                Debug.LogError("No Start node found in the graph.");
+                return;
+            }
+
+            // Instanciar el motor de ejecución
+            runtimeEngine = new SimulationRuntimeEngine(Graph, this, HighlightNode);
+            runtimeEngine.RunFrom(startNode);
+        }
+        public void StopRuntime()
+        {
+            if (!isSimulationRunning) return;
+            isSimulationRunning = false;
+            GraphView.SetEditingEnabled(true);
+            runtimeEngine = null;
+        }
+
     }
 }
