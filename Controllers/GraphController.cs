@@ -21,9 +21,9 @@ namespace Controllers
         private VisualElement rightPanelRoot;
         private string lastSavedPath;
 
-        public bool IsEditingEnabled => _editingEnabled;
+        public bool IsEditingEnabled { get; set; } = true;
 
-        private SimulationRuntimeEngine runtimeEngine;
+        // private SimulationRuntimeEngine runtimeEngine;
         private bool isSimulationRunning = false;
 
         public GraphController() {}
@@ -35,6 +35,12 @@ namespace Controllers
 
         public bool AddNode(TweenityNodeModel node)
         {
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] AddNode blocked — editing is disabled.");
+                return false;
+            }
+
             Debug.Log($"[GraphController]  AddNode called for: {node.Title} | ID: {node.NodeID}");
 
             if (Graph.AddNode(node))
@@ -51,7 +57,13 @@ namespace Controllers
 
         public void RemoveNode(string nodeId)
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] RemoveNode blocked — editing is disabled.");
+                return;
+            }
+
+            if (GraphView == null) return;
 
             CleanupConnectionsTo(nodeId);
 
@@ -74,6 +86,12 @@ namespace Controllers
 
         private void CleanupConnectionsTo(string deletedNodeId)
         {
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] CleanupConnectionsTo blocked — editing is disabled.");
+                return;
+            }
+
             foreach (var node in Graph.Nodes)
             {
                 if (node.IsConnectedTo(deletedNodeId))
@@ -126,7 +144,13 @@ namespace Controllers
 
         public void UpdateNodeTitle(TweenityNodeModel model, string newTitle)
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] UpdateNodeTitle blocked — editing is disabled.");
+                return;
+            }
+
+            if (GraphView == null) return;
 
             model.Title = newTitle;
             GraphView.UpdateNodeTitle(model.NodeID, newTitle);
@@ -135,7 +159,13 @@ namespace Controllers
 
         public void UpdateNodeDescription(TweenityNodeModel model, string newDescription)
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] UpdateNodeDescription blocked — editing is disabled.");
+                return;
+            }
+
+            if (GraphView == null) return;
 
             model.Description = newDescription;
             GraphView.RefreshNodeVisual(model.NodeID);
@@ -199,14 +229,22 @@ namespace Controllers
 
         public void CreateNewNode()
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] CreateNewNode blocked — editing is disabled.");
+                return;
+            }
+
+            if (GraphView == null) return;
 
             var newNode = new NoTypeNodeModel("New Node");
             Rect baseRect = new Rect(200, 200, 150, 200);
             Rect position = baseRect;
 
-            var existingRects = GraphView.graphElements.OfType<TweenityNode>()
-                .Select(n => n.GetPosition()).ToList();
+            var existingRects = GraphView.graphElements
+                .OfType<TweenityNode>()
+                .Select(n => n.GetPosition())
+                .ToList();
 
             int attempts = 0;
             while (existingRects.Any(r => r.Overlaps(position)))
@@ -223,7 +261,13 @@ namespace Controllers
 
         public void ConnectNodes(string fromNodeId, string toNodeId)
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] ConnectNodes blocked — editing is disabled.");
+                return;
+            }
+
+            if (GraphView == null) return;
 
             var fromNode = Graph.GetNode(fromNodeId);
             var toNode = Graph.GetNode(toNodeId);
@@ -257,7 +301,13 @@ namespace Controllers
 
         public void DisconnectNodes(string fromNodeId, string toNodeId)
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] DisconnectNodes blocked — editing is disabled.");
+                return;
+            }
+
+            if (GraphView == null) return;
 
             var fromNode = Graph.GetNode(fromNodeId);
             if (fromNode != null && fromNode.IsConnectedTo(toNodeId))
@@ -271,12 +321,25 @@ namespace Controllers
 
         public void StartConnectionFrom(string sourceNodeId, Action<string> onTargetSelected)
         {
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] StartConnectionFrom blocked — editing is disabled.");
+                return;
+            }
+
             pendingSourceNodeId = sourceNodeId;
             onTargetNodeSelected = onTargetSelected;
         }
 
         public void TryConnectTo(string targetId)
         {
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] TryConnectTo blocked — editing is disabled.");
+                pendingSourceNodeId = null; // ensure we clean up state
+                return;
+            }
+
             if (string.IsNullOrEmpty(pendingSourceNodeId) || pendingSourceNodeId == targetId)
                 return;
 
@@ -292,8 +355,13 @@ namespace Controllers
 
         public (bool, string) ChangeNodeType(TweenityNodeModel oldModel, NodeType newType)
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return (false, "Editing is disabled.");
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] ChangeNodeType blocked — editing is disabled.");
+                return (false, "Editing is disabled.");
+            }
 
+            if (GraphView == null) return (false, "GraphView not available.");
             if (oldModel.Type == newType) return (true, null);
 
             if (newType == NodeType.Start && Graph.Nodes.Any(n => n.Type == NodeType.Start && n.NodeID != oldModel.NodeID))
@@ -326,6 +394,7 @@ namespace Controllers
             OnNodeSelected(newModel);
             return (true, null);
         }
+
         public void DebugGraph()
         {
             foreach (var node in Graph.Nodes)
@@ -365,7 +434,13 @@ namespace Controllers
 
         public void UpdateReminderText(ReminderNodeModel model, string newText)
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] UpdateReminderText blocked — editing is disabled.");
+                return;
+            }
+
+            if (GraphView == null) return;
 
             model.ReminderText = newText;
             GraphView.RefreshNodeVisual(model.NodeID);
@@ -373,7 +448,13 @@ namespace Controllers
 
         public void UpdateReminderTimer(ReminderNodeModel model, float newTimer)
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] UpdateReminderTimer blocked — editing is disabled.");
+                return;
+            }
+
+            if (GraphView == null) return;
 
             model.ReminderTimer = newTimer;
             GraphView.RefreshNodeVisual(model.NodeID);
@@ -381,7 +462,13 @@ namespace Controllers
 
         public void AddRandomPath(RandomNodeModel model)
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] AddRandomPath blocked — editing is disabled.");
+                return;
+            }
+
+            if (GraphView == null) return;
 
             model.OutgoingPaths.Add(new PathData($"Path {model.OutgoingPaths.Count + 1}"));
             GraphView.RefreshNodeVisual(model.NodeID);
@@ -389,7 +476,13 @@ namespace Controllers
 
         public void UpdateDialogueText(DialogueNodeModel model, string newText)
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] UpdateDialogueText blocked — editing is disabled.");
+                return;
+            }
+
+            if (GraphView == null) return;
 
             model.DialogueText = newText;
             GraphView.RefreshNodeVisual(model.NodeID);
@@ -397,43 +490,91 @@ namespace Controllers
 
         public void AddDialogueResponse(DialogueNodeModel model)
         {
-            if (GraphView == null || !GraphView.IsEditingEnabled) return;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] AddDialogueResponse blocked — editing is disabled.");
+                return;
+            }
+
+            if (GraphView == null) return;
 
             model.AddResponse($"Response {model.OutgoingPaths.Count + 1}");
             GraphView.RefreshNodeVisual(model.NodeID);
         }
-        public void StartRuntime()
+
+        public void SetTriggerForDialogueResponse(DialogueNodeModel model, int index, string trigger)
         {
-            if (isSimulationRunning || GraphView == null)
+            if (!IsEditingEnabled)
             {
-                Debug.LogWarning("Runtime already running or graphView not set.");
+                Debug.LogWarning("[GraphController] SetTriggerForDialogueResponse blocked — editing is disabled.");
                 return;
             }
 
-            isSimulationRunning = true;
+            model.SetTriggerForResponse(index, trigger);
+            GraphView?.RefreshNodeVisual(model.NodeID);
+        }
 
-            // Bloquear edición y mostrar mensaje
-            GraphView.SetEditingEnabled(false);
-
-            // Buscar nodo de inicio
-            var startNode = Graph.Nodes.FirstOrDefault(n => n.Type == NodeType.Start);
-            if (startNode == null)
+        public void SetTriggerForMultipleChoiceOption(MultipleChoiceNodeModel model, int index, string trigger)
+        {
+            if (!IsEditingEnabled)
             {
-                Debug.LogError("No Start node found in the graph.");
+                Debug.LogWarning("[GraphController] SetTriggerForMultipleChoiceOption blocked — editing is disabled.");
                 return;
             }
 
-            // Instanciar el motor de ejecución
-            runtimeEngine = new SimulationRuntimeEngine(Graph, this, HighlightNode);
-            runtimeEngine.RunFrom(startNode);
+            model.SetTriggerForOption(index, trigger);
+            GraphView?.RefreshNodeVisual(model.NodeID);
         }
-        public void StopRuntime()
+
+        public void SetTriggerForTimeoutPath(TimeoutNodeModel model, bool isTimeoutPath, string trigger)
         {
-            if (!isSimulationRunning) return;
-            isSimulationRunning = false;
-            GraphView.SetEditingEnabled(true);
-            runtimeEngine = null;
+            if (!IsEditingEnabled)
+            {
+                Debug.LogWarning("[GraphController] SetTriggerForTimeoutPath blocked — editing is disabled.");
+                return;
+            }
+
+            if (isTimeoutPath)
+                model.SetTriggerForTimeout(trigger);
+            else
+                model.SetTriggerForSuccess(trigger);
+
+            GraphView?.RefreshNodeVisual(model.NodeID);
         }
+
+
+        // public void StartRuntime()
+        // {
+        //     if (isSimulationRunning || GraphView == null)
+        //     {
+        //         Debug.LogWarning("Runtime already running or graphView not set.");
+        //         return;
+        //     }
+
+        //     isSimulationRunning = true;
+
+        //     // Bloquear edición y mostrar mensaje
+        //     GraphView.SetEditingEnabled(false);
+
+        //     // Buscar nodo de inicio
+        //     var startNode = Graph.Nodes.FirstOrDefault(n => n.Type == NodeType.Start);
+        //     if (startNode == null)
+        //     {
+        //         Debug.LogError("No Start node found in the graph.");
+        //         return;
+        //     }
+
+        //     // Instanciar el motor de ejecución
+        //     runtimeEngine = new SimulationRuntimeEngine(Graph, this, HighlightNode);
+        //     runtimeEngine.RunFrom(startNode);
+        // }
+        // public void StopRuntime()
+        // {
+        //     if (!isSimulationRunning) return;
+        //     isSimulationRunning = false;
+        //     GraphView.SetEditingEnabled(true);
+        //     runtimeEngine = null;
+        // }
 
     }
 }
