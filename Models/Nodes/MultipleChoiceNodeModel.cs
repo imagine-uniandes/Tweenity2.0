@@ -27,5 +27,14 @@ namespace Models.Nodes
             if (index >= 0 && index < OutgoingPaths.Count)
                 OutgoingPaths[index].TargetNodeID = targetNodeID;
         }
+        public void SetTriggerForOption(int index, string trigger)
+        {
+            if (index >= 0 && index < OutgoingPaths.Count)
+            {
+                OutgoingPaths[index].Trigger = trigger;
+            }
+        }
+
+
     }
 }
