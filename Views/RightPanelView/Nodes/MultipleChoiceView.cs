@@ -1,161 +1,213 @@
-using UnityEngine.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEditor;
+using System.Collections.Generic;
 using Models.Nodes;
 using Controllers;
-using System.Linq;
 
 namespace Views.RightPanel
 {
     public class MultipleChoiceView : TweenityNodeView
     {
-        private ListView _choicesList;
-        private const int MaxChoiceLength = 39;
-
         public MultipleChoiceView(MultipleChoiceNodeModel model, GraphController controller) : base(model, controller)
         {
+            var typedModel = (MultipleChoiceNodeModel)_model;
+
             Add(new Label("Multiple Choice Node Details")
             {
                 style = { unityFontStyleAndWeight = FontStyle.Bold, whiteSpace = WhiteSpace.Normal }
             });
 
-            Add(new Label("Question"));
+            Add(new Label("Question") { style = { whiteSpace = WhiteSpace.Normal } });
 
-            var questionField = new TextField { value = model.Question, multiline = true };
+            var questionField = new TextField { value = typedModel.Question };
             questionField.RegisterValueChangedCallback(evt =>
             {
-                model.Question = evt.newValue;
+                typedModel.Question = evt.newValue;
+                controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
             });
             Add(questionField);
 
-            Add(new Label("Answers"));
-
-            var addChoiceButton = new Button(() =>
+            Add(new Label("Choices")
             {
-                model.OutgoingPaths.Add(new PathData($"Choice {model.OutgoingPaths.Count + 1}"));
-                _choicesList.Rebuild();
-                controller.GraphView.RefreshNodeVisual(model.NodeID);
-            })
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
+            });
+
+            for (int i = 0; i < typedModel.OutgoingPaths.Count; i++)
             {
-                text = "+ Add Answer"
-            };
-            Add(addChoiceButton);
+                int index = i;
+                var path = typedModel.OutgoingPaths[index];
 
-            _choicesList = new ListView(model.OutgoingPaths, 90, () =>
-            {
-                var container = new VisualElement
-                {
-                    style = {
-                        flexDirection = FlexDirection.Column,
-                        marginBottom = 10
-                    }
-                };
+                var row = new VisualElement();
+                row.style.marginTop = 6;
+                row.style.flexDirection = FlexDirection.Column;
 
-                var answerField = new TextField
+                var choiceField = new TextField { value = path.Label };
+                choiceField.RegisterValueChangedCallback(evt =>
                 {
-                    multiline = true,
-                    maxLength = MaxChoiceLength,
-                    style = {
-                        whiteSpace = WhiteSpace.Normal,
-                        flexGrow = 0,
-                        overflow = Overflow.Visible,
-                        marginBottom = 2,
-                        minHeight = 20,
-                        backgroundColor = Color.clear,
-                        borderBottomWidth = 0,
-                        borderTopWidth = 0,
-                        borderLeftWidth = 0,
-                        borderRightWidth = 0
-                    }
-                };
-
-                answerField.RegisterCallback<ChangeEvent<string>>(evt =>
-                {
-                    int lineCount = evt.newValue.Count(c => c == '\n') + 1;
-                    answerField.style.height = Mathf.Max(20, lineCount * 18);
+                    typedModel.UpdateChoice(index, evt.newValue);
+                    controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
                 });
+                row.Add(choiceField);
 
-                var buttonRow = new VisualElement
+                var connectedModel = controller.GetNode(path.TargetNodeID);
+                if (string.IsNullOrEmpty(path.TargetNodeID))
                 {
-                    style = {
-                        flexDirection = FlexDirection.Row,
-                        justifyContent = Justify.SpaceBetween
-                    }
-                };
-
-                var triggerButton = new Button(() => Debug.Log("[Trigger]"))
-                {
-                    text = "Trigger",
-                    style = {
-                        flexGrow = 1,
-                        marginRight = 4
-                    }
-                };
-
-                var connectButton = new Button
-                {
-                    text = "Connect",
-                    style = { flexGrow = 1 }
-                };
-
-                buttonRow.Add(triggerButton);
-                buttonRow.Add(connectButton);
-
-                container.Add(answerField);
-                container.Add(buttonRow);
-
-                return container;
-            },
-            (element, i) =>
-            {
-                var container = element as VisualElement;
-                var answerField = container.ElementAt(0) as TextField;
-                var buttonRow = container.ElementAt(1) as VisualElement;
-                var triggerButton = buttonRow.ElementAt(0) as Button;
-                var connectButton = buttonRow.ElementAt(1) as Button;
-
-                var path = model.OutgoingPaths[i];
-                answerField.value = path.Label;
-
-                answerField.RegisterValueChangedCallback(evt =>
-                {
-                    path.Label = evt.newValue.Length > MaxChoiceLength ? evt.newValue.Substring(0, MaxChoiceLength) : evt.newValue;
-                    answerField.SetValueWithoutNotify(path.Label);
-                    controller.GraphView.RefreshNodeVisual(model.NodeID);
-                });
-
-                if (!string.IsNullOrEmpty(path.TargetNodeID))
-                {
-                    var targetName = controller.GetNode(path.TargetNodeID)?.Title ?? "(Unknown)";
-                    connectButton.text = $"→ {targetName}";
-                    connectButton.SetEnabled(false);
+                    var connectBtn = new Button(() =>
+                    {
+                        controller.StartConnectionFrom(typedModel.NodeID, targetId =>
+                        {
+                            typedModel.ConnectChoiceTo(index, targetId);
+                            controller.GraphView.RenderConnections();
+                            controller.CancelConnection();
+                            controller.OnNodeSelected(typedModel);
+                        });
+                    })
+                    {
+                        text = "Connect",
+                        style = { marginTop = 2 }
+                    };
+                    row.Add(connectBtn);
                 }
                 else
                 {
-                    connectButton.text = "Connect";
-                    connectButton.SetEnabled(true);
-                    connectButton.clickable = new Clickable(() =>
+                    var connectedBtn = new Button
                     {
-                        controller.StartConnectionFrom(model.NodeID, targetId =>
+                        text = $"→ {connectedModel?.Title ?? "(Unknown)"}"
+                    };
+                    connectedBtn.SetEnabled(false);
+                    row.Add(connectedBtn);
+
+                    // Trigger assignment section
+                    string currentTrigger = path.Trigger ?? "";
+                    string selectedEventType = "";
+                    List<string> availableEvents = new();
+
+                    string preObj = "", preEvent = "";
+                    if (!string.IsNullOrEmpty(currentTrigger) && currentTrigger.Contains(":"))
+                    {
+                        var parts = currentTrigger.Split(':');
+                        if (parts.Length == 2)
                         {
-                            model.OutgoingPaths[i].TargetNodeID = targetId;
-                            controller.GraphView.RenderConnections();
-                            _choicesList.Rebuild();
-                        });
+                            preObj = parts[0];
+                            preEvent = parts[1];
+                        }
+                    }
+
+                    var selectionLabel = new Label("Current selection: (none)")
+                    {
+                        style = {
+                            marginTop = 2,
+                            whiteSpace = WhiteSpace.Normal,
+                            flexWrap = Wrap.Wrap,
+                            unityTextAlign = TextAnchor.UpperLeft
+                        }
+                    };
+                    row.Add(selectionLabel);
+
+                    var eventDropdown = new PopupField<string>("Event", new List<string>(), 0);
+                    eventDropdown.style.display = DisplayStyle.None;
+                    row.Add(eventDropdown);
+
+                    var saveBtn = new Button { text = "Save Trigger" };
+                    saveBtn.SetEnabled(false);
+                    row.Add(saveBtn);
+
+                    void UpdateSaveButtonState()
+                    {
+                        if (TriggerAssignmentController.SelectedObject != null && !string.IsNullOrEmpty(selectedEventType))
+                        {
+                            string newTrigger = $"{TriggerAssignmentController.SelectedObject.name}:{selectedEventType}";
+                            saveBtn.SetEnabled(newTrigger != currentTrigger);
+                        }
+                        else saveBtn.SetEnabled(false);
+                    }
+
+                    var startBtn = new Button(() =>
+                    {
+                        TriggerAssignmentController.Start(
+                            trigger =>
+                            {
+                                controller.SetTriggerForMultipleChoicePath(typedModel, index, trigger);
+                                controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
+                            },
+                            onObjectSelectedImmediate: () =>
+                            {
+                                var go = TriggerAssignmentController.SelectedObject;
+                                if (go != null)
+                                {
+                                    selectionLabel.text = $"Current selection: {go.name}";
+                                    availableEvents = TriggerAssignmentController.GetAvailableEvents(go);
+                                    if (availableEvents.Count > 0)
+                                    {
+                                        eventDropdown.choices = availableEvents;
+                                        selectedEventType = availableEvents[0];
+                                        eventDropdown.SetValueWithoutNotify(selectedEventType);
+                                        eventDropdown.style.display = DisplayStyle.Flex;
+                                    }
+                                    else eventDropdown.style.display = DisplayStyle.None;
+                                    UpdateSaveButtonState();
+                                }
+                            }
+                        );
+                    })
+                    {
+                        text = "Select Object for Trigger",
+                        style = { marginTop = 2 }
+                    };
+                    row.Add(startBtn);
+
+                    eventDropdown.RegisterValueChangedCallback(evt =>
+                    {
+                        selectedEventType = evt.newValue;
+                        UpdateSaveButtonState();
                     });
+
+                    saveBtn.clicked += () =>
+                    {
+                        if (TriggerAssignmentController.SelectedObject != null && !string.IsNullOrEmpty(selectedEventType))
+                        {
+                            string finalTrigger = $"{TriggerAssignmentController.SelectedObject.name}:{selectedEventType}";
+                            controller.SetTriggerForMultipleChoicePath(typedModel, index, finalTrigger);
+                            controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
+                            currentTrigger = finalTrigger;
+                            UpdateSaveButtonState();
+                        }
+                    };
+
+                    // Preload trigger
+                    if (!string.IsNullOrEmpty(preObj))
+                    {
+                        var preGO = GameObject.Find(preObj);
+                        if (preGO != null)
+                        {
+                            TriggerAssignmentController.SetSelectedObjectManually(preGO);
+                            selectionLabel.text = $"Current selection: {preGO.name}";
+                            availableEvents = TriggerAssignmentController.GetAvailableEvents(preGO);
+                            if (availableEvents.Count > 0)
+                            {
+                                eventDropdown.choices = availableEvents;
+                                selectedEventType = availableEvents.Contains(preEvent) ? preEvent : availableEvents[0];
+                                eventDropdown.SetValueWithoutNotify(selectedEventType);
+                                eventDropdown.style.display = DisplayStyle.Flex;
+                            }
+                        }
+                    }
                 }
-            });
 
-            _choicesList.selectionType = SelectionType.None;
-            _choicesList.style.flexGrow = 0;
-            _choicesList.style.flexShrink = 1;
-            _choicesList.style.height = StyleKeyword.Auto;
-            _choicesList.style.borderBottomWidth = 0;
-            _choicesList.style.borderTopWidth = 0;
-            _choicesList.style.borderLeftWidth = 0;
-            _choicesList.style.borderRightWidth = 0;
-            _choicesList.style.backgroundColor = Color.clear;
+                Add(row);
+            }
 
-            Add(_choicesList);
+            var addBtn = new Button(() =>
+            {
+                typedModel.AddChoice("New Choice");
+                controller.OnNodeSelected(typedModel); // Refresh view
+            })
+            {
+                text = "Add Choice",
+                style = { marginTop = 6 }
+            };
+            Add(addBtn);
         }
     }
 }

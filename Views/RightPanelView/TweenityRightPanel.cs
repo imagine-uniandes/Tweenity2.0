@@ -12,7 +12,7 @@ namespace Views
         {
             VisualElement rightPanel = new VisualElement();
             rightPanel.name = "RightPanel";
-            rightPanel.style.width = 250;
+            rightPanel.style.width = 300;
             rightPanel.style.backgroundColor = EditorGUIUtility.isProSkin ?
                 new Color(0.22f, 0.22f, 0.22f) : new Color(0.76f, 0.76f, 0.76f);
             rightPanel.style.paddingLeft = 5;

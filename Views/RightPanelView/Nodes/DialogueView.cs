@@ -1,144 +1,213 @@
-using UnityEngine.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEditor;
+using System.Collections.Generic;
 using Models.Nodes;
 using Controllers;
-using System;
 
 namespace Views.RightPanel
 {
     public class DialogueView : TweenityNodeView
     {
-        private ListView _responseList;
-        private const int MaxResponseLength = 39;
-
         public DialogueView(DialogueNodeModel model, GraphController controller) : base(model, controller)
         {
+            var typedModel = (DialogueNodeModel)_model;
+
             Add(new Label("Dialogue Node Details")
             {
                 style = { unityFontStyleAndWeight = FontStyle.Bold, whiteSpace = WhiteSpace.Normal }
             });
 
-            var dialogueModel = (DialogueNodeModel)_model;
+            Add(new Label("Dialogue Text") { style = { whiteSpace = WhiteSpace.Normal } });
 
-            // Dialogue Text
-            Add(new Label("Question"));
-            var dialogueText = new TextField { value = dialogueModel.DialogueText, multiline = true };
-            dialogueText.RegisterValueChangedCallback(evt =>
+            var textField = new TextField { value = typedModel.DialogueText };
+            textField.RegisterValueChangedCallback(evt =>
             {
-                dialogueModel.DialogueText = evt.newValue;
-                controller.GraphView.RefreshNodeVisual(dialogueModel.NodeID);
+                typedModel.DialogueText = evt.newValue;
+                controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
             });
-            Add(dialogueText);
+            Add(textField);
 
-            // Responses
-            Add(new Label("Responses"));
-
-            var addButton = new Button(() =>
+            Add(new Label("Responses")
             {
-                dialogueModel.AddResponse("New Response");
-                _responseList.Rebuild();
-                controller.GraphView.RefreshNodeVisual(dialogueModel.NodeID);
-            })
-            { text = "+ Add Response" };
-            Add(addButton);
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
+            });
 
-            _responseList = new ListView(dialogueModel.OutgoingPaths, 70, () =>
+            for (int i = 0; i < typedModel.OutgoingPaths.Count; i++)
             {
-                var container = new VisualElement
-                {
-                    style = {
-                        flexDirection = FlexDirection.Column,
-                        marginBottom = 6,
-                        backgroundColor = new Color(0, 0, 0, 0)
-                    }
-                };
+                int index = i;
+                var path = typedModel.OutgoingPaths[index];
 
-                var responseField = new TextField
-                {
-                    multiline = true,
-                    style = {
-                        whiteSpace = WhiteSpace.Normal,
-                        flexGrow = 0,
-                        overflow = Overflow.Visible,
-                        minHeight = 20,
-                        marginBottom = 4
-                    }
-                };
+                var row = new VisualElement();
+                row.style.marginTop = 6;
+                row.style.flexDirection = FlexDirection.Column;
 
-                responseField.RegisterCallback<ChangeEvent<string>>(evt =>
-                {
-                    int lines = evt.newValue.Split('\n').Length;
-                    responseField.style.height = Mathf.Max(20, lines * 18);
-                });
-
-                var buttonRow = new VisualElement
-                {
-                    style = {
-                        flexDirection = FlexDirection.Row,
-                        justifyContent = Justify.SpaceBetween
-                    }
-                };
-
-                var connectButton = new Button
-                {
-                    style = {
-                        flexGrow = 1
-                    }
-                };
-
-                buttonRow.Add(connectButton);
-                container.Add(responseField);
-                container.Add(buttonRow);
-
-                return container;
-            },
-            (element, i) =>
-            {
-                var container = element as VisualElement;
-                var responseField = container.ElementAt(0) as TextField;
-                var buttonRow = container.ElementAt(1) as VisualElement;
-                var connectButton = buttonRow.ElementAt(0) as Button;
-
-                var path = dialogueModel.OutgoingPaths[i];
-                responseField.value = path.Label;
-
+                var responseField = new TextField { value = path.Label };
                 responseField.RegisterValueChangedCallback(evt =>
                 {
-                    var clamped = evt.newValue.Length > MaxResponseLength
-                        ? evt.newValue.Substring(0, MaxResponseLength)
-                        : evt.newValue;
-                    dialogueModel.UpdateResponse(i, clamped);
-                    responseField.SetValueWithoutNotify(clamped);
-                    controller.GraphView.RefreshNodeVisual(dialogueModel.NodeID);
+                    typedModel.UpdateResponse(index, evt.newValue);
+                    controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
                 });
+                row.Add(responseField);
 
-                if (!string.IsNullOrEmpty(path.TargetNodeID))
+                var connectedModel = controller.GetNode(path.TargetNodeID);
+                if (string.IsNullOrEmpty(path.TargetNodeID))
                 {
-                    var targetTitle = controller.GetNode(path.TargetNodeID)?.Title ?? "(Unknown)";
-                    connectButton.text = $"→ {targetTitle}";
-                    connectButton.SetEnabled(false);
+                    var connectBtn = new Button(() =>
+                    {
+                        controller.StartConnectionFrom(typedModel.NodeID, targetId =>
+                        {
+                            typedModel.ConnectResponseTo(index, targetId);
+                            controller.GraphView.RenderConnections();
+                            controller.CancelConnection();
+                            controller.OnNodeSelected(typedModel);
+                        });
+                    })
+                    {
+                        text = "Connect",
+                        style = { marginTop = 2 }
+                    };
+                    row.Add(connectBtn);
                 }
                 else
                 {
-                    connectButton.text = "Connect";
-                    connectButton.SetEnabled(true);
-                    connectButton.clickable = new Clickable(() =>
+                    var connectedBtn = new Button
                     {
-                        controller.StartConnectionFrom(dialogueModel.NodeID, targetNodeId =>
+                        text = $"→ {connectedModel?.Title ?? "(Unknown)"}"
+                    };
+                    connectedBtn.SetEnabled(false);
+                    row.Add(connectedBtn);
+
+                    // Trigger assignment section
+                    string currentTrigger = path.Trigger ?? "";
+                    string selectedEventType = "";
+                    List<string> availableEvents = new();
+
+                    string preObj = "", preEvent = "";
+                    if (!string.IsNullOrEmpty(currentTrigger) && currentTrigger.Contains(":"))
+                    {
+                        var parts = currentTrigger.Split(':');
+                        if (parts.Length == 2)
                         {
-                            dialogueModel.ConnectResponseTo(i, targetNodeId);
-                            controller.GraphView.RenderConnections();
-                            _responseList.Rebuild(); // 👈 Refresh after assigning
-                        });
+                            preObj = parts[0];
+                            preEvent = parts[1];
+                        }
+                    }
+
+                    var selectionLabel = new Label("Current selection: (none)")
+                    {
+                        style = {
+                            marginTop = 2,
+                            whiteSpace = WhiteSpace.Normal,
+                            flexWrap = Wrap.Wrap,
+                            unityTextAlign = TextAnchor.UpperLeft
+                        }
+                    };
+                    row.Add(selectionLabel);
+
+                    var eventDropdown = new PopupField<string>("Event", new List<string>(), 0);
+                    eventDropdown.style.display = DisplayStyle.None;
+                    row.Add(eventDropdown);
+
+                    var saveBtn = new Button { text = "Save Trigger" };
+                    saveBtn.SetEnabled(false);
+                    row.Add(saveBtn);
+
+                    void UpdateSaveButtonState()
+                    {
+                        if (TriggerAssignmentController.SelectedObject != null && !string.IsNullOrEmpty(selectedEventType))
+                        {
+                            string newTrigger = $"{TriggerAssignmentController.SelectedObject.name}:{selectedEventType}";
+                            saveBtn.SetEnabled(newTrigger != currentTrigger);
+                        }
+                        else saveBtn.SetEnabled(false);
+                    }
+
+                    var startBtn = new Button(() =>
+                    {
+                        TriggerAssignmentController.Start(
+                            trigger =>
+                            {
+                                controller.SetTriggerForDialoguePath(typedModel, index, trigger);
+                                controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
+                            },
+                            onObjectSelectedImmediate: () =>
+                            {
+                                var go = TriggerAssignmentController.SelectedObject;
+                                if (go != null)
+                                {
+                                    selectionLabel.text = $"Current selection: {go.name}";
+                                    availableEvents = TriggerAssignmentController.GetAvailableEvents(go);
+                                    if (availableEvents.Count > 0)
+                                    {
+                                        eventDropdown.choices = availableEvents;
+                                        selectedEventType = availableEvents[0];
+                                        eventDropdown.SetValueWithoutNotify(selectedEventType);
+                                        eventDropdown.style.display = DisplayStyle.Flex;
+                                    }
+                                    else eventDropdown.style.display = DisplayStyle.None;
+                                    UpdateSaveButtonState();
+                                }
+                            }
+                        );
+                    })
+                    {
+                        text = "Select Object for Trigger",
+                        style = { marginTop = 2 }
+                    };
+                    row.Add(startBtn);
+
+                    eventDropdown.RegisterValueChangedCallback(evt =>
+                    {
+                        selectedEventType = evt.newValue;
+                        UpdateSaveButtonState();
                     });
+
+                    saveBtn.clicked += () =>
+                    {
+                        if (TriggerAssignmentController.SelectedObject != null && !string.IsNullOrEmpty(selectedEventType))
+                        {
+                            string finalTrigger = $"{TriggerAssignmentController.SelectedObject.name}:{selectedEventType}";
+                            controller.SetTriggerForDialoguePath(typedModel, index, finalTrigger);
+                            controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
+                            currentTrigger = finalTrigger;
+                            UpdateSaveButtonState();
+                        }
+                    };
+
+                    // Preload trigger
+                    if (!string.IsNullOrEmpty(preObj))
+                    {
+                        var preGO = GameObject.Find(preObj);
+                        if (preGO != null)
+                        {
+                            TriggerAssignmentController.SetSelectedObjectManually(preGO);
+                            selectionLabel.text = $"Current selection: {preGO.name}";
+                            availableEvents = TriggerAssignmentController.GetAvailableEvents(preGO);
+                            if (availableEvents.Count > 0)
+                            {
+                                eventDropdown.choices = availableEvents;
+                                selectedEventType = availableEvents.Contains(preEvent) ? preEvent : availableEvents[0];
+                                eventDropdown.SetValueWithoutNotify(selectedEventType);
+                                eventDropdown.style.display = DisplayStyle.Flex;
+                            }
+                        }
+                    }
                 }
-            });
 
-            _responseList.selectionType = SelectionType.None;
-            _responseList.style.borderBottomWidth = 0;
-            _responseList.style.backgroundColor = new Color(0, 0, 0, 0);
+                Add(row);
+            }
 
-            Add(_responseList);
+            var addBtn = new Button(() =>
+            {
+                typedModel.AddResponse("New Response");
+                controller.OnNodeSelected(typedModel); // Refresh
+            })
+            {
+                text = "Add Response",
+                style = { marginTop = 6 }
+            };
+            Add(addBtn);
         }
     }
 }

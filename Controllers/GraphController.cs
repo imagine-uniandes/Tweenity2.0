@@ -333,19 +333,22 @@ namespace Controllers
 
         public void TryConnectTo(string targetId)
         {
-            if (!IsEditingEnabled)
+            if (string.IsNullOrEmpty(pendingSourceNodeId) || pendingSourceNodeId == targetId)
             {
-                Debug.LogWarning("[GraphController] TryConnectTo blocked — editing is disabled.");
-                pendingSourceNodeId = null; // ensure we clean up state
+                CancelConnection();
                 return;
             }
 
-            if (string.IsNullOrEmpty(pendingSourceNodeId) || pendingSourceNodeId == targetId)
-                return;
-
-            ConnectNodes(pendingSourceNodeId, targetId);
-            pendingSourceNodeId = null;
+            try
+            {
+                ConnectNodes(pendingSourceNodeId, targetId);
+            }
+            finally
+            {
+                CancelConnection(); // Always reset pending state
+            }
         }
+
         public void CancelConnection()
         {
             pendingSourceNodeId = null;
@@ -541,6 +544,22 @@ namespace Controllers
 
             GraphView?.RefreshNodeVisual(model.NodeID);
         }
+        public void SetTriggerForMultipleChoicePath(MultipleChoiceNodeModel model, int index, string trigger)
+        {
+            if (index >= 0 && index < model.OutgoingPaths.Count)
+            {
+                model.OutgoingPaths[index].Trigger = trigger;
+            }
+        }
+
+        public void SetTriggerForDialoguePath(DialogueNodeModel model, int index, string trigger)
+        {
+            if (index >= 0 && index < model.OutgoingPaths.Count)
+            {
+                model.OutgoingPaths[index].Trigger = trigger;
+            }
+        }
+
 
 
         // public void StartRuntime()
