@@ -172,6 +172,9 @@ namespace Views.RightPanel
                             controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
                             currentTrigger = finalTrigger;
                             UpdateSaveButtonState();
+
+                            // NEW: Add AwaitTrigger instruction
+                            ApplyInstructionsToMultipleChoiceNode(typedModel);
                         }
                     };
 
@@ -209,5 +212,15 @@ namespace Views.RightPanel
             };
             Add(addBtn);
         }
+        private void ApplyInstructionsToMultipleChoiceNode(MultipleChoiceNodeModel node)
+        {
+            if (node == null) return;
+
+            node.Instructions ??= new List<string>();
+            node.Instructions.Clear();
+
+            InstructionHelpers.AddAwaitTriggerInstruction(node);
+        }
+
     }
 }

@@ -253,6 +253,9 @@ namespace Views.RightPanel
                         controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
                         currentTrigger = finalTrigger;
                         UpdateSaveButtonState();
+
+                        // NEW: Add instructions
+                        ApplyInstructionsToTimeoutNode(typedModel);
                     }
                 };
 
@@ -276,6 +279,16 @@ namespace Views.RightPanel
                     }
                 }
             }
+        }
+        private void ApplyInstructionsToTimeoutNode(TimeoutNodeModel node)
+        {
+            if (node == null) return;
+
+            node.Instructions ??= new List<string>();
+            node.Instructions.Clear();
+
+            InstructionHelpers.AddAwaitTriggerInstruction(node);
+            InstructionHelpers.AddWaitInstruction(node, node.TimeoutDuration);
         }
     }
 }

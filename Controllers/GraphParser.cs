@@ -60,7 +60,18 @@ namespace Controllers
                 var pathJsons = node.OutgoingPaths.Select(path =>
                     $"{{\"label\":\"{path.Label}\",\"trigger\":\"{path.Trigger}\",\"target\":\"{path.TargetNodeID}\"}}"
                 );
-                twee.AppendLine("[" + string.Join(",", pathJsons) + "]");
+                string jsonLine = "[" + string.Join(",", pathJsons) + "]";
+
+                // Export paths
+                twee.AppendLine(jsonLine);
+
+                // Export instructions in multiline block
+                twee.AppendLine("<");
+                foreach (var instr in node.Instructions ?? new List<string>())
+                {
+                    twee.AppendLine(instr.Trim() + ",");
+                }
+                twee.AppendLine(">");
                 twee.AppendLine();
             }
 
@@ -97,31 +108,40 @@ namespace Controllers
 
                 string special1 = "null";
                 string special2 = "null";
-                string pathJson = "[]";
+                string pathJsonLine = "";
+                List<string> instructionLines = new List<string>();
 
                 for (int i = atIndex + 1; i < lines.Count; i++)
                 {
                     string line = lines[i].Trim();
+
                     if (line.StartsWith("- "))
                     {
                         if (special1 == "null") special1 = line.Substring(2).Trim();
                         else if (special2 == "null") special2 = line.Substring(2).Trim();
                     }
-                    else if (line.StartsWith("{") || line.StartsWith("["))
+                    else if (line.StartsWith("["))
                     {
-                        pathJson = string.Join("\n", lines.Skip(i)).Trim();
-                        break;
+                        pathJsonLine = line;
                     }
-                    else
+                    else if (line == "<")
                     {
-                        if (special2 != "null") special2 += "\n" + line;
-                        else if (special1 != "null") special1 += "\n" + line;
+                        i++; // move to next line after <
+                        while (i < lines.Count && lines[i].Trim() != ">")
+                        {
+                            string instrLine = lines[i].Trim().TrimEnd(',');
+                            if (!string.IsNullOrWhiteSpace(instrLine))
+                                instructionLines.Add(instrLine);
+                            i++;
+                        }
+                        break; // done with this block
                     }
                 }
 
+                // Parse paths
                 var paths = new List<PathData>();
                 var pathRegex = new Regex(@"\{""label"":""(.*?)"",""trigger"":""(.*?)"",""target"":""(.*?)""\}");
-                foreach (Match m in pathRegex.Matches(pathJson))
+                foreach (Match m in pathRegex.Matches(pathJsonLine))
                 {
                     paths.Add(new PathData(m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value));
                 }
@@ -142,6 +162,7 @@ namespace Controllers
                 node.Position = position;
                 node.Description = description;
                 node.OutgoingPaths = paths;
+                node.Instructions = instructionLines;
 
                 if (node is DialogueNodeModel d && special1 != "null")
                     d.DialogueText = special1;

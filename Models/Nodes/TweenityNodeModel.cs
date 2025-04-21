@@ -16,6 +16,7 @@ namespace Models.Nodes
         public List<PathData> OutgoingPaths { get; set; }
 
         public List<string> RuntimeInstructions { get; set; }
+        public List<string> Instructions { get; set; }
 
         public TweenityNodeModel(string title, NodeType type)
         {
@@ -26,6 +27,7 @@ namespace Models.Nodes
             OutgoingPaths = new List<PathData>();
             Position = Vector2.zero;
             RuntimeInstructions = new List<string>();
+            Instructions = new List<string>();
         }
 
         public void ConnectTo(string targetNodeID, string label = "Next", string trigger = "")
