@@ -1,0 +1,54 @@
+using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+
+public class ObjectController : MonoBehaviour
+{
+    [Tooltip("El script que contiene métodos activables (triggerables).")]
+    public MonoBehaviour targetScript;
+
+    /// <summary>
+    /// Devuelve una lista de métodos públicos sin parámetros que pueden ser usados como triggers.
+    /// </summary>
+    public List<string> GetAvailableTriggerMethods()
+    {
+        List<string> validMethods = new();
+        if (targetScript == null) return validMethods;
+
+        MethodInfo[] methods = targetScript.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
+        foreach (var method in methods)
+        {
+            if (method.GetParameters().Length == 0 && !method.IsSpecialName)
+            {
+                validMethods.Add(method.Name);
+            }
+        }
+
+        return validMethods;
+    }
+
+    /// <summary>
+    /// Ejecuta el método con el nombre dado sobre el script objetivo.
+    /// </summary>
+    public bool TriggerMethod(string methodName)
+    {
+        if (targetScript == null)
+        {
+            Debug.LogWarning($"[{gameObject.name}] No target script assigned.");
+            return false;
+        }
+
+        var method = targetScript.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
+        if (method == null || method.GetParameters().Length > 0)
+        {
+            Debug.LogWarning($"[{gameObject.name}] Method '{methodName}' is not valid or requires parameters.");
+            return false;
+        }
+
+        method.Invoke(targetScript, null);
+        Debug.Log($"[{gameObject.name}] Triggered method: {methodName}");
+        return true;
+    }
+}
