@@ -1,8 +1,17 @@
+using System.Collections.Generic;
+using System.Linq;
+
+
 namespace Simulation.Runtime
 {
     public class SimulationScript
     {
         public Dictionary<string, Node> nodes = new();
+
+        public SimulationScript()
+        {
+            nodes = new Dictionary<string, Node>();
+        }
 
         public Node GetStartNode()
         {

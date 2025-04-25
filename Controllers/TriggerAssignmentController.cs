@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using UnityEditor.SceneManagement;
 using System;
 using System.Collections.Generic;
 
@@ -32,23 +33,30 @@ public static class TriggerAssignmentController
         _onTriggerConfirmed = onTriggerSelected;
         _onObjectSelectedImmediate = onObjectSelectedImmediate;
         _selectedObject = null;
-        Debug.Log("Trigger assignment started. Select an object from the scene.");
+        Debug.Log("Trigger assignment started. Select an object from the scene or Hierarchy.");
     }
 
     public static void ConfirmObjectSelection()
     {
         GameObject selected = Selection.activeGameObject;
 
-        // 🧱 Ignore prefabs or project assets
-        if (selected == null || !selected.scene.IsValid())
+        if (selected == null)
         {
-            Debug.LogWarning("Selected object is not part of the active scene. Please select a placed GameObject.");
+            Debug.LogWarning("No object selected.");
+            return;
+        }
+
+        // Ignore prefab assets (project assets not in the scene)
+        var prefabType = PrefabUtility.GetPrefabAssetType(selected);
+        if (prefabType != PrefabAssetType.NotAPrefab && !selected.scene.IsValid())
+        {
+            Debug.LogWarning("Selected object is a prefab asset. Please select an instance from the scene (Hierarchy).");
             return;
         }
 
         // 🔁 Allow re-selection of the same object (force UI refresh)
         _selectedObject = selected;
-        Debug.Log($"Selected object for trigger: {_selectedObject.name}");
+        Debug.Log($"🎯 Object selected from Hierarchy: {_selectedObject.name}", _selectedObject);
 
         _onObjectSelectedImmediate?.Invoke();
         _onObjectSelectedImmediate = null;
@@ -60,12 +68,11 @@ public static class TriggerAssignmentController
 
         if (obj == null) return events;
 
-        if (obj.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>() != null)
-            events.Add("used");
-
-        var collider = obj.GetComponent<Collider>();
-        if (collider != null && collider.isTrigger)
-            events.Add("entered");
+        var objectController = obj.GetComponent<ObjectController>();
+        if (objectController != null)
+        {
+            events.AddRange(objectController.GetAvailableTriggerMethods());
+        }
 
         return events;
     }
@@ -85,6 +92,7 @@ public static class TriggerAssignmentController
         }
 
         string trigger = $"{_selectedObject.name}:{selectedEvent}";
+        Debug.Log($"✅ Trigger saved: {trigger}", _selectedObject);
         _onTriggerConfirmed?.Invoke(trigger);
         Reset();
     }

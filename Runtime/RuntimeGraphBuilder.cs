@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Models;
 using Models.Nodes;
 using Simulation.Runtime;
@@ -53,7 +55,7 @@ namespace Simulation.Runtime
 
         private static string GetNodeTitleById(GraphModel graph, string nodeId)
         {
-            return graph.Nodes.FirstOrDefault(n => n.ID == nodeId)?.Title ?? "(Missing)";
+            return graph.Nodes.FirstOrDefault(n => n.NodeID == nodeId)?.Title ?? "(Missing)";
         }
     }
 }

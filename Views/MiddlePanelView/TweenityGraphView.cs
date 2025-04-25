@@ -309,6 +309,27 @@ namespace Views
 
             _runtimeLabel.style.display = enabled ? DisplayStyle.None : DisplayStyle.Flex;
         }
+        public void ClearGraphView()
+        {
+            // Remove all nodes
+            var nodes = this.graphElements.OfType<TweenityNode>().ToList();
+            foreach (var node in nodes)
+            {
+                RemoveElement(node);
+            }
+
+            // Remove all edges
+            var edges = this.graphElements.OfType<Edge>().ToList();
+            foreach (var edge in edges)
+            {
+                edge.input?.Disconnect(edge);
+                edge.output?.Disconnect(edge);
+                RemoveElement(edge);
+            }
+
+            Debug.Log("[GraphView] Cleared all nodes and edges from view.");
+        }
+
 
     }
 }

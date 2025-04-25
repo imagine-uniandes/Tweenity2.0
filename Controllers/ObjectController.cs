@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 
 public class ObjectController : MonoBehaviour
 {
@@ -50,5 +51,30 @@ public class ObjectController : MonoBehaviour
         method.Invoke(targetScript, null);
         Debug.Log($"[{gameObject.name}] Triggered method: {methodName}");
         return true;
+    }
+
+    /// <summary>
+    /// Método async para ejecución desde SimulationController. Retorna el MethodInfo ejecutado o null si falló.
+    /// </summary>
+    public async Task<MethodInfo> MethodAccess(string methodName, string methodParams)
+    {
+        await Task.Yield(); // simulate async even if it's immediate
+
+        if (targetScript == null)
+        {
+            Debug.LogWarning($"[{gameObject.name}] No target script assigned.");
+            return null;
+        }
+
+        var method = targetScript.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
+        if (method == null || method.GetParameters().Length > 0)
+        {
+            Debug.LogWarning($"[{gameObject.name}] Method '{methodName}' not found or has parameters.");
+            return null;
+        }
+
+        method.Invoke(targetScript, null);
+        Debug.Log($"[{gameObject.name}] MethodAccess invoked: {methodName}");
+        return method;
     }
 }
