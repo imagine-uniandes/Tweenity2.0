@@ -4,6 +4,7 @@ namespace Simulation.Runtime
 {
     public class Node
     {
+        public string NodeID; 
         public string title;
         public string text;
         public List<string> tags;

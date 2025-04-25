@@ -8,6 +8,7 @@ using Simulation.Runtime;
 
 #if UNITY_EDITOR
 using Models; // To recognize GraphModel
+using Tweenity2.EditorHelpers;
 #endif
 
 public class SimulationController : MonoBehaviour
@@ -85,8 +86,7 @@ public class SimulationController : MonoBehaviour
         curSimulatorActions = null;
 
     #if UNITY_EDITOR
-        var controller = UnityEngine.Object.FindObjectOfType<Controllers.GraphController>();
-        controller?.GraphView?.CenterOnNode(newNode.id);
+        EditorGraphHelper.TryCenterNode(newNode.NodeID);
     #endif
 
         if (newNode.tags.Contains("end"))
