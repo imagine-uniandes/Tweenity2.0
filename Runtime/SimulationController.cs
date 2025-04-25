@@ -84,6 +84,11 @@ public class SimulationController : MonoBehaviour
         curExpectedUserAction = new Action();
         curSimulatorActions = null;
 
+    #if UNITY_EDITOR
+        var controller = UnityEngine.Object.FindObjectOfType<Controllers.GraphController>();
+        controller?.GraphView?.CenterOnNode(newNode.id);
+    #endif
+
         if (newNode.tags.Contains("end"))
         {
             await ExecuteSimulatorActions(newNode.simulatorActions);

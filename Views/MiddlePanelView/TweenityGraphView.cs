@@ -330,6 +330,23 @@ namespace Views
             Debug.Log("[GraphView] Cleared all nodes and edges from view.");
         }
 
+        public void CenterOnNode(string nodeId)
+        {
+            var target = this.graphElements
+                .OfType<TweenityNode>()
+                .FirstOrDefault(n => n.NodeID == nodeId);
+
+            if (target == null)
+            {
+                Debug.LogWarning($"[GraphView] Cannot center on node: {nodeId} not found.");
+                return;
+            }
+
+            ClearSelection();            // Deselect others
+            AddToSelection(target);      // Select the node
+
+            FrameSelection();            // Center it visually
+        }
 
     }
 }

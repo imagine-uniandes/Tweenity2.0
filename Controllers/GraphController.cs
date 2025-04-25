@@ -15,6 +15,9 @@ namespace Controllers
 {
     public class GraphController
     {
+    #if UNITY_EDITOR
+        public static GraphController ActiveEditorGraphController;
+    #endif
         public GraphModel Graph { get; private set; } = new GraphModel();
         public TweenityGraphView GraphView { get; private set; }
 
@@ -31,6 +34,10 @@ namespace Controllers
         public void SetGraphView(TweenityGraphView graphView)
         {
             GraphView = graphView;
+
+        #if UNITY_EDITOR
+            ActiveEditorGraphController = this;
+        #endif
         }
 
         public bool AddNode(TweenityNodeModel node)
