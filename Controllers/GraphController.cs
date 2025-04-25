@@ -180,21 +180,10 @@ namespace Controllers
 
         public void ClearGraph()
         {
-            // Vaciar modelo
             Graph.Nodes.Clear();
-
-            // Vaciar vista
-            if (GraphView != null)
-            {
-                foreach (var node in GraphView.graphElements.OfType<TweenityNode>().ToList())
-                    GraphView.RemoveNodeFromView(node.NodeID);
-
-                GraphView.RenderConnections(); // Por si quedan edges sueltos
-            }
-
+            GraphView?.ClearGraphView();
             Debug.Log("🧹 GraphController: Graph and view cleared.");
         }
-
 
         public void SaveCurrentGraph()
         {

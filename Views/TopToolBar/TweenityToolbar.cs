@@ -70,8 +70,6 @@ namespace Views
                 _graphController.ResetView();
             });
 
-            toolbar.Add(viewMenu);
-            // Help Button
             ToolbarButton helpButton = new ToolbarButton(() =>
             {
                 _graphController.ShowHelp();
@@ -81,7 +79,20 @@ namespace Views
             };
             toolbar.Add(helpButton);
 
-            // Add Node Button
+            // 🔄 Clear All Button (NEW)
+            ToolbarButton clearAllButton = new ToolbarButton(() =>
+            {
+                if (EditorUtility.DisplayDialog("Clear Graph", "Are you sure you want to clear the entire graph?", "Yes", "Cancel"))
+                {
+                    _graphController.ClearGraph();
+                }
+            })
+            {
+                text = "Clear"
+            };
+            toolbar.Add(clearAllButton);
+
+            // ➕ Add Node Button
             ToolbarButton addNodeButton = new ToolbarButton(() =>
             {
                 _graphController.CreateNewNode();
@@ -90,7 +101,7 @@ namespace Views
                 text = "[ + ]"
             };
             toolbar.Add(addNodeButton);
-
+            
             return toolbar;
         }
     }
