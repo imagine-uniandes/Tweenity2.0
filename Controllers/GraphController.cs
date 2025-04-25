@@ -171,6 +171,24 @@ namespace Controllers
             GraphView.RefreshNodeVisual(model.NodeID);
         }
 
+        public void ClearGraph()
+        {
+            // Vaciar modelo
+            Graph.Nodes.Clear();
+
+            // Vaciar vista
+            if (GraphView != null)
+            {
+                foreach (var node in GraphView.graphElements.OfType<TweenityNode>().ToList())
+                    GraphView.RemoveNodeFromView(node.NodeID);
+
+                GraphView.RenderConnections(); // Por si quedan edges sueltos
+            }
+
+            Debug.Log("🧹 GraphController: Graph and view cleared.");
+        }
+
+
         public void SaveCurrentGraph()
         {
             if (string.IsNullOrEmpty(lastSavedPath))
@@ -181,6 +199,7 @@ namespace Controllers
             if (!string.IsNullOrEmpty(lastSavedPath))
             {
                 ExportGraphTo(lastSavedPath);
+                EditorPrefs.SetString("Tweenity_LastGraphPath", lastSavedPath); // ✅ Guardar ruta
             }
         }
 

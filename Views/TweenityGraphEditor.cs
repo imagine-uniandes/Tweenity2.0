@@ -6,6 +6,9 @@ using Models;
 using Models.Nodes;
 using Controllers;
 using Views;
+using System.IO;
+using System;
+
 
 public class TweenityGraphEditor : EditorWindow
 {
@@ -33,7 +36,7 @@ public class TweenityGraphEditor : EditorWindow
 
         // Bind controller <-> view
         graphController.SetGraphView(graphView);
-        graphView.SetController(graphController); // <- 💡 Nuevo binding
+        graphView.SetController(graphController);
         graphView.OnNodeSelected = graphController.OnNodeSelected;
 
         // Add toolbar
@@ -56,5 +59,32 @@ public class TweenityGraphEditor : EditorWindow
 
         // Bottom bar
         root.Add(TweenityBottomToolbar.CreateBottomToolbar(graphController));
+
+        // ✅ Restaurar automáticamente desde último path guardado
+        string lastPath = EditorPrefs.GetString("Tweenity_LastGraphPath", "");
+        if (!string.IsNullOrEmpty(lastPath) && File.Exists(lastPath))
+        {
+            try
+            {
+                string twee = File.ReadAllText(lastPath);
+                var importedNodes = GraphParser.ImportFromTwee(twee);
+
+                // Limpiar vista y modelo antes de restaurar
+                graphController.ClearGraph();
+
+                EditorApplication.delayCall += () =>
+                {
+                    foreach (var node in importedNodes)
+                        graphController.AddNode(node);
+
+                    Debug.Log($"✅ Graph restored from last saved file: {lastPath} ({importedNodes.Count} nodes)");
+                };
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"❌ Failed to load graph from last saved path: {e.Message}");
+            }
+        }
     }
+
 }
