@@ -9,6 +9,9 @@ namespace Views.RightPanel
 {
     public class DialogueView : TweenityNodeView
     {
+        private string selectedEventType = "";
+        private List<string> availableEvents = new();
+
         public DialogueView(DialogueNodeModel model, GraphController controller) : base(model, controller)
         {
             var typedModel = (DialogueNodeModel)_model;
@@ -38,9 +41,10 @@ namespace Views.RightPanel
                 int index = i;
                 var path = typedModel.OutgoingPaths[index];
 
-                var row = new VisualElement();
-                row.style.marginTop = 6;
-                row.style.flexDirection = FlexDirection.Column;
+                var row = new VisualElement
+                {
+                    style = { marginTop = 6, flexDirection = FlexDirection.Column }
+                };
 
                 var responseField = new TextField { value = path.Label };
                 responseField.RegisterValueChangedCallback(evt =>
@@ -78,12 +82,9 @@ namespace Views.RightPanel
                     connectedBtn.SetEnabled(false);
                     row.Add(connectedBtn);
 
-                    // Trigger assignment section
                     string currentTrigger = path.Trigger ?? "";
-                    string selectedEventType = "";
-                    List<string> availableEvents = new();
-
                     string preObj = "", preEvent = "";
+
                     if (!string.IsNullOrEmpty(currentTrigger) && currentTrigger.Contains(":"))
                     {
                         var parts = currentTrigger.Split(':');
@@ -97,7 +98,7 @@ namespace Views.RightPanel
                     var selectionLabel = new Label("Current selection: (none)")
                     {
                         style = {
-                            marginTop = 2,
+                            marginTop = 4,
                             whiteSpace = WhiteSpace.Normal,
                             flexWrap = Wrap.Wrap,
                             unityTextAlign = TextAnchor.UpperLeft
@@ -109,7 +110,7 @@ namespace Views.RightPanel
                     eventDropdown.style.display = DisplayStyle.None;
                     row.Add(eventDropdown);
 
-                    var saveBtn = new Button { text = "Save Trigger" };
+                    var saveBtn = new Button { text = "Save Trigger", style = { marginTop = 2 } };
                     saveBtn.SetEnabled(false);
                     row.Add(saveBtn);
 
@@ -123,13 +124,14 @@ namespace Views.RightPanel
                         else saveBtn.SetEnabled(false);
                     }
 
-                    var startBtn = new Button(() =>
+                    var selectBtn = new Button(() =>
                     {
                         TriggerAssignmentController.Start(
                             trigger =>
                             {
                                 controller.SetTriggerForDialoguePath(typedModel, index, trigger);
                                 controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
+                                ApplyInstructionsToDialogueNode(typedModel);
                             },
                             onObjectSelectedImmediate: () =>
                             {
@@ -146,6 +148,7 @@ namespace Views.RightPanel
                                         eventDropdown.style.display = DisplayStyle.Flex;
                                     }
                                     else eventDropdown.style.display = DisplayStyle.None;
+
                                     UpdateSaveButtonState();
                                 }
                             }
@@ -153,9 +156,35 @@ namespace Views.RightPanel
                     })
                     {
                         text = "Select Object for Trigger",
-                        style = { marginTop = 2 }
+                        style = { marginTop = 4 }
                     };
-                    row.Add(startBtn);
+                    row.Add(selectBtn);
+
+                    var refreshBtn = new Button(() =>
+                    {
+                        TriggerAssignmentController.ConfirmObjectSelection();
+
+                        var go = TriggerAssignmentController.SelectedObject;
+                        if (go != null)
+                        {
+                            selectionLabel.text = $"Current selection: {go.name}";
+                            availableEvents = TriggerAssignmentController.GetAvailableEvents(go);
+                            if (availableEvents.Count > 0)
+                            {
+                                eventDropdown.choices = availableEvents;
+                                selectedEventType = availableEvents.Contains(preEvent) ? preEvent : availableEvents[0];
+                                eventDropdown.SetValueWithoutNotify(selectedEventType);
+                                eventDropdown.style.display = DisplayStyle.Flex;
+                            }
+                            else eventDropdown.style.display = DisplayStyle.None;
+
+                            UpdateSaveButtonState();
+                        }
+                    })
+                    {
+                        text = "Load Events From Selection"
+                    };
+                    row.Add(refreshBtn);
 
                     eventDropdown.RegisterValueChangedCallback(evt =>
                     {
@@ -173,12 +202,10 @@ namespace Views.RightPanel
                             currentTrigger = finalTrigger;
                             UpdateSaveButtonState();
 
-                            // NEW: Add AwaitTrigger instruction
                             ApplyInstructionsToDialogueNode(typedModel);
                         }
                     };
 
-                    // Preload trigger
                     if (!string.IsNullOrEmpty(preObj))
                     {
                         var preGO = GameObject.Find(preObj);
@@ -212,6 +239,7 @@ namespace Views.RightPanel
             };
             Add(addBtn);
         }
+
         private void ApplyInstructionsToDialogueNode(DialogueNodeModel node)
         {
             if (node == null) return;
@@ -221,6 +249,5 @@ namespace Views.RightPanel
 
             InstructionHelpers.AddAwaitTriggerInstruction(node);
         }
-
     }
 }

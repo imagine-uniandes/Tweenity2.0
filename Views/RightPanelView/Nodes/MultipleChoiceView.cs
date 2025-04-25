@@ -9,6 +9,9 @@ namespace Views.RightPanel
 {
     public class MultipleChoiceView : TweenityNodeView
     {
+        private string selectedEventType = "";
+        private List<string> availableEvents = new();
+
         public MultipleChoiceView(MultipleChoiceNodeModel model, GraphController controller) : base(model, controller)
         {
             var typedModel = (MultipleChoiceNodeModel)_model;
@@ -38,9 +41,10 @@ namespace Views.RightPanel
                 int index = i;
                 var path = typedModel.OutgoingPaths[index];
 
-                var row = new VisualElement();
-                row.style.marginTop = 6;
-                row.style.flexDirection = FlexDirection.Column;
+                var row = new VisualElement
+                {
+                    style = { marginTop = 6, flexDirection = FlexDirection.Column }
+                };
 
                 var choiceField = new TextField { value = path.Label };
                 choiceField.RegisterValueChangedCallback(evt =>
@@ -79,123 +83,7 @@ namespace Views.RightPanel
                     row.Add(connectedBtn);
 
                     // Trigger assignment section
-                    string currentTrigger = path.Trigger ?? "";
-                    string selectedEventType = "";
-                    List<string> availableEvents = new();
-
-                    string preObj = "", preEvent = "";
-                    if (!string.IsNullOrEmpty(currentTrigger) && currentTrigger.Contains(":"))
-                    {
-                        var parts = currentTrigger.Split(':');
-                        if (parts.Length == 2)
-                        {
-                            preObj = parts[0];
-                            preEvent = parts[1];
-                        }
-                    }
-
-                    var selectionLabel = new Label("Current selection: (none)")
-                    {
-                        style = {
-                            marginTop = 2,
-                            whiteSpace = WhiteSpace.Normal,
-                            flexWrap = Wrap.Wrap,
-                            unityTextAlign = TextAnchor.UpperLeft
-                        }
-                    };
-                    row.Add(selectionLabel);
-
-                    var eventDropdown = new PopupField<string>("Event", new List<string>(), 0);
-                    eventDropdown.style.display = DisplayStyle.None;
-                    row.Add(eventDropdown);
-
-                    var saveBtn = new Button { text = "Save Trigger" };
-                    saveBtn.SetEnabled(false);
-                    row.Add(saveBtn);
-
-                    void UpdateSaveButtonState()
-                    {
-                        if (TriggerAssignmentController.SelectedObject != null && !string.IsNullOrEmpty(selectedEventType))
-                        {
-                            string newTrigger = $"{TriggerAssignmentController.SelectedObject.name}:{selectedEventType}";
-                            saveBtn.SetEnabled(newTrigger != currentTrigger);
-                        }
-                        else saveBtn.SetEnabled(false);
-                    }
-
-                    var startBtn = new Button(() =>
-                    {
-                        TriggerAssignmentController.Start(
-                            trigger =>
-                            {
-                                controller.SetTriggerForMultipleChoicePath(typedModel, index, trigger);
-                                controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
-                            },
-                            onObjectSelectedImmediate: () =>
-                            {
-                                var go = TriggerAssignmentController.SelectedObject;
-                                if (go != null)
-                                {
-                                    selectionLabel.text = $"Current selection: {go.name}";
-                                    availableEvents = TriggerAssignmentController.GetAvailableEvents(go);
-                                    if (availableEvents.Count > 0)
-                                    {
-                                        eventDropdown.choices = availableEvents;
-                                        selectedEventType = availableEvents[0];
-                                        eventDropdown.SetValueWithoutNotify(selectedEventType);
-                                        eventDropdown.style.display = DisplayStyle.Flex;
-                                    }
-                                    else eventDropdown.style.display = DisplayStyle.None;
-                                    UpdateSaveButtonState();
-                                }
-                            }
-                        );
-                    })
-                    {
-                        text = "Select Object for Trigger",
-                        style = { marginTop = 2 }
-                    };
-                    row.Add(startBtn);
-
-                    eventDropdown.RegisterValueChangedCallback(evt =>
-                    {
-                        selectedEventType = evt.newValue;
-                        UpdateSaveButtonState();
-                    });
-
-                    saveBtn.clicked += () =>
-                    {
-                        if (TriggerAssignmentController.SelectedObject != null && !string.IsNullOrEmpty(selectedEventType))
-                        {
-                            string finalTrigger = $"{TriggerAssignmentController.SelectedObject.name}:{selectedEventType}";
-                            controller.SetTriggerForMultipleChoicePath(typedModel, index, finalTrigger);
-                            controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
-                            currentTrigger = finalTrigger;
-                            UpdateSaveButtonState();
-
-                            // NEW: Add AwaitTrigger instruction
-                            ApplyInstructionsToMultipleChoiceNode(typedModel);
-                        }
-                    };
-
-                    // Preload trigger
-                    if (!string.IsNullOrEmpty(preObj))
-                    {
-                        var preGO = GameObject.Find(preObj);
-                        if (preGO != null)
-                        {
-                            TriggerAssignmentController.SetSelectedObjectManually(preGO);
-                            selectionLabel.text = $"Current selection: {preGO.name}";
-                            availableEvents = TriggerAssignmentController.GetAvailableEvents(preGO);
-                            if (availableEvents.Count > 0)
-                            {
-                                eventDropdown.choices = availableEvents;
-                                selectedEventType = availableEvents.Contains(preEvent) ? preEvent : availableEvents[0];
-                                eventDropdown.SetValueWithoutNotify(selectedEventType);
-                                eventDropdown.style.display = DisplayStyle.Flex;
-                            }
-                        }
-                    }
+                    AddTriggerAssignmentSection(row, controller, typedModel, index, path);
                 }
 
                 Add(row);
@@ -204,7 +92,7 @@ namespace Views.RightPanel
             var addBtn = new Button(() =>
             {
                 typedModel.AddChoice("New Choice");
-                controller.OnNodeSelected(typedModel); // Refresh view
+                controller.OnNodeSelected(typedModel); // Refresh
             })
             {
                 text = "Add Choice",
@@ -212,6 +100,169 @@ namespace Views.RightPanel
             };
             Add(addBtn);
         }
+
+        private void AddTriggerAssignmentSection(VisualElement container, GraphController controller, MultipleChoiceNodeModel typedModel, int index, PathData path)
+        {
+            string currentTrigger = path.Trigger ?? "";
+            string preselectedObjectName = "";
+            string preselectedEvent = "";
+
+            if (!string.IsNullOrEmpty(currentTrigger) && currentTrigger.Contains(":"))
+            {
+                var parts = currentTrigger.Split(':');
+                if (parts.Length == 2)
+                {
+                    preselectedObjectName = parts[0];
+                    preselectedEvent = parts[1];
+                }
+            }
+
+            var selectionLabel = new Label("Current selection: (none)")
+            {
+                style = {
+                    marginTop = 4,
+                    whiteSpace = WhiteSpace.Normal,
+                    flexWrap = Wrap.Wrap,
+                    unityTextAlign = TextAnchor.UpperLeft
+                }
+            };
+            container.Add(selectionLabel);
+
+            var eventDropdown = new PopupField<string>("Event", new List<string>(), 0);
+            eventDropdown.style.display = DisplayStyle.None;
+            container.Add(eventDropdown);
+
+            var saveBtn = new Button()
+            {
+                text = "Save Trigger",
+                style = { marginTop = 4 }
+            };
+            saveBtn.SetEnabled(false);
+            container.Add(saveBtn);
+
+            void UpdateSaveButtonState()
+            {
+                if (TriggerAssignmentController.SelectedObject != null && !string.IsNullOrEmpty(selectedEventType))
+                {
+                    string newTrigger = $"{TriggerAssignmentController.SelectedObject.name}:{selectedEventType}";
+                    saveBtn.SetEnabled(newTrigger != currentTrigger);
+                }
+                else
+                {
+                    saveBtn.SetEnabled(false);
+                }
+            }
+
+            var selectBtn = new Button(() =>
+            {
+                TriggerAssignmentController.Start(
+                    trigger =>
+                    {
+                        controller.SetTriggerForMultipleChoicePath(typedModel, index, trigger);
+                        controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
+                        ApplyInstructionsToMultipleChoiceNode(typedModel);
+                    },
+                    onObjectSelectedImmediate: () =>
+                    {
+                        var go = TriggerAssignmentController.SelectedObject;
+                        if (go != null)
+                        {
+                            selectionLabel.text = $"Current selection: {go.name}";
+
+                            availableEvents = TriggerAssignmentController.GetAvailableEvents(go);
+                            if (availableEvents.Count > 0)
+                            {
+                                eventDropdown.choices = availableEvents;
+                                selectedEventType = availableEvents[0];
+                                eventDropdown.SetValueWithoutNotify(selectedEventType);
+                                eventDropdown.style.display = DisplayStyle.Flex;
+                            }
+                            else
+                            {
+                                eventDropdown.style.display = DisplayStyle.None;
+                            }
+
+                            UpdateSaveButtonState();
+                        }
+                    }
+                );
+            })
+            {
+                text = "Select Object for Trigger",
+                style = { marginTop = 4 }
+            };
+            container.Add(selectBtn);
+
+            var refreshBtn = new Button(() =>
+            {
+                TriggerAssignmentController.ConfirmObjectSelection();
+
+                if (TriggerAssignmentController.SelectedObject != null)
+                {
+                    var go = TriggerAssignmentController.SelectedObject;
+                    selectionLabel.text = $"Current selection: {go.name}";
+
+                    availableEvents = TriggerAssignmentController.GetAvailableEvents(go);
+                    if (availableEvents.Count > 0)
+                    {
+                        eventDropdown.choices = availableEvents;
+                        selectedEventType = availableEvents.Contains(preselectedEvent) ? preselectedEvent : availableEvents[0];
+                        eventDropdown.SetValueWithoutNotify(selectedEventType);
+                        eventDropdown.style.display = DisplayStyle.Flex;
+                    }
+                    else
+                    {
+                        eventDropdown.style.display = DisplayStyle.None;
+                    }
+
+                    UpdateSaveButtonState();
+                }
+            })
+            {
+                text = "Load Events From Selection"
+            };
+            container.Add(refreshBtn);
+
+            eventDropdown.RegisterValueChangedCallback(evt =>
+            {
+                selectedEventType = evt.newValue;
+                UpdateSaveButtonState();
+            });
+
+            saveBtn.clicked += () =>
+            {
+                if (TriggerAssignmentController.SelectedObject != null && !string.IsNullOrEmpty(selectedEventType))
+                {
+                    string finalTrigger = $"{TriggerAssignmentController.SelectedObject.name}:{selectedEventType}";
+                    controller.SetTriggerForMultipleChoicePath(typedModel, index, finalTrigger);
+                    controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
+                    currentTrigger = finalTrigger;
+                    UpdateSaveButtonState();
+
+                    ApplyInstructionsToMultipleChoiceNode(typedModel);
+                }
+            };
+
+            if (!string.IsNullOrEmpty(preselectedObjectName))
+            {
+                var preselectedGO = GameObject.Find(preselectedObjectName);
+                if (preselectedGO != null)
+                {
+                    TriggerAssignmentController.SetSelectedObjectManually(preselectedGO);
+                    selectionLabel.text = $"Current selection: {preselectedGO.name}";
+
+                    availableEvents = TriggerAssignmentController.GetAvailableEvents(preselectedGO);
+                    if (availableEvents.Count > 0)
+                    {
+                        eventDropdown.choices = availableEvents;
+                        selectedEventType = availableEvents.Contains(preselectedEvent) ? preselectedEvent : availableEvents[0];
+                        eventDropdown.SetValueWithoutNotify(selectedEventType);
+                        eventDropdown.style.display = DisplayStyle.Flex;
+                    }
+                }
+            }
+        }
+
         private void ApplyInstructionsToMultipleChoiceNode(MultipleChoiceNodeModel node)
         {
             if (node == null) return;
@@ -221,6 +272,5 @@ namespace Views.RightPanel
 
             InstructionHelpers.AddAwaitTriggerInstruction(node);
         }
-
     }
 }
