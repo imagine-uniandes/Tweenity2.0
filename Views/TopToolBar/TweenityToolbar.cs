@@ -79,7 +79,7 @@ namespace Views
             };
             toolbar.Add(helpButton);
 
-            // 🔄 Clear All Button (NEW)
+            // 🔄 Clear All Button 
             ToolbarButton clearAllButton = new ToolbarButton(() =>
             {
                 if (EditorUtility.DisplayDialog("Clear Graph", "Are you sure you want to clear the entire graph?", "Yes", "Cancel"))

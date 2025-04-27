@@ -1,4 +1,7 @@
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
+
 using UnityEngine;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
@@ -85,6 +88,31 @@ public class TweenityGraphEditor : EditorWindow
                 Debug.LogError($"❌ Failed to load graph from last saved path: {e.Message}");
             }
         }
+
+        #if UNITY_EDITOR
+    EditorApplication.playModeStateChanged += (PlayModeStateChange state) =>
+    {
+        if (state == PlayModeStateChange.EnteredPlayMode)
+        {
+            Debug.Log("▶ Play Mode entered. Checking graph...");
+
+            var controller = GraphController.ActiveEditorGraphController;
+            if (controller == null)
+            {
+                Debug.LogWarning("GraphController not found. Cannot start simulation.");
+                return;
+            }
+
+            if (EditorUtility.DisplayDialog("Save Graph?", "Do you want to save the current graph before starting simulation?", "Save and Start", "Start without Saving"))
+            {
+                controller.SaveCurrentGraph();
+            }
+
+            controller.StartRuntime();
+        }
+    };
+    #endif
+
     }
 
 }
