@@ -24,9 +24,9 @@ namespace Controllers
         private VisualElement rightPanelRoot;
         private string lastSavedPath;
         public bool IsEditingEnabled { get; set; } = true;
+        private SimulationController simulationController;
         private bool isSimulationRunning = false;
         public bool IsDirty { get; private set; } = false;
-
         private string pendingSourceNodeId;
         private Action<string> onTargetNodeSelected;
 
@@ -204,7 +204,7 @@ namespace Controllers
         }
 
         // ==========================
-        // Node-Specific Updates (Reminder, Random)
+        // Node-Specific Updates 
         // ==========================
         public void UpdateReminderText(ReminderNodeModel model, string newText)
         {
@@ -430,12 +430,8 @@ namespace Controllers
                 return;
             }
 
-            var simulationController = GameObject.FindObjectOfType<SimulationController>();
             if (simulationController == null)
-            {
-                Debug.LogError("SimulationController not found.");
-                return;
-            }
+                simulationController = new SimulationController();
 
             var simulationScript = RuntimeGraphBuilder.FromGraphModel(Graph);
             simulationController.SetSimulation(simulationScript);
