@@ -43,6 +43,7 @@ namespace Controllers
             GraphView = graphView;
 #if UNITY_EDITOR
             ActiveEditorGraphController = this;
+            Debug.Log("✅ ActiveEditorGraphController set!");
 #endif
         }
 
@@ -207,15 +208,23 @@ namespace Controllers
         // ==========================
         // Node-Specific Updates 
         // ==========================
-        public void UpdateReminderText(ReminderNodeModel model, string newText)
+        public void SetReminderSuccessTrigger(ReminderNodeModel model, string objectName, string scriptName, string methodName, string targetNodeID)
         {
             if (!IsEditingEnabled || GraphView == null) return;
 
-            model.ReminderText = newText;
+            model.SetSuccessPath(objectName, scriptName, methodName, targetNodeID);
             GraphView.RefreshNodeVisual(model.NodeID);
             MarkDirty();
         }
 
+        public void SetReminderTimeoutTrigger(ReminderNodeModel model, string objectName, string scriptName, string methodName)
+        {
+            if (!IsEditingEnabled || GraphView == null) return;
+
+            model.SetReminderPath(objectName, scriptName, methodName);
+            GraphView.RefreshNodeVisual(model.NodeID);
+            MarkDirty();
+        }
         public void UpdateReminderTimer(ReminderNodeModel model, float newTimer)
         {
             if (!IsEditingEnabled || GraphView == null) return;
@@ -419,6 +428,7 @@ namespace Controllers
         // ==========================
         public void StartRuntime()
         {
+            Debug.Log("🚀 StartRuntime called!");
             if (isSimulationRunning || GraphView == null) return;
 
             isSimulationRunning = true;
@@ -427,7 +437,7 @@ namespace Controllers
             var startNode = Graph.Nodes.FirstOrDefault(n => n.Type == NodeType.Start);
             if (startNode == null)
             {
-                Debug.LogError("No Start node found.");
+                Debug.LogError("❌ No Start node found in graph.");
                 return;
             }
 
@@ -439,7 +449,7 @@ namespace Controllers
             var simulationScript = RuntimeGraphBuilder.FromGraphModel(Graph);
             simulationController.SetSimulation(simulationScript);
 
-            Debug.Log("✅ Simulation started through GraphController.");
+            Debug.Log("✅ SimulationController started successfully.");
         }
 
         // ==========================

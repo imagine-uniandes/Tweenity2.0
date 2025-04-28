@@ -24,44 +24,31 @@ namespace Simulation.Runtime
                     responses = new List<Response>()
                 };
 
-                // --- Parse outgoing paths (Success paths)
+                // --- Parse outgoing paths (Success + Reminder paths)
                 foreach (var path in node.OutgoingPaths)
                 {
                     runtimeNode.responses.Add(new Response
                     {
-                        displayText = path.Label ?? "Continue",
+                        displayText = path.Trigger ?? "Continue",
                         destinationNode = GetNodeTitleById(graphModel, path.TargetNodeID)
                     });
 
-                    if (!string.IsNullOrEmpty(path.Trigger) && path.Trigger.Contains(":"))
+                    // Only create UserActions for Success paths (which have a target)
+                    if (!string.IsNullOrEmpty(path.TargetNodeID) && !string.IsNullOrEmpty(path.Trigger) && path.Trigger.Contains(":"))
                     {
                         var parts = path.Trigger.Split(':');
                         if (parts.Length == 2)
                         {
-                            runtimeNode.userActions.Add(new Action
+                            var methodParts = parts[1].Split('.');
+                            if (methodParts.Length == 2)
                             {
-                                object2Action = parts[0],
-                                actionName = parts[1],
-                                actionParams = ""
-                            });
-                        }
-                    }
-                }
-
-                // --- Parse ReminderBehavior (only for ReminderNodes)
-                if (node is ReminderNodeModel reminderNode)
-                {
-                    if (!string.IsNullOrEmpty(reminderNode.ReminderBehavior) && reminderNode.ReminderBehavior.Contains(":"))
-                    {
-                        var parts = reminderNode.ReminderBehavior.Split(':');
-                        if (parts.Length == 2)
-                        {
-                            runtimeNode.simulatorActions.Add(new Action
-                            {
-                                object2Action = parts[0],
-                                actionName = parts[1],
-                                actionParams = "reminder" // We mark this action as a special reminder behavior
-                            });
+                                runtimeNode.userActions.Add(new Action
+                                {
+                                    object2Action = parts[0],
+                                    actionName = $"{methodParts[0]}.{methodParts[1]}",
+                                    actionParams = ""
+                                });
+                            }
                         }
                     }
                 }

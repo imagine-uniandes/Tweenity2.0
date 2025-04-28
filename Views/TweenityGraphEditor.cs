@@ -28,29 +28,18 @@ public class TweenityGraphEditor : EditorWindow
         root.style.flexDirection = FlexDirection.Column;
         root.style.flexGrow = 1;
 
-        // Create GraphController
+        // Create controller
         GraphController graphController = new GraphController();
-
-        // Create GraphView 
         TweenityGraphView graphView = new TweenityGraphView();
-        graphView.style.backgroundColor = EditorGUIUtility.isProSkin
-            ? new Color(0.18f, 0.18f, 0.18f)
-            : new Color(0.82f, 0.82f, 0.82f);
-
-        // Bind controller <-> view
         graphController.SetGraphView(graphView);
+        Debug.Log("✅ Created GraphController in CreateGUI()");
         graphView.SetController(graphController);
         graphView.OnNodeSelected = graphController.OnNodeSelected;
 
-        // Add toolbar
+        // Setup UI
         root.Add(TweenityToolbar.CreateToolbar(graphController));
 
-        // Layout: Left - Center - Right
-        VisualElement mainLayout = new VisualElement
-        {
-            style = { flexDirection = FlexDirection.Row, flexGrow = 1 }
-        };
-
+        VisualElement mainLayout = new VisualElement { style = { flexDirection = FlexDirection.Row, flexGrow = 1 } };
         mainLayout.Add(TweenityLeftPanel.CreateLeftPanel(graphController));
         mainLayout.Add(graphView);
 
@@ -59,60 +48,52 @@ public class TweenityGraphEditor : EditorWindow
         mainLayout.Add(rightPanelRoot);
 
         root.Add(mainLayout);
-
-        // Bottom bar
         root.Add(TweenityBottomToolbar.CreateBottomToolbar(graphController));
 
-        // ✅ Restaurar automáticamente desde último path guardado
-        string lastPath = EditorPrefs.GetString("Tweenity_LastGraphPath", "");
-        if (!string.IsNullOrEmpty(lastPath) && File.Exists(lastPath))
+        // ✅ Defer graph restore after Editor is ready
+        EditorApplication.delayCall += () =>
         {
-            try
+            string lastPath = EditorPrefs.GetString("Tweenity_LastGraphPath", "");
+            if (!string.IsNullOrEmpty(lastPath) && File.Exists(lastPath))
             {
-                string twee = File.ReadAllText(lastPath);
-                var importedNodes = GraphParser.ImportFromTwee(twee);
-
-                // Limpiar vista y modelo antes de restaurar
-                graphController.ClearGraph();
-
-                EditorApplication.delayCall += () =>
+                try
                 {
+                    string twee = File.ReadAllText(lastPath);
+                    var importedNodes = GraphParser.ImportFromTwee(twee);
+
+                    graphController.ClearGraph();
                     foreach (var node in importedNodes)
                         graphController.AddNode(node);
 
-                    Debug.Log($"✅ Graph restored from last saved file: {lastPath} ({importedNodes.Count} nodes)");
-                };
+                    Debug.Log($"✅ Graph restored after PlayMode reload from: {lastPath} ({importedNodes.Count} nodes)");
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"❌ Failed to load graph after PlayMode reload: {e.Message}");
+                }
             }
-            catch (Exception e)
-            {
-                Debug.LogError($"❌ Failed to load graph from last saved path: {e.Message}");
-            }
-        }
+        };
 
-        #if UNITY_EDITOR
-    EditorApplication.playModeStateChanged += (PlayModeStateChange state) =>
+    #if UNITY_EDITOR
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+    #endif
+    }
+
+    private static void OnPlayModeStateChanged(PlayModeStateChange state)
     {
         if (state == PlayModeStateChange.EnteredPlayMode)
         {
-            Debug.Log("▶ Play Mode entered. Checking graph...");
+            Debug.Log("▶ PlayModeStateChange: EnteredPlayMode!");
 
             var controller = GraphController.ActiveEditorGraphController;
             if (controller == null)
             {
-                Debug.LogWarning("GraphController not found. Cannot start simulation.");
+                Debug.LogWarning("❌ No ActiveEditorGraphController at PlayMode start.");
                 return;
             }
 
-            if (EditorUtility.DisplayDialog("Save Graph?", "Do you want to save the current graph before starting simulation?", "Save and Start", "Start without Saving"))
-            {
-                controller.SaveCurrentGraph();
-            }
-
+            Debug.Log("✅ Calling StartRuntime()");
             controller.StartRuntime();
         }
-    };
-    #endif
-
     }
-
 }

@@ -250,23 +250,42 @@ namespace Simulation.Runtime
                 return;
             }
 
-            // Find a simulator action specifically tagged as "reminder"
-            var reminderAction = curNode.simulatorActions
-                .FirstOrDefault(a => a.actionParams == "reminder");
-
-            if (reminderAction == null)
+            if (curNode.responses == null || curNode.responses.Count < 2)
             {
-                Debug.LogWarning("No ReminderBehavior action found in simulatorActions.");
+                Debug.LogWarning("Reminder node does not have two responses (Success + Reminder).");
                 return;
             }
 
-            if (string.IsNullOrEmpty(reminderAction.object2Action) || string.IsNullOrEmpty(reminderAction.actionName))
+            var reminderTrigger = curNode.responses[1].displayText; // Path 1 = Reminder behavior
+
+            if (string.IsNullOrEmpty(reminderTrigger))
             {
-                Debug.LogWarning("ReminderBehavior action has missing object or method name.");
+                Debug.LogWarning("Reminder trigger not set.");
                 return;
             }
 
-            GameObject obj = GameObject.Find(reminderAction.object2Action);
+            // Parse reminderTrigger: expected format = "Object:Script.Method"
+            var parts = reminderTrigger.Split(':');
+            if (parts.Length != 2)
+            {
+                Debug.LogWarning("Invalid Reminder trigger format. Expected 'Object:Script.Method'.");
+                return;
+            }
+
+            string objectName = parts[0];
+            string methodParts = parts[1];
+
+            var methodSplit = methodParts.Split('.');
+            if (methodSplit.Length != 2)
+            {
+                Debug.LogWarning("Invalid Reminder trigger method format. Expected 'Script.Method'.");
+                return;
+            }
+
+            string scriptName = methodSplit[0];
+            string methodName = methodSplit[1];
+
+            GameObject obj = GameObject.Find(objectName);
             if (obj != null)
             {
                 var scripts = obj.GetComponents<MonoBehaviour>();
@@ -275,18 +294,21 @@ namespace Simulation.Runtime
                 {
                     if (script == null) continue;
 
-                    var method = script.GetType().GetMethod(reminderAction.actionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (script.GetType().Name != scriptName)
+                        continue;
+
+                    var method = script.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                     if (method != null && method.GetParameters().Length == 0)
                     {
                         method.Invoke(script, null);
-                        Debug.Log($"✅ Reminder behavior '{reminderAction.actionName}' invoked on '{reminderAction.object2Action}'");
+                        Debug.Log($"✅ Reminder behavior '{scriptName}.{methodName}' invoked on '{objectName}'.");
                         break;
                     }
                 }
             }
             else
             {
-                Debug.LogWarning($"[SimulationController] Reminder target object not found: {reminderAction.object2Action}");
+                Debug.LogWarning($"[SimulationController] Reminder target object not found: {objectName}");
             }
         }
 

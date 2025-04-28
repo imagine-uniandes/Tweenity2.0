@@ -1,28 +1,42 @@
+using System.Collections.Generic;
+using UnityEngine;
+
 namespace Models.Nodes
 {
     public class ReminderNodeModel : TweenityNodeModel
     {
-        public string ReminderText { get; set; }
         public float ReminderTimer { get; set; }
-        public string ReminderBehavior { get; set; }
 
         public ReminderNodeModel(string title) : base(title, NodeType.Reminder)
         {
-            ReminderText = "";
             ReminderTimer = 0f;
-            ReminderBehavior = "";
+
+            // Initialize two paths immediately
+            OutgoingPaths.Add(new PathData("Success", "", ""));
+            OutgoingPaths.Add(new PathData("Reminder", "", ""));
         }
-        public void SetReminderPath(string label, string targetNodeID)
+
+        public void SetSuccessPath(string objectName, string scriptName, string methodName, string targetNodeID)
         {
-            if (OutgoingPaths.Count == 0)
-            {
-                OutgoingPaths.Add(new PathData(label, "", targetNodeID));
-            }
-            else
-            {
-                OutgoingPaths[0].Label = label;
-                OutgoingPaths[0].TargetNodeID = targetNodeID;
-            }
+            string trigger = $"{objectName}:{scriptName}.{methodName}";
+            OutgoingPaths[0].Label = "Success";
+            OutgoingPaths[0].Trigger = trigger;
+            OutgoingPaths[0].TargetNodeID = targetNodeID;
         }
+
+        public void SetReminderPath(string objectName, string scriptName, string methodName)
+        {
+            string trigger = $"{objectName}:{scriptName}.{methodName}";
+
+            while (OutgoingPaths.Count <= 1)
+            {
+                OutgoingPaths.Add(new PathData("Reminder", "", ""));
+            }
+
+            OutgoingPaths[1].Label = "Reminder";
+            OutgoingPaths[1].Trigger = trigger;
+            OutgoingPaths[1].TargetNodeID = "";
+        }
+
     }
 }
