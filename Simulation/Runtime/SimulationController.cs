@@ -153,14 +153,35 @@ namespace Simulation.Runtime
         public async Task<MethodInfo> ExecuteSimulatorActions(List<Action> simulatorActions)
         {
             MethodInfo taskObject = null;
+
             foreach (var action in simulatorActions)
             {
                 GameObject obj = GameObject.Find(action.object2Action);
                 if (obj != null)
-                    taskObject = await obj.GetComponent<ObjectController>().MethodAccess(action.actionName, action.actionParams);
+                {
+                    var scripts = obj.GetComponents<MonoBehaviour>();
+
+                    foreach (var script in scripts)
+                    {
+                        if (script == null) continue;
+
+                        // Find method by action name
+                        var method = script.GetType().GetMethod(action.actionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                        if (method != null && method.GetParameters().Length == 0)
+                        {
+                            method.Invoke(script, null);
+                            taskObject = method;
+                            break;
+                        }
+                    }
+                }
                 else
-                    Debug.LogWarning($"[Sim] Object not found: {action.object2Action}");
+                {
+                    Debug.LogWarning($"[SimulationController] Object not found: {action.object2Action}");
+                }
             }
+
+            await Task.Yield(); // Still async, even if immediate
             return taskObject;
         }
 
@@ -224,7 +245,21 @@ namespace Simulation.Runtime
             {
                 GameObject obj = GameObject.Find(curReminder.object2Action);
                 if (obj != null)
-                    _ = obj.GetComponent<ObjectController>().MethodAccess(curReminder.actionName, curReminder.actionParams);
+                {
+                    var scripts = obj.GetComponents<MonoBehaviour>();
+
+                    foreach (var script in scripts)
+                    {
+                        if (script == null) continue;
+
+                        var method = script.GetType().GetMethod(curReminder.actionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                        if (method != null && method.GetParameters().Length == 0)
+                        {
+                            method.Invoke(script, null);
+                            break;
+                        }
+                    }
+                }
             }
         }
 

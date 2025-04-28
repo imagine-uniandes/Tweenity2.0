@@ -11,6 +11,7 @@ using Views;
 using Views.MiddlePanel;
 using UnityEditor.Experimental.GraphView;
 using Simulation.Runtime;
+using Simulation;
 
 namespace Controllers
 {
@@ -432,6 +433,8 @@ namespace Controllers
 
             if (simulationController == null)
                 simulationController = new SimulationController();
+
+            TweenityEvents.RegisterSimulationController(simulationController);
 
             var simulationScript = RuntimeGraphBuilder.FromGraphModel(Graph);
             simulationController.SetSimulation(simulationScript);

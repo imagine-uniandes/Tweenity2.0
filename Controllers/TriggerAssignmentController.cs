@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor.SceneManagement;
 using System;
 using System.Collections.Generic;
+using Controllers;
 
 #if UNITY_EDITOR
 [InitializeOnLoad]
@@ -64,17 +65,9 @@ public static class TriggerAssignmentController
 
     public static List<string> GetAvailableEvents(GameObject obj)
     {
-        List<string> events = new();
+        if (obj == null) return new List<string>();
 
-        if (obj == null) return events;
-
-        var objectController = obj.GetComponent<ObjectController>();
-        if (objectController != null)
-        {
-            events.AddRange(objectController.GetAvailableTriggerMethods());
-        }
-
-        return events;
+        return Controllers.ObjectController.GetAvailableTriggerMethods(obj);
     }
 
     public static void SaveTrigger(string selectedEvent)

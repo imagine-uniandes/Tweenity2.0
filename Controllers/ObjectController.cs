@@ -2,79 +2,56 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Threading.Tasks;
+using Simulation;
 
-public class ObjectController : MonoBehaviour
+namespace Controllers
 {
-    [Tooltip("El script que contiene métodos activables (triggerables).")]
-    public MonoBehaviour targetScript;
-
     /// <summary>
-    /// Devuelve una lista de métodos públicos sin parámetros que pueden ser usados como triggers.
+    /// ObjectController scans a GameObject for methods marked with [TweenityTrigger].
+    /// 
+    /// Contract:
+    ///  - Method must be marked with [TweenityTrigger]
+    ///  - Inside the method, you must call:
+    ///      TweenityEvents.ReportAction(gameObject.name, nameof(MethodName), parameters);
+    /// 
+    ///  This ensures:
+    ///      - Object name matches at runtime
+    ///      - Action name matches exactly with method name
     /// </summary>
-    public List<string> GetAvailableTriggerMethods()
+    public static class ObjectController
     {
-        List<string> validMethods = new();
-        if (targetScript == null) return validMethods;
-
-        MethodInfo[] methods = targetScript.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
-
-        foreach (var method in methods)
+        /// <summary>
+        /// Scans the given GameObject and returns a list of valid action trigger methods.
+        /// Only methods marked with [TweenityTrigger] are considered.
+        /// </summary>
+        public static List<string> GetAvailableTriggerMethods(GameObject target)
         {
-            if (method.GetParameters().Length == 0 && !method.IsSpecialName)
+            List<string> validMethods = new();
+
+            if (target == null) return validMethods;
+
+            // Check all attached MonoBehaviours
+            MonoBehaviour[] scripts = target.GetComponents<MonoBehaviour>();
+
+            foreach (var script in scripts)
             {
-                validMethods.Add(method.Name);
+                if (script == null) continue; // Can happen with missing scripts
+
+                MethodInfo[] methods = script.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+
+                foreach (var method in methods)
+                {
+                    if (method.IsSpecialName) continue; // Skip property getters/setters etc.
+
+                    // Check if method is marked with [TweenityTrigger]
+                    if (method.GetCustomAttribute(typeof(TweenityTriggerAttribute)) != null)
+                    {
+                        validMethods.Add($"{script.GetType().Name}.{method.Name}");
+                    }
+                }
             }
+
+            return validMethods;
         }
-
-        return validMethods;
-    }
-
-    /// <summary>
-    /// Ejecuta el método con el nombre dado sobre el script objetivo.
-    /// </summary>
-    public bool TriggerMethod(string methodName)
-    {
-        if (targetScript == null)
-        {
-            Debug.LogWarning($"[{gameObject.name}] No target script assigned.");
-            return false;
-        }
-
-        var method = targetScript.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
-        if (method == null || method.GetParameters().Length > 0)
-        {
-            Debug.LogWarning($"[{gameObject.name}] Method '{methodName}' is not valid or requires parameters.");
-            return false;
-        }
-
-        method.Invoke(targetScript, null);
-        Debug.Log($"[{gameObject.name}] Triggered method: {methodName}");
-        return true;
-    }
-
-    /// <summary>
-    /// Método async para ejecución desde SimulationController. Retorna el MethodInfo ejecutado o null si falló.
-    /// </summary>
-    public async Task<MethodInfo> MethodAccess(string methodName, string methodParams)
-    {
-        await Task.Yield(); // simulate async even if it's immediate
-
-        if (targetScript == null)
-        {
-            Debug.LogWarning($"[{gameObject.name}] No target script assigned.");
-            return null;
-        }
-
-        var method = targetScript.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
-        if (method == null || method.GetParameters().Length > 0)
-        {
-            Debug.LogWarning($"[{gameObject.name}] Method '{methodName}' not found or has parameters.");
-            return null;
-        }
-
-        method.Invoke(targetScript, null);
-        Debug.Log($"[{gameObject.name}] MethodAccess invoked: {methodName}");
-        return method;
     }
 }
