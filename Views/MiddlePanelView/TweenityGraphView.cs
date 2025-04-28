@@ -8,6 +8,7 @@ using Views.MiddlePanel;
 using Models;
 using UnityEditor;
 using Controllers;
+using System.Collections.Generic;
 
 namespace Views
 {
@@ -347,6 +348,32 @@ namespace Views
 
             FrameSelection();            // Center it visually
         }
+
+        public void ForceRemoveNodeById(string nodeId)
+        {
+            var elementsToRemove = new List<GraphElement>();
+
+            foreach (var element in graphElements)
+            {
+                if (element is TweenityNode node && node.NodeID == nodeId)
+                {
+                    elementsToRemove.Add(node);
+                }
+                else if (element is Edge edge)
+                {
+                    if (edge.output?.node is TweenityNode outputNode && outputNode.NodeID == nodeId)
+                        elementsToRemove.Add(edge);
+                    if (edge.input?.node is TweenityNode inputNode && inputNode.NodeID == nodeId)
+                        elementsToRemove.Add(edge);
+                }
+            }
+
+            foreach (var element in elementsToRemove)
+            {
+                RemoveElement(element);
+            }
+        }
+
 
     }
 }

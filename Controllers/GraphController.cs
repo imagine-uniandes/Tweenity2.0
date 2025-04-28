@@ -93,8 +93,7 @@ namespace Controllers
 
             if (AddNode(newNode))
             {
-                GraphView.RenderNode(newNode, positionRect);
-                GraphView.CenterOnNode(newNode.NodeID); // Center the view on new node
+                GraphView.CenterOnNode(newNode.NodeID);
             }
         }
 
@@ -180,6 +179,7 @@ namespace Controllers
                 ?.GetPosition().position ?? new Vector2(200, 200);
 
             RemoveNode(oldModel.NodeID);
+            GraphView.ForceRemoveNodeById(oldModel.NodeID);
 
             TweenityNodeModel newModel = newType switch
             {
@@ -196,8 +196,8 @@ namespace Controllers
             newModel.Description = oldModel.Description;
             newModel.Position = pos;
 
-            AddNode(newModel);
-            GraphView.RenderNode(newModel, new Rect(pos, new Vector2(150, 200)));
+            AddNode(newModel); // This already internally calls RenderNode()
+
             OnNodeSelected(newModel);
             MarkDirty();
 
