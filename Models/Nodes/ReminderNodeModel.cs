@@ -4,11 +4,13 @@ namespace Models.Nodes
     {
         public string ReminderText { get; set; }
         public float ReminderTimer { get; set; }
+        public string ReminderBehavior { get; set; }
 
         public ReminderNodeModel(string title) : base(title, NodeType.Reminder)
         {
             ReminderText = "";
             ReminderTimer = 0f;
+            ReminderBehavior = "";
         }
         public void SetReminderPath(string label, string targetNodeID)
         {

@@ -24,6 +24,7 @@ namespace Simulation.Runtime
                     responses = new List<Response>()
                 };
 
+                // --- Parse outgoing paths (Success paths)
                 foreach (var path in node.OutgoingPaths)
                 {
                     runtimeNode.responses.Add(new Response
@@ -42,6 +43,24 @@ namespace Simulation.Runtime
                                 object2Action = parts[0],
                                 actionName = parts[1],
                                 actionParams = ""
+                            });
+                        }
+                    }
+                }
+
+                // --- Parse ReminderBehavior (only for ReminderNodes)
+                if (node is ReminderNodeModel reminderNode)
+                {
+                    if (!string.IsNullOrEmpty(reminderNode.ReminderBehavior) && reminderNode.ReminderBehavior.Contains(":"))
+                    {
+                        var parts = reminderNode.ReminderBehavior.Split(':');
+                        if (parts.Length == 2)
+                        {
+                            runtimeNode.simulatorActions.Add(new Action
+                            {
+                                object2Action = parts[0],
+                                actionName = parts[1],
+                                actionParams = "reminder" // We mark this action as a special reminder behavior
                             });
                         }
                     }

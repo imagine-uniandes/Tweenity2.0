@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using Simulation.Runtime;
+using System.Linq;
 
 #if UNITY_EDITOR
 using Models;
@@ -241,25 +242,51 @@ namespace Simulation.Runtime
 
         public void ActivateReminder()
         {
-            if (remember)
+            if (!remember) return;
+
+            if (curNode == null)
             {
-                GameObject obj = GameObject.Find(curReminder.object2Action);
-                if (obj != null)
+                Debug.LogWarning("No current node during reminder activation.");
+                return;
+            }
+
+            // Find a simulator action specifically tagged as "reminder"
+            var reminderAction = curNode.simulatorActions
+                .FirstOrDefault(a => a.actionParams == "reminder");
+
+            if (reminderAction == null)
+            {
+                Debug.LogWarning("No ReminderBehavior action found in simulatorActions.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(reminderAction.object2Action) || string.IsNullOrEmpty(reminderAction.actionName))
+            {
+                Debug.LogWarning("ReminderBehavior action has missing object or method name.");
+                return;
+            }
+
+            GameObject obj = GameObject.Find(reminderAction.object2Action);
+            if (obj != null)
+            {
+                var scripts = obj.GetComponents<MonoBehaviour>();
+
+                foreach (var script in scripts)
                 {
-                    var scripts = obj.GetComponents<MonoBehaviour>();
+                    if (script == null) continue;
 
-                    foreach (var script in scripts)
+                    var method = script.GetType().GetMethod(reminderAction.actionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (method != null && method.GetParameters().Length == 0)
                     {
-                        if (script == null) continue;
-
-                        var method = script.GetType().GetMethod(curReminder.actionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                        if (method != null && method.GetParameters().Length == 0)
-                        {
-                            method.Invoke(script, null);
-                            break;
-                        }
+                        method.Invoke(script, null);
+                        Debug.Log($"✅ Reminder behavior '{reminderAction.actionName}' invoked on '{reminderAction.object2Action}'");
+                        break;
                     }
                 }
+            }
+            else
+            {
+                Debug.LogWarning($"[SimulationController] Reminder target object not found: {reminderAction.object2Action}");
             }
         }
 

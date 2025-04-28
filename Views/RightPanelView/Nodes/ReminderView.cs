@@ -9,10 +9,15 @@ namespace Views.RightPanel
 {
     public class ReminderView : TweenityNodeView
     {
-        private ObjectField objectField;
-        private PopupField<string> triggerDropdown;
-        private List<string> availableTriggers = new();
-        private string selectedEventType = "";
+        private ObjectField successObjectField;
+        private PopupField<string> successTriggerDropdown;
+        private List<string> availableSuccessTriggers = new();
+        private string selectedSuccessEvent = "";
+
+        private ObjectField reminderObjectField;
+        private PopupField<string> reminderBehaviorDropdown;
+        private List<string> availableReminderTriggers = new();
+        private string selectedReminderBehavior = "";
 
         public ReminderView(ReminderNodeModel model, GraphController controller) : base(model, controller)
         {
@@ -45,24 +50,6 @@ namespace Views.RightPanel
             });
             Add(timerField);
 
-            Add(new Label("Reminder Trigger Assignment")
-            {
-                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
-            });
-
-            // Object Picker
-            objectField = new ObjectField("Target Object");
-            objectField.objectType = typeof(GameObject);
-            objectField.value = null;
-            objectField.RegisterValueChangedCallback(OnObjectSelected);
-            Add(objectField);
-
-            // Trigger Dropdown
-            triggerDropdown = new PopupField<string>("Trigger Method", availableTriggers, 0);
-            triggerDropdown.SetEnabled(false);
-            triggerDropdown.RegisterValueChangedCallback(OnTriggerSelected);
-            Add(triggerDropdown);
-
             // Outgoing connection section
             if (typedModel.OutgoingPaths.Count == 0)
             {
@@ -93,63 +80,79 @@ namespace Views.RightPanel
                 label.style.whiteSpace = WhiteSpace.Normal;
                 Add(label);
 
-                // 🚀 Now show trigger assignment ONLY after connection exists
-                Add(new Label("Reminder Trigger Assignment")
+                // Success Action Section (for normal user interaction)
+                Add(new Label("Success Trigger Assignment")
                 {
                     style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
                 });
 
-                // Object Picker
-                objectField = new ObjectField("Target Object");
-                objectField.objectType = typeof(GameObject);
-                objectField.value = null;
-                objectField.RegisterValueChangedCallback(OnObjectSelected);
-                Add(objectField);
+                successObjectField = new ObjectField("Success Target Object");
+                successObjectField.objectType = typeof(GameObject);
+                successObjectField.value = null;
+                successObjectField.RegisterValueChangedCallback(OnSuccessObjectSelected);
+                Add(successObjectField);
 
-                // Trigger Dropdown
-                triggerDropdown = new PopupField<string>("Trigger Method", availableTriggers, 0);
-                triggerDropdown.SetEnabled(false);
-                triggerDropdown.RegisterValueChangedCallback(OnTriggerSelected);
-                Add(triggerDropdown);
+                successTriggerDropdown = new PopupField<string>("Success Trigger Method", availableSuccessTriggers, 0);
+                successTriggerDropdown.SetEnabled(false);
+                successTriggerDropdown.RegisterValueChangedCallback(OnSuccessTriggerSelected);
+                Add(successTriggerDropdown);
+
+                // Reminder Behavior Section (for what happens if timer expires)
+                Add(new Label("Reminder Behavior Assignment")
+                {
+                    style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
+                });
+
+                reminderObjectField = new ObjectField("Reminder Target Object");
+                reminderObjectField.objectType = typeof(GameObject);
+                reminderObjectField.value = null;
+                reminderObjectField.RegisterValueChangedCallback(OnReminderObjectSelected);
+                Add(reminderObjectField);
+
+                reminderBehaviorDropdown = new PopupField<string>("Reminder Behavior Method", availableReminderTriggers, 0);
+                reminderBehaviorDropdown.SetEnabled(false);
+                reminderBehaviorDropdown.RegisterValueChangedCallback(OnReminderBehaviorSelected);
+                Add(reminderBehaviorDropdown);
             }
-
         }
 
-        private void OnObjectSelected(ChangeEvent<UnityEngine.Object> evt)
+        // -- Success Trigger Logic --
+
+        private void OnSuccessObjectSelected(ChangeEvent<UnityEngine.Object> evt)
         {
             GameObject selectedObject = evt.newValue as GameObject;
             if (selectedObject == null)
             {
-                triggerDropdown.SetEnabled(false);
+                successTriggerDropdown.SetEnabled(false);
                 return;
             }
 
-            availableTriggers = TriggerAssignmentController.GetAvailableEvents(selectedObject);
+            availableSuccessTriggers = TriggerAssignmentController.GetAvailableEvents(selectedObject);
 
-            if (availableTriggers.Count > 0)
+            if (availableSuccessTriggers.Count > 0)
             {
-                triggerDropdown.choices = availableTriggers;
-                triggerDropdown.index = 0;
-                triggerDropdown.SetEnabled(true);
+                successTriggerDropdown.choices = availableSuccessTriggers;
+                successTriggerDropdown.index = 0;
+                successTriggerDropdown.SetEnabled(true);
 
-                SetReminderTriggerInModel(selectedObject, availableTriggers[0]);
+                SetSuccessTriggerInModel(selectedObject, availableSuccessTriggers[0]);
             }
             else
             {
-                triggerDropdown.choices = new List<string>();
-                triggerDropdown.SetEnabled(false);
+                successTriggerDropdown.choices = new List<string>();
+                successTriggerDropdown.SetEnabled(false);
             }
         }
 
-        private void OnTriggerSelected(ChangeEvent<string> evt)
+        private void OnSuccessTriggerSelected(ChangeEvent<string> evt)
         {
-            if (objectField.value == null || string.IsNullOrEmpty(evt.newValue))
+            if (successObjectField.value == null || string.IsNullOrEmpty(evt.newValue))
                 return;
 
-            SetReminderTriggerInModel(objectField.value as GameObject, evt.newValue);
+            SetSuccessTriggerInModel(successObjectField.value as GameObject, evt.newValue);
         }
 
-        private void SetReminderTriggerInModel(GameObject selectedObject, string selectedTriggerFullName)
+        private void SetSuccessTriggerInModel(GameObject selectedObject, string selectedTriggerFullName)
         {
             string[] parts = selectedTriggerFullName.Split('.');
             if (parts.Length != 2) return;
@@ -161,9 +164,55 @@ namespace Views.RightPanel
             if (typedModel.OutgoingPaths.Count == 0)
                 typedModel.OutgoingPaths.Add(new PathData("Next"));
 
-            // Set trigger format as "ObjectName:MethodName" into OutgoingPaths[0].Trigger
             typedModel.OutgoingPaths[0].Trigger = $"{selectedObject.name}:{methodName}";
         }
 
+        // -- Reminder Behavior Logic --
+
+        private void OnReminderObjectSelected(ChangeEvent<UnityEngine.Object> evt)
+        {
+            GameObject selectedObject = evt.newValue as GameObject;
+            if (selectedObject == null)
+            {
+                reminderBehaviorDropdown.SetEnabled(false);
+                return;
+            }
+
+            availableReminderTriggers = TriggerAssignmentController.GetAvailableEvents(selectedObject);
+
+            if (availableReminderTriggers.Count > 0)
+            {
+                reminderBehaviorDropdown.choices = availableReminderTriggers;
+                reminderBehaviorDropdown.index = 0;
+                reminderBehaviorDropdown.SetEnabled(true);
+
+                SetReminderBehaviorInModel(selectedObject, availableReminderTriggers[0]);
+            }
+            else
+            {
+                reminderBehaviorDropdown.choices = new List<string>();
+                reminderBehaviorDropdown.SetEnabled(false);
+            }
+        }
+
+        private void OnReminderBehaviorSelected(ChangeEvent<string> evt)
+        {
+            if (reminderObjectField.value == null || string.IsNullOrEmpty(evt.newValue))
+                return;
+
+            SetReminderBehaviorInModel(reminderObjectField.value as GameObject, evt.newValue);
+        }
+
+        private void SetReminderBehaviorInModel(GameObject selectedObject, string selectedTriggerFullName)
+        {
+            string[] parts = selectedTriggerFullName.Split('.');
+            if (parts.Length != 2) return;
+
+            string methodName = parts[1];
+
+            var typedModel = (ReminderNodeModel)_model;
+
+            typedModel.ReminderBehavior = $"{selectedObject.name}:{methodName}";
+        }
     }
 }
