@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEditor;
+using UnityEditor.UIElements;
 using System.Collections.Generic;
 using Models.Nodes;
 using Controllers;
@@ -9,9 +9,6 @@ namespace Views.RightPanel
 {
     public class DialogueView : TweenityNodeView
     {
-        private string selectedEventType = "";
-        private List<string> availableEvents = new();
-
         public DialogueView(DialogueNodeModel model, GraphController controller) : base(model, controller)
         {
             var typedModel = (DialogueNodeModel)_model;
@@ -23,13 +20,13 @@ namespace Views.RightPanel
 
             Add(new Label("Dialogue Text") { style = { whiteSpace = WhiteSpace.Normal } });
 
-            var textField = new TextField { value = typedModel.DialogueText };
-            textField.RegisterValueChangedCallback(evt =>
+            var dialogueTextField = new TextField { value = typedModel.DialogueText };
+            dialogueTextField.RegisterValueChangedCallback(evt =>
             {
                 typedModel.DialogueText = evt.newValue;
-                controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
+                controller.MarkDirty();
             });
-            Add(textField);
+            Add(dialogueTextField);
 
             Add(new Label("Responses")
             {
@@ -46,18 +43,19 @@ namespace Views.RightPanel
                     style = { marginTop = 6, flexDirection = FlexDirection.Column }
                 };
 
+                // --- Response Text ---
                 var responseField = new TextField { value = path.Label };
                 responseField.RegisterValueChangedCallback(evt =>
                 {
                     typedModel.UpdateResponse(index, evt.newValue);
-                    controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
+                    controller.MarkDirty();
                 });
                 row.Add(responseField);
 
-                var connectedModel = controller.GetNode(path.TargetNodeID);
+                // --- Connection Section ---
                 if (string.IsNullOrEmpty(path.TargetNodeID))
                 {
-                    var connectBtn = new Button(() =>
+                    var connectButton = new Button(() =>
                     {
                         controller.StartConnectionFrom(typedModel.NodeID, targetId =>
                         {
@@ -68,186 +66,114 @@ namespace Views.RightPanel
                         });
                     })
                     {
-                        text = "Connect",
-                        style = { marginTop = 2 }
+                        text = "Connect Response",
+                        style = { marginTop = 4 }
                     };
-                    row.Add(connectBtn);
+                    row.Add(connectButton);
                 }
                 else
                 {
-                    var connectedBtn = new Button
-                    {
-                        text = $"→ {connectedModel?.Title ?? "(Unknown)"}"
-                    };
-                    connectedBtn.SetEnabled(false);
-                    row.Add(connectedBtn);
+                    var connectedLabel = new Label($"→ {controller.GetNode(path.TargetNodeID)?.Title ?? "(Unknown)"}");
+                    connectedLabel.style.marginTop = 4;
+                    row.Add(connectedLabel);
+                }
 
-                    string currentTrigger = path.Trigger ?? "";
-                    string preObj = "", preEvent = "";
+                // --- Target Object + Method Section ---
+                row.Add(new Label("Target Object") { style = { marginTop = 6 } });
 
-                    if (!string.IsNullOrEmpty(currentTrigger) && currentTrigger.Contains(":"))
+                var objectField = new ObjectField();
+                objectField.objectType = typeof(GameObject);
+                objectField.style.marginTop = 2;
+                row.Add(objectField);
+
+                var methodDropdown = new PopupField<string>("Trigger Method", new List<string>(), 0);
+                methodDropdown.style.marginTop = 2;
+                methodDropdown.style.display = DisplayStyle.None;
+                row.Add(methodDropdown);
+
+                // Load from saved Trigger if exists
+                if (!string.IsNullOrEmpty(path.Trigger) && path.Trigger.Contains(":"))
+                {
+                    var parts = path.Trigger.Split(':');
+                    if (parts.Length == 2)
                     {
-                        var parts = currentTrigger.Split(':');
-                        if (parts.Length == 2)
+                        var objName = parts[0];
+                        var methodName = parts[1];
+
+                        var obj = GameObject.Find(objName);
+                        if (obj != null)
                         {
-                            preObj = parts[0];
-                            preEvent = parts[1];
-                        }
-                    }
+                            objectField.SetValueWithoutNotify(obj);
 
-                    var selectionLabel = new Label("Current selection: (none)")
-                    {
-                        style = {
-                            marginTop = 4,
-                            whiteSpace = WhiteSpace.Normal,
-                            flexWrap = Wrap.Wrap,
-                            unityTextAlign = TextAnchor.UpperLeft
-                        }
-                    };
-                    row.Add(selectionLabel);
-
-                    var eventDropdown = new PopupField<string>("Event", new List<string>(), 0);
-                    eventDropdown.style.display = DisplayStyle.None;
-                    row.Add(eventDropdown);
-
-                    var saveBtn = new Button { text = "Save Trigger", style = { marginTop = 2 } };
-                    saveBtn.SetEnabled(false);
-                    row.Add(saveBtn);
-
-                    void UpdateSaveButtonState()
-                    {
-                        if (TriggerAssignmentController.SelectedObject != null && !string.IsNullOrEmpty(selectedEventType))
-                        {
-                            string newTrigger = $"{TriggerAssignmentController.SelectedObject.name}:{selectedEventType}";
-                            saveBtn.SetEnabled(newTrigger != currentTrigger);
-                        }
-                        else saveBtn.SetEnabled(false);
-                    }
-
-                    var selectBtn = new Button(() =>
-                    {
-                        TriggerAssignmentController.Start(
-                            trigger =>
+                            var availableMethods = TriggerAssignmentController.GetAvailableEvents(obj);
+                            if (availableMethods.Count > 0)
                             {
-                                controller.SetTriggerForDialoguePath(typedModel, index, trigger);
-                                controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
-                                ApplyInstructionsToDialogueNode(typedModel);
-                            },
-                            onObjectSelectedImmediate: () =>
-                            {
-                                var go = TriggerAssignmentController.SelectedObject;
-                                if (go != null)
-                                {
-                                    selectionLabel.text = $"Current selection: {go.name}";
-                                    availableEvents = TriggerAssignmentController.GetAvailableEvents(go);
-                                    if (availableEvents.Count > 0)
-                                    {
-                                        eventDropdown.choices = availableEvents;
-                                        selectedEventType = availableEvents[0];
-                                        eventDropdown.SetValueWithoutNotify(selectedEventType);
-                                        eventDropdown.style.display = DisplayStyle.Flex;
-                                    }
-                                    else eventDropdown.style.display = DisplayStyle.None;
-
-                                    UpdateSaveButtonState();
-                                }
-                            }
-                        );
-                    })
-                    {
-                        text = "Select Object for Trigger",
-                        style = { marginTop = 4 }
-                    };
-                    row.Add(selectBtn);
-
-                    var refreshBtn = new Button(() =>
-                    {
-                        TriggerAssignmentController.ConfirmObjectSelection();
-
-                        var go = TriggerAssignmentController.SelectedObject;
-                        if (go != null)
-                        {
-                            selectionLabel.text = $"Current selection: {go.name}";
-                            availableEvents = TriggerAssignmentController.GetAvailableEvents(go);
-                            if (availableEvents.Count > 0)
-                            {
-                                eventDropdown.choices = availableEvents;
-                                selectedEventType = availableEvents.Contains(preEvent) ? preEvent : availableEvents[0];
-                                eventDropdown.SetValueWithoutNotify(selectedEventType);
-                                eventDropdown.style.display = DisplayStyle.Flex;
-                            }
-                            else eventDropdown.style.display = DisplayStyle.None;
-
-                            UpdateSaveButtonState();
-                        }
-                    })
-                    {
-                        text = "Load Events From Selection"
-                    };
-                    row.Add(refreshBtn);
-
-                    eventDropdown.RegisterValueChangedCallback(evt =>
-                    {
-                        selectedEventType = evt.newValue;
-                        UpdateSaveButtonState();
-                    });
-
-                    saveBtn.clicked += () =>
-                    {
-                        if (TriggerAssignmentController.SelectedObject != null && !string.IsNullOrEmpty(selectedEventType))
-                        {
-                            string finalTrigger = $"{TriggerAssignmentController.SelectedObject.name}:{selectedEventType}";
-                            controller.SetTriggerForDialoguePath(typedModel, index, finalTrigger);
-                            controller.GraphView.RefreshNodeVisual(typedModel.NodeID);
-                            currentTrigger = finalTrigger;
-                            UpdateSaveButtonState();
-
-                            ApplyInstructionsToDialogueNode(typedModel);
-                        }
-                    };
-
-                    if (!string.IsNullOrEmpty(preObj))
-                    {
-                        var preGO = GameObject.Find(preObj);
-                        if (preGO != null)
-                        {
-                            TriggerAssignmentController.SetSelectedObjectManually(preGO);
-                            selectionLabel.text = $"Current selection: {preGO.name}";
-                            availableEvents = TriggerAssignmentController.GetAvailableEvents(preGO);
-                            if (availableEvents.Count > 0)
-                            {
-                                eventDropdown.choices = availableEvents;
-                                selectedEventType = availableEvents.Contains(preEvent) ? preEvent : availableEvents[0];
-                                eventDropdown.SetValueWithoutNotify(selectedEventType);
-                                eventDropdown.style.display = DisplayStyle.Flex;
+                                methodDropdown.choices = availableMethods;
+                                methodDropdown.SetValueWithoutNotify(availableMethods.Contains(methodName) ? methodName : availableMethods[0]);
+                                methodDropdown.style.display = DisplayStyle.Flex;
                             }
                         }
                     }
                 }
+
+                objectField.RegisterValueChangedCallback(evt =>
+                {
+                    var selectedObj = evt.newValue as GameObject;
+                    if (selectedObj != null)
+                    {
+                        var availableMethods = TriggerAssignmentController.GetAvailableEvents(selectedObj);
+                        if (availableMethods.Count > 0)
+                        {
+                            methodDropdown.choices = availableMethods;
+                            methodDropdown.index = 0;
+                            methodDropdown.style.display = DisplayStyle.Flex;
+
+                            UpdateTrigger(typedModel, index, selectedObj.name, methodDropdown.value);
+                        }
+                        else
+                        {
+                            methodDropdown.style.display = DisplayStyle.None;
+                        }
+                    }
+                    else
+                    {
+                        methodDropdown.style.display = DisplayStyle.None;
+                    }
+                });
+
+                methodDropdown.RegisterValueChangedCallback(evt =>
+                {
+                    var selectedObj = objectField.value as GameObject;
+                    if (selectedObj != null && !string.IsNullOrEmpty(evt.newValue))
+                    {
+                        UpdateTrigger(typedModel, index, selectedObj.name, evt.newValue);
+                    }
+                });
 
                 Add(row);
             }
 
-            var addBtn = new Button(() =>
+            // --- Add New Response Button ---
+            var addResponseBtn = new Button(() =>
             {
                 typedModel.AddResponse("New Response");
-                controller.OnNodeSelected(typedModel); // Refresh
+                controller.OnNodeSelected(typedModel);
             })
             {
                 text = "Add Response",
-                style = { marginTop = 6 }
+                style = { marginTop = 10 }
             };
-            Add(addBtn);
+            Add(addResponseBtn);
         }
 
-        private void ApplyInstructionsToDialogueNode(DialogueNodeModel node)
+        private void UpdateTrigger(DialogueNodeModel model, int responseIndex, string objectName, string methodName)
         {
-            if (node == null) return;
+            var triggerString = $"{objectName}:{methodName}";
+            model.OutgoingPaths[responseIndex].Trigger = triggerString;
+            model.Instructions ??= new List<string>();
+            model.Instructions.Clear();
 
-            node.Instructions ??= new List<string>();
-            node.Instructions.Clear();
-
-            InstructionHelpers.AddAwaitTriggerInstruction(node);
+            InstructionHelpers.AddAwaitTriggerInstruction(model);
         }
     }
 }
