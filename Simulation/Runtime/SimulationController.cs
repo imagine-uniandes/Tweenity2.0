@@ -227,7 +227,19 @@ namespace Simulation.Runtime
 
         public void VerifyUserAction(Action received)
         {
-            if (received == null || curNode == null) return;
+            if (received == null || curNode == null)
+            {
+                Debug.LogWarning("❌ [VerifyUserAction] Received null action or no current node.");
+                return;
+            }
+
+            Debug.Log($"📥 [VerifyUserAction] Received: {received.ObjectAction}.{received.ActionName}");
+            Debug.Log($"🧠 [VerifyUserAction] Current node: {curNode.NodeID} [{curNode.Type}]");
+            Debug.Log("📋 [VerifyUserAction] Registered userActions in this node:");
+            foreach (var a in curNode.userActions)
+            {
+                Debug.Log($" - {a.ObjectAction}.{a.ActionName} (ResponseID: {a.ResponseID})");
+            }
 
             var match = curNode.userActions.FirstOrDefault(a =>
                 a.ObjectAction == received.ObjectAction &&
@@ -246,7 +258,7 @@ namespace Simulation.Runtime
             }
             else
             {
-                PrintOnDebug($"❌ User action mismatch: {received.ObjectAction}.{received.ActionName}");
+                Debug.LogWarning($"❌ [VerifyUserAction] No matching user action for: {received.ObjectAction}.{received.ActionName}");
             }
         }
     }
