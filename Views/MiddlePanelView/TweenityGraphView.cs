@@ -295,7 +295,7 @@ namespace Views
             // Mostrar u ocultar mensaje de runtime
             if (_runtimeLabel == null)
             {
-                _runtimeLabel = new Label("⚠ La edición está deshabilitada durante la ejecución de la simulación.");
+                _runtimeLabel = new Label("⚠ Editing disabled during simulation");
                 _runtimeLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
                 _runtimeLabel.style.color = Color.yellow;
                 _runtimeLabel.style.marginTop = 4;

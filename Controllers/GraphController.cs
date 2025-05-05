@@ -20,6 +20,7 @@ namespace Controllers
 #if UNITY_EDITOR
         public static GraphController ActiveEditorGraphController;
 #endif
+        public SimulationController SimulationController { get; private set; }
         public GraphModel Graph { get; private set; } = new GraphModel();
         public TweenityGraphView GraphView { get; private set; }
         private VisualElement rightPanelRoot;
@@ -440,8 +441,12 @@ namespace Controllers
         // ==========================
         public void StartRuntime()
         {
-            Debug.Log("🚀 StartRuntime called!");
-            if (isSimulationRunning || GraphView == null) return;
+            Debug.Log("🚀 [GraphController] StartRuntime called!");
+            if (isSimulationRunning || GraphView == null)
+            {
+                Debug.LogWarning($"⚠️ [GraphController] Cannot start runtime: isSimulationRunning={isSimulationRunning}, GraphView={(GraphView == null ? "null" : "ok")}");
+                return;
+            }
 
             isSimulationRunning = true;
             GraphView.SetEditingEnabled(false);
@@ -449,7 +454,7 @@ namespace Controllers
             var startNode = Graph.Nodes.FirstOrDefault(n => n.Type == NodeType.Start);
             if (startNode == null)
             {
-                Debug.LogError("❌ No Start node found in graph.");
+                Debug.LogError("❌ [GraphController] No Start node found in graph.");
                 return;
             }
 
@@ -459,9 +464,10 @@ namespace Controllers
             TweenityEvents.RegisterSimulationController(simulationController);
 
             var simulationScript = RuntimeGraphBuilder.FromGraphModel(Graph);
+            Debug.Log("🧠 [GraphController] Runtime graph built. Starting simulation...");
             simulationController.SetSimulation(simulationScript);
 
-            Debug.Log("✅ SimulationController started successfully.");
+            Debug.Log("✅ [GraphController] SimulationController started successfully.");
         }
 
         // ==========================

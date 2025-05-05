@@ -12,7 +12,6 @@ using Views;
 using System.IO;
 using System;
 
-
 public class TweenityGraphEditor : EditorWindow
 {
     [MenuItem("Window/Tweenity Graph Editor")]
@@ -74,13 +73,33 @@ public class TweenityGraphEditor : EditorWindow
             }
         };
 
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
         EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-    #endif
+        Debug.Log("📌 Subscribed to PlayModeStateChange in static constructor.");
+#endif
+
+        // 🔁 Runtime startup check
+        if (EditorApplication.isPlaying)
+        {
+            EditorApplication.delayCall += () =>
+            {
+                if (GraphController.ActiveEditorGraphController != null)
+                {
+                    Debug.Log("🎯 Automatically calling StartRuntime() after controller set.");
+                    GraphController.ActiveEditorGraphController.StartRuntime();
+                }
+                else
+                {
+                    Debug.LogWarning("⚠️ Tried to start runtime but ActiveEditorGraphController is still null.");
+                }
+            };
+        }
     }
 
     private static void OnPlayModeStateChanged(PlayModeStateChange state)
     {
+        Debug.Log("🎮 PlayMode state changed: " + state);
+
         if (state == PlayModeStateChange.EnteredPlayMode)
         {
             Debug.Log("▶ PlayModeStateChange: EnteredPlayMode!");
