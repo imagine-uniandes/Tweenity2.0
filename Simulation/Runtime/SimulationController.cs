@@ -7,6 +7,7 @@ using UnityEngine.Events;
 using System.Linq;
 
 #if UNITY_EDITOR
+using UnityEditor;
 using Models;
 using Views;
 using Controllers;
@@ -40,13 +41,22 @@ namespace Simulation.Runtime
 
         private void PrintOnDebug(string msg)
         {
-            if (debugLectura) Debug.Log("[Simulation] " + msg);
+            if (debugLectura)
+                Debug.Log("[Simulation] " + msg);
         }
 
         public void SetSimulation(SimulationScript simulation)
         {
             currSim = simulation;
+
+            if (currSim == null)
+            {
+                Debug.LogError("❌ SimulationScript is null!");
+                return;
+            }
+
             curNode = currSim.GetStartNode();
+            Debug.Log($"🧠 [SetSimulation] Start node = {(curNode == null ? "null" : curNode.NodeID)}");
 
             if (curNode == null)
             {
@@ -54,12 +64,24 @@ namespace Simulation.Runtime
                 return;
             }
 
+#if UNITY_EDITOR
+            EditorApplication.delayCall += () =>
+            {
+                EditorApplication.delayCall += () =>
+                {
+                    Debug.Log($"⏳ [Simulation] Delayed enter to: {curNode.NodeID}");
+                    EnterNode(curNode);
+                };
+            };
+#else
             EnterNode(curNode);
+#endif
         }
 
 #if UNITY_EDITOR
         public void SetSimulationFromGraph(GraphModel model)
         {
+            Debug.Log("🛠 [SimulationController] Building runtime graph from model...");
             var runtimeGraph = RuntimeGraphBuilder.FromGraphModel(model);
             SetSimulation(runtimeGraph);
         }
@@ -75,7 +97,7 @@ namespace Simulation.Runtime
             var nextNode = currSim.GetNode(nextId);
             if (nextNode == null)
             {
-                Debug.LogError($"Node with ID {nextId} not found.");
+                Debug.LogError($"❌ Node with ID {nextId} not found.");
                 return;
             }
 
@@ -84,14 +106,14 @@ namespace Simulation.Runtime
 
         private async void EnterNode(Node node)
         {
+            Debug.Log($"➡️ [Simulation] EnterNode called for: {node.NodeID} [{node.Type}]");
+
             tokenSource?.Cancel();
             tokenSource = new CancellationTokenSource();
 
             curNode = node;
             curSimulatorActions = node.simulatorActions;
             curExpectedUserAction = null;
-
-            PrintOnDebug($"➡ Entering node: {node.NodeID} [{node.Type}]");
 
 #if UNITY_EDITOR
             graphView?.CenterOnNode(node.NodeID);
@@ -100,7 +122,10 @@ namespace Simulation.Runtime
             onEnteredNode?.Invoke(node);
 
             if (node.simulatorActions.Any())
+            {
+                Debug.Log($"⚙️ [Simulation] Executing {node.simulatorActions.Count} simulator actions...");
                 await ExecuteSimulatorActions(node.simulatorActions);
+            }
 
             switch (node.Type)
             {
@@ -109,7 +134,10 @@ namespace Simulation.Runtime
                     {
                         var delay = node.simulatorActions.FirstOrDefault(a => !string.IsNullOrEmpty(a.ActionParams))?.ActionParams;
                         if (float.TryParse(delay, out float seconds))
+                        {
+                            Debug.Log($"⏱ [Reminder] Waiting {seconds}s before reminder...");
                             _ = ReminderAfterDelay(seconds, tokenSource.Token);
+                        }
 
                         curExpectedUserAction = node.userActions[1];
                     }
@@ -120,7 +148,10 @@ namespace Simulation.Runtime
                     {
                         var delay = node.simulatorActions.FirstOrDefault(a => !string.IsNullOrEmpty(a.ActionParams))?.ActionParams;
                         if (float.TryParse(delay, out float seconds))
+                        {
+                            Debug.Log($"⏱ [Timeout] Waiting {seconds}s before timeout...");
                             _ = TimeoutAfterDelay(seconds, tokenSource.Token);
+                        }
 
                         curExpectedUserAction = node.userActions[1];
                     }
@@ -130,7 +161,10 @@ namespace Simulation.Runtime
                     curExpectedUserAction = node.userActions.FirstOrDefault();
 
                     if (!node.userActions.Any() && node.responses.Count == 1)
+                    {
+                        Debug.Log("📤 [Auto] Advancing to single response...");
                         ChooseResponse(0);
+                    }
                     break;
             }
         }
@@ -140,9 +174,10 @@ namespace Simulation.Runtime
             try
             {
                 await Task.Delay((int)(seconds * 1000), token);
+                Debug.Log("🔔 Reminder fired.");
                 ChooseResponse(1);
             }
-            catch { }
+            catch { Debug.Log("⚠️ Reminder cancelled."); }
         }
 
         private async Task TimeoutAfterDelay(float seconds, CancellationToken token)
@@ -150,9 +185,10 @@ namespace Simulation.Runtime
             try
             {
                 await Task.Delay((int)(seconds * 1000), token);
+                Debug.Log("⏰ Timeout fired.");
                 ChooseResponse(0);
             }
-            catch { }
+            catch { Debug.Log("⚠️ Timeout cancelled."); }
         }
 
         public async Task<MethodInfo> ExecuteSimulatorActions(List<Action> actions)
@@ -177,6 +213,7 @@ namespace Simulation.Runtime
                     var method = script.GetType().GetMethod(act.ActionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                     if (method != null && method.GetParameters().Length == 0)
                     {
+                        Debug.Log($"✅ Invoking method: {act.ActionName} on {act.ObjectAction}");
                         method.Invoke(script, null);
                         result = method;
                         break;
