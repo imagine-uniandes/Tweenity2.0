@@ -50,7 +50,7 @@ namespace Simulation.Runtime
                 return;
             }
 
-            onEnteredNode?.Invoke(curNode);
+            EnterNode(curNode);
         }
 
 #if UNITY_EDITOR
@@ -63,268 +63,111 @@ namespace Simulation.Runtime
 
         public List<Response> GetCurrentResponses() => curNode.responses;
 
-        public void ChooseResponse(int responseIndex)
+        public void ChooseResponse(int index)
         {
-            if (!curNode.tags.Contains("end"))
+            if (index < 0 || index >= curNode.responses.Count) return;
+
+            string nextId = curNode.responses[index].DestinationNodeID;
+            var nextNode = currSim.GetNode(nextId);
+            if (nextNode == null)
             {
-                string nextNodeID = curNode.responses[responseIndex].destinationNode;
-                Node nextNode = currSim.GetNode(nextNodeID);
-                curNode = nextNode;
-                onEnteredNode?.Invoke(nextNode);
+                Debug.LogError($"Node with ID {nextId} not found.");
+                return;
             }
+
+            EnterNode(nextNode);
         }
 
-        private async void OnNodeEntered(Node newNode)
+        private async void EnterNode(Node node)
         {
-            tokenSource?.Cancel(); // Cancel any previous timers
+            tokenSource?.Cancel();
             tokenSource = new CancellationTokenSource();
 
-            PrintOnDebug("Entering node: " + newNode.title);
-            curExpectedUserAction = new Action();
-            curSimulatorActions = null;
+            curNode = node;
+            curExpectedUserAction = null;
+            curSimulatorActions = node.simulatorActions;
+
+            PrintOnDebug($"Entering node: {node.NodeID} [{node.Type}]");
 
 #if UNITY_EDITOR
-            EditorGraphHelper.TryCenterNode(newNode.NodeID);
+            EditorGraphHelper.TryCenterNode(node.NodeID);
 #endif
 
-            if (newNode.tags.Contains("end"))
+            onEnteredNode?.Invoke(node);
+
+            if (node.simulatorActions.Any())
             {
-                await ExecuteSimulatorActions(newNode.simulatorActions);
-                return;
+                await ExecuteSimulatorActions(node.simulatorActions);
             }
 
-            if (newNode.userActions.Count == 0)
+            if (node.userActions.Any())
             {
-                var taskObject = await ExecuteSimulatorActions(newNode.simulatorActions);
-
-                if (newNode.tags.Contains("random"))
-                    ChooseResponse(Random.Range(0, newNode.responses.Count));
-                else if (newNode.responses.Count == 1 && taskObject != null && !newNode.tags.Contains("dialogue"))
-                    ChooseResponse(0);
+                curExpectedUserAction = node.userActions.First();
             }
-            else
+            else if (node.responses.Count == 1)
             {
-                HandleUserActionNode(newNode);
-                curSimulatorActions = newNode.simulatorActions;
+                ChooseResponse(0);
             }
         }
 
-        private void HandleUserActionNode(Node node)
+        public async Task<MethodInfo> ExecuteSimulatorActions(List<Action> actions)
         {
-            if (node.userActions.Count > 1 && node.tags.Contains("reminder"))
-            {
-                curReminder = node.userActions[0];
-                remember = true;
-                _ = ActivateReminderAfterDelay(float.Parse(curReminder.actionParams), tokenSource.Token);
-                curExpectedUserAction = node.userActions[1];
-            }
-            else if (node.userActions.Count == 1)
-            {
-                curExpectedUserAction = node.userActions[0];
-            }
+            MethodInfo taskResult = null;
 
-            if (node.userActions.Count > 1 && node.tags.Contains("timeout"))
+            foreach (var act in actions)
             {
-                timeout = true;
-                _ = TimeoutAfterDelay(float.Parse(node.userActions[0].actionParams), tokenSource.Token);
-                curExpectedUserAction = node.userActions[1];
-            }
-        }
+                if (string.IsNullOrEmpty(act.ObjectAction) || string.IsNullOrEmpty(act.ActionName))
+                    continue;
 
-        private async Task TimeoutAfterDelay(float seconds, CancellationToken token)
-        {
-            try
-            {
-                await Task.Delay((int)(seconds * 1000), token);
-                Timeout();
-            }
-            catch (TaskCanceledException) { /* Timer cancelled */ }
-        }
-
-        private async Task ActivateReminderAfterDelay(float seconds, CancellationToken token)
-        {
-            try
-            {
-                await Task.Delay((int)(seconds * 1000), token);
-                ActivateReminder();
-            }
-            catch (TaskCanceledException) { /* Timer cancelled */ }
-        }
-
-        public async Task<MethodInfo> ExecuteSimulatorActions(List<Action> simulatorActions)
-        {
-            MethodInfo taskObject = null;
-
-            foreach (var action in simulatorActions)
-            {
-                GameObject obj = GameObject.Find(action.object2Action);
-                if (obj != null)
+                var obj = GameObject.Find(act.ObjectAction);
+                if (obj == null)
                 {
-                    var scripts = obj.GetComponents<MonoBehaviour>();
-
-                    foreach (var script in scripts)
-                    {
-                        if (script == null) continue;
-
-                        // Find method by action name
-                        var method = script.GetType().GetMethod(action.actionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                        if (method != null && method.GetParameters().Length == 0)
-                        {
-                            method.Invoke(script, null);
-                            taskObject = method;
-                            break;
-                        }
-                    }
+                    Debug.LogWarning($"Object not found: {act.ObjectAction}");
+                    continue;
                 }
-                else
-                {
-                    Debug.LogWarning($"[SimulationController] Object not found: {action.object2Action}");
-                }
-            }
 
-            await Task.Yield(); // Still async, even if immediate
-            return taskObject;
-        }
-
-        public async void VerifyUserAction(Action receivedAction)
-        {
-            PrintOnDebug($"Expected: {curExpectedUserAction.object2Action}.{curExpectedUserAction.actionName}");
-            PrintOnDebug($"Received: {receivedAction.object2Action}.{receivedAction.actionName}");
-
-            if (receivedAction.Equals(curExpectedUserAction) || curNode.userActions.Contains(receivedAction))
-            {
-                remember = false;
-                timeout = false;
-
-                tokenSource?.Cancel(); // Cancel any pending reminders or timeouts
-
-                if (curSimulatorActions.Count > 0)
-                {
-                    var taskObject = await ExecuteSimulatorActions(curSimulatorActions);
-                    if (taskObject != null)
-                        SelectNextNode(receivedAction);
-                }
-                else
-                {
-                    SelectNextNode(receivedAction);
-                }
-            }
-            else
-            {
-                PrintOnDebug("User action was not expected.");
-            }
-        }
-
-        public void SelectNextNode(Action act)
-        {
-            if (curNode.tags.Contains("random"))
-            {
-                ChooseResponse(Random.Range(0, curNode.responses.Count));
-            }
-            else if (curNode.tags.Contains("multiplechoice"))
-            {
-                ChooseResponse(GetPositionOfResponse($"{act.object2Action}.{act.actionName}"));
-            }
-            else
-            {
-                if (curNode.responses.Count == 1)
-                    ChooseResponse(0);
-                else if (curNode.tags.Contains("timeout"))
-                    ChooseResponse(GetActionResponse(curNode.responses, GetPositionOfResponse("timeout")));
-            }
-        }
-
-        public void Timeout()
-        {
-            if (timeout)
-                ChooseResponse(GetPositionOfResponse("timeout"));
-        }
-
-        public void ActivateReminder()
-        {
-            if (!remember) return;
-
-            if (curNode == null)
-            {
-                Debug.LogWarning("No current node during reminder activation.");
-                return;
-            }
-
-            if (curNode.responses == null || curNode.responses.Count < 2)
-            {
-                Debug.LogWarning("Reminder node does not have two responses (Success + Reminder).");
-                return;
-            }
-
-            var reminderTrigger = curNode.responses[1].displayText; // Path 1 = Reminder behavior
-
-            if (string.IsNullOrEmpty(reminderTrigger))
-            {
-                Debug.LogWarning("Reminder trigger not set.");
-                return;
-            }
-
-            // Parse reminderTrigger: expected format = "Object:Script.Method"
-            var parts = reminderTrigger.Split(':');
-            if (parts.Length != 2)
-            {
-                Debug.LogWarning("Invalid Reminder trigger format. Expected 'Object:Script.Method'.");
-                return;
-            }
-
-            string objectName = parts[0];
-            string methodParts = parts[1];
-
-            var methodSplit = methodParts.Split('.');
-            if (methodSplit.Length != 2)
-            {
-                Debug.LogWarning("Invalid Reminder trigger method format. Expected 'Script.Method'.");
-                return;
-            }
-
-            string scriptName = methodSplit[0];
-            string methodName = methodSplit[1];
-
-            GameObject obj = GameObject.Find(objectName);
-            if (obj != null)
-            {
-                var scripts = obj.GetComponents<MonoBehaviour>();
-
-                foreach (var script in scripts)
+                foreach (var script in obj.GetComponents<MonoBehaviour>())
                 {
                     if (script == null) continue;
-
-                    if (script.GetType().Name != scriptName)
-                        continue;
-
-                    var method = script.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    var method = script.GetType().GetMethod(act.ActionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                     if (method != null && method.GetParameters().Length == 0)
                     {
                         method.Invoke(script, null);
-                        Debug.Log($"✅ Reminder behavior '{scriptName}.{methodName}' invoked on '{objectName}'.");
+                        taskResult = method;
                         break;
                     }
                 }
             }
+
+            await Task.Yield();
+            return taskResult;
+        }
+
+        public void VerifyUserAction(Action action)
+        {
+            if (action == null || curNode == null) return;
+
+            var matching = curNode.userActions.FirstOrDefault(a =>
+                a.ObjectAction == action.ObjectAction && a.ActionName == action.ActionName);
+
+            if (matching != null)
+            {
+                PrintOnDebug("User action verified.");
+
+                if (!string.IsNullOrEmpty(matching.ResponseID))
+                {
+                    var response = curNode.GetResponseByID(matching.ResponseID);
+                    if (response != null)
+                    {
+                        int index = curNode.responses.IndexOf(response);
+                        ChooseResponse(index);
+                    }
+                }
+            }
             else
             {
-                Debug.LogWarning($"[SimulationController] Reminder target object not found: {objectName}");
+                PrintOnDebug("User action invalid.");
             }
-        }
-
-        private int GetActionResponse(List<Response> responses, int timeoutIndex)
-        {
-            return responses.Count - 1 - timeoutIndex;
-        }
-
-        public int GetPositionOfResponse(string actionResponseText)
-        {
-            for (int i = 0; i < curNode.responses.Count; i++)
-            {
-                if (curNode.responses[i].destinationNode.StartsWith(actionResponseText))
-                    return i;
-            }
-            return 0;
         }
     }
 }

@@ -4,6 +4,7 @@ using UnityEditor.UIElements;
 using System.Collections.Generic;
 using Models.Nodes;
 using Controllers;
+using Models;
 
 namespace Views.RightPanel
 {
@@ -34,6 +35,7 @@ namespace Views.RightPanel
             timeoutTimerField.RegisterValueChangedCallback(evt =>
             {
                 typedModel.TimeoutDuration = evt.newValue;
+                UpdateWaitInstruction(typedModel);
                 controller.MarkDirty();
             });
             Add(timeoutTimerField);
@@ -116,7 +118,6 @@ namespace Views.RightPanel
                 methodDropdown.style.display = DisplayStyle.None;
                 Add(methodDropdown);
 
-                // Preload if trigger exists
                 if (!string.IsNullOrEmpty(typedModel.OutgoingPaths[1].Trigger) && typedModel.OutgoingPaths[1].Trigger.Contains(":"))
                 {
                     var parts = typedModel.OutgoingPaths[1].Trigger.Split(':');
@@ -175,21 +176,23 @@ namespace Views.RightPanel
                     }
                 });
             }
+
+            // Always create initial Wait() instruction
+            UpdateWaitInstruction(typedModel);
         }
 
         private void UpdateTrigger(TimeoutNodeModel model, string objectName, string methodName, GraphController controller)
         {
             var triggerString = $"{objectName}:{methodName}";
-            model.SetSuccessPath(model.OutgoingPaths[1].Label, model.OutgoingPaths[1].TargetNodeID); // Preserve label and target
             model.OutgoingPaths[1].Trigger = triggerString;
 
-            model.Instructions ??= new List<string>();
-            model.Instructions.Clear();
+            controller.MarkDirty(); // No toca model.Instructions
+        }
 
-            InstructionHelpers.AddAwaitTriggerInstruction(model);
-            InstructionHelpers.AddWaitInstruction(model, model.TimeoutDuration);
-
-            controller.MarkDirty();
+        private void UpdateWaitInstruction(TimeoutNodeModel model)
+        {
+            // Esta función debe quedar vacía o eliminarse completamente
+            // ya que el timeout se maneja en runtime y no requiere instrucciones en el modelo
         }
     }
 }

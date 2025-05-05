@@ -28,11 +28,12 @@ namespace Simulation{
 
             var action = new Action
             {
-                object2Action = objectName,
-                actionName = actionName,
-                actionParams = parameters
+                ObjectAction = objectName,
+                ActionName = actionName,
+                ActionParams = parameters
+                // ResponseID is not set — and that's intentional
             };
-
+            
             _simulationController.VerifyUserAction(action);
         }
     }

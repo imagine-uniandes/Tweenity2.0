@@ -11,6 +11,9 @@ namespace Models.Nodes
         {
             ReminderTimer = 0f;
 
+            // Add default Remind instruction (empty but typed)
+            Instructions.Add(new ActionInstruction(ActionInstructionType.Remind));
+
             // Initialize two paths immediately
             OutgoingPaths.Add(new PathData("Success", "", ""));
             OutgoingPaths.Add(new PathData("Reminder", "", ""));
@@ -36,6 +39,23 @@ namespace Models.Nodes
             OutgoingPaths[1].Label = "Reminder";
             OutgoingPaths[1].Trigger = trigger;
             OutgoingPaths[1].TargetNodeID = "";
+        }
+        
+        /// <summary>
+        /// Ensures there is exactly one Remind instruction and updates it.
+        /// </summary>
+        public void SetReminderInstruction(string objectName, string methodName, string parameters = "")
+        {
+            var instruction = Instructions.Find(i => i.Type == ActionInstructionType.Remind);
+            if (instruction == null)
+            {
+                instruction = new ActionInstruction(ActionInstructionType.Remind);
+                Instructions.Add(instruction);
+            }
+
+            instruction.ObjectName = objectName;
+            instruction.MethodName = methodName;
+            instruction.Params = parameters;
         }
 
     }

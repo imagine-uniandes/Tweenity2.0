@@ -243,6 +243,18 @@ namespace Controllers
             MarkDirty();
         }
 
+        public void SetReminderInstruction(string nodeId, string objectName, string methodName, string parameters = "")
+        {
+            var node = Graph.GetNode(nodeId);
+            if (node is ReminderNodeModel reminder)
+            {
+                reminder.SetReminderInstruction(objectName, methodName, parameters);
+            }
+            else
+            {
+                Debug.LogWarning($"[GraphController] Tried to set reminder instruction on a non-Reminder node: {nodeId}");
+            }
+        }
 
         // ==========================
         // Connection Operations

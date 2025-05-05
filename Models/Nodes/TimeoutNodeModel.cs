@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Models.Nodes
 {
     public class TimeoutNodeModel : TweenityNodeModel
@@ -9,32 +11,46 @@ namespace Models.Nodes
         {
             Condition = "";
             TimeoutDuration = 0f;
-            OutgoingPaths.Add(new PathData("Timeout Path", "", "")); // path 0
-            OutgoingPaths.Add(new PathData("Success Path", "", "")); // path 1
+
+            EnsureMinimumPaths();
+        }
+
+        /// <summary>
+        /// Ensures that OutgoingPaths has at least 2 paths: Timeout (index 0) and Success (index 1)
+        /// </summary>
+        private void EnsureMinimumPaths()
+        {
+            while (OutgoingPaths.Count < 2)
+            {
+                string defaultLabel = OutgoingPaths.Count == 0 ? "Timeout Path" : "Success Path";
+                OutgoingPaths.Add(new PathData(defaultLabel, "", ""));
+            }
         }
 
         public void SetTimeoutPath(string label, string targetNodeID)
         {
+            EnsureMinimumPaths();
             OutgoingPaths[0].Label = label;
             OutgoingPaths[0].TargetNodeID = targetNodeID;
         }
 
         public void SetSuccessPath(string label, string targetNodeID)
         {
+            EnsureMinimumPaths();
             OutgoingPaths[1].Label = label;
             OutgoingPaths[1].TargetNodeID = targetNodeID;
         }
+
         public void SetTriggerForTimeout(string trigger)
         {
-            if (OutgoingPaths.Count >= 1)
-                OutgoingPaths[0].Trigger = trigger;
+            EnsureMinimumPaths();
+            OutgoingPaths[0].Trigger = trigger;
         }
 
         public void SetTriggerForSuccess(string trigger)
         {
-            if (OutgoingPaths.Count >= 2)
-                OutgoingPaths[1].Trigger = trigger;
+            EnsureMinimumPaths();
+            OutgoingPaths[1].Trigger = trigger;
         }
-
     }
 }

@@ -1,8 +1,7 @@
 using System.Collections.Generic;
-using System.Linq;
 using Models;
 using Models.Nodes;
-using Simulation.Runtime;
+using System.Linq;
 
 namespace Simulation.Runtime
 {
@@ -16,25 +15,26 @@ namespace Simulation.Runtime
             {
                 var runtimeNode = new Node
                 {
-                    title = node.Title,
-                    text = node.Description ?? "",
-                    tags = new List<string> { node.Type.ToString().ToLower() },
+                    NodeID = node.NodeID,
+                    Type = node.Type,
+                    responses = new List<Response>(),
                     userActions = new List<Action>(),
-                    simulatorActions = new List<Action>(),
-                    responses = new List<Response>()
+                    simulatorActions = new List<Action>()
                 };
 
-                // --- Parse outgoing paths (Success + Reminder paths)
+                // --- Convert OutgoingPaths to Responses & UserActions
                 foreach (var path in node.OutgoingPaths)
                 {
+                    var responseID = System.Guid.NewGuid().ToString();
+
                     runtimeNode.responses.Add(new Response
                     {
-                        displayText = path.Trigger ?? "Continue",
-                        destinationNode = GetNodeTitleById(graphModel, path.TargetNodeID)
+                        ResponseID = responseID,
+                        DestinationNodeID = path.TargetNodeID
                     });
 
-                    // Only create UserActions for Success paths (which have a target)
-                    if (!string.IsNullOrEmpty(path.TargetNodeID) && !string.IsNullOrEmpty(path.Trigger) && path.Trigger.Contains(":"))
+                    // Convert Trigger (Object:Script.Method) to userAction
+                    if (!string.IsNullOrEmpty(path.Trigger) && path.Trigger.Contains(":"))
                     {
                         var parts = path.Trigger.Split(':');
                         if (parts.Length == 2)
@@ -44,12 +44,28 @@ namespace Simulation.Runtime
                             {
                                 runtimeNode.userActions.Add(new Action
                                 {
-                                    object2Action = parts[0],
-                                    actionName = $"{methodParts[0]}.{methodParts[1]}",
-                                    actionParams = ""
+                                    ObjectAction = parts[0],
+                                    ActionName = $"{methodParts[0]}.{methodParts[1]}",
+                                    ActionParams = "", // You can support later
+                                    ResponseID = responseID
                                 });
                             }
                         }
+                    }
+                }
+
+                // --- Convert Instruction objects to simulatorActions
+                if (node.Instructions != null)
+                {
+                    foreach (var instr in node.Instructions)
+                    {
+                        runtimeNode.simulatorActions.Add(new Action
+                        {
+                            ObjectAction = instr.ObjectName,
+                            ActionName = instr.MethodName,
+                            ActionParams = instr.Params,
+                            ResponseID = null
+                        });
                     }
                 }
 
@@ -57,11 +73,6 @@ namespace Simulation.Runtime
             }
 
             return runtimeScript;
-        }
-
-        private static string GetNodeTitleById(GraphModel graph, string nodeId)
-        {
-            return graph.Nodes.FirstOrDefault(n => n.NodeID == nodeId)?.Title ?? "(Missing)";
         }
     }
 }

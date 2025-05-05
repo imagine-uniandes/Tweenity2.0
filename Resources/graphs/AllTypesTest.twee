@@ -1,0 +1,73 @@
+:: My Start [start] {"position":"-398,362","id":"start-1"}
+This is the beginning of the simulation.
+@
+- null
+- null
+[{"label":"Next","trigger":"","target":"dialogue-1"}]
+<
+>
+
+:: Dialogue Example [dialogue] {"position":"-48,349","id":"dialogue-1"}
+Description of dialogue example
+@
+- Hello there!
+- null
+[{"label":"Continue","trigger":"Cube:CubeClickTest.GrabCube","target":"choice-1"}]
+<
+>
+
+:: Multiple Choice Question [multiplechoice] {"position":"228,343","id":"choice-1"}
+This node asks the user to make a decision.
+@
+- What will you do?
+- null
+[{"label":"TestOption1","trigger":"Cube:CubeClickTest.GrabCube","target":"reminder-1"},{"label":"TestOption2","trigger":"Cylinder:CylinderClickTest.PullCylinder","target":"timeout-1"}]
+<
+>
+
+:: Reminder Node [reminder] {"position":"433,645","id":"reminder-1"}
+This node reminds the user after some time.
+@
+- null
+- 10
+[{"label":"Success","trigger":"Cylinder:CylinderClickTest.PullCylinder","target":"random-1"},{"label":"Reminder","trigger":"Cylinder:CylinderClickTest.FlashCylinderReminder","target":""}]
+<
+Remind(Cylinder:CylinderClickTest.FlashCylinderReminder),
+>
+
+:: Timeout Node [timeout] {"position":"378,-21","id":"timeout-1"}
+This node waits for user input, then times out.
+@
+- UserPressButton
+- 10
+[{"label":"Timeout","trigger":"","target":"end-1"},{"label":"Success","trigger":"Cylinder:CylinderClickTest.PullCylinder","target":"9e4b4e9f-98a1-47a0-bc81-b27a59110caf"}]
+<
+>
+
+:: Random Node [random] {"position":"689,396","id":"random-1"}
+Randomly chooses a path.
+@
+- null
+- null
+[{"label":"TestPath A","trigger":"","target":"end-1"}]
+<
+>
+
+:: End Node [end] {"position":"807,-72","id":"end-1"}
+You've reached the end.
+@
+- null
+- null
+[]
+<
+>
+
+:: My No Type Node [notype] {"position":"582,191","id":"9e4b4e9f-98a1-47a0-bc81-b27a59110caf"}
+NoType Description Test
+@
+- null
+- null
+[{"label":"Next","trigger":"","target":"end-1"}]
+<
+>
+

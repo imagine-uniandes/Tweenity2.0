@@ -4,6 +4,7 @@ using UnityEditor.UIElements;
 using System.Collections.Generic;
 using Models.Nodes;
 using Controllers;
+using Models;
 
 namespace Views.RightPanel
 {
@@ -43,7 +44,6 @@ namespace Views.RightPanel
                     style = { marginTop = 6, flexDirection = FlexDirection.Column }
                 };
 
-                // --- Choice Text ---
                 var choiceField = new TextField { value = path.Label };
                 choiceField.RegisterValueChangedCallback(evt =>
                 {
@@ -52,7 +52,6 @@ namespace Views.RightPanel
                 });
                 row.Add(choiceField);
 
-                // --- Connection Section ---
                 if (string.IsNullOrEmpty(path.TargetNodeID))
                 {
                     var connectButton = new Button(() =>
@@ -78,7 +77,6 @@ namespace Views.RightPanel
                     row.Add(connectedLabel);
                 }
 
-                // --- Target Object + Trigger Method ---
                 row.Add(new Label("Target Object") { style = { marginTop = 6 } });
 
                 var objectField = new ObjectField();
@@ -91,7 +89,6 @@ namespace Views.RightPanel
                 methodDropdown.style.display = DisplayStyle.None;
                 row.Add(methodDropdown);
 
-                // Load from saved Trigger if exists
                 if (!string.IsNullOrEmpty(path.Trigger) && path.Trigger.Contains(":"))
                 {
                     var parts = path.Trigger.Split(':');
@@ -153,7 +150,6 @@ namespace Views.RightPanel
                 Add(row);
             }
 
-            // --- Add New Choice Button ---
             var addChoiceBtn = new Button(() =>
             {
                 typedModel.AddChoice("New Choice");
@@ -170,10 +166,7 @@ namespace Views.RightPanel
         {
             var triggerString = $"{objectName}:{methodName}";
             model.OutgoingPaths[choiceIndex].Trigger = triggerString;
-            model.Instructions ??= new List<string>();
-            model.Instructions.Clear();
-
-            InstructionHelpers.AddAwaitTriggerInstruction(model);
         }
+
     }
 }

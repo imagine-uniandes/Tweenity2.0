@@ -32,7 +32,8 @@ namespace Views.RightPanel
             timerLabel.style.whiteSpace = WhiteSpace.Normal;
             Add(timerLabel);
 
-            var timerField = new FloatField { value = typedModel.ReminderTimer };
+            var timerField = new FloatField();
+            timerField.SetValueWithoutNotify(typedModel.ReminderTimer);
             timerField.RegisterValueChangedCallback(evt =>
             {
                 typedModel.ReminderTimer = evt.newValue;
@@ -228,8 +229,15 @@ namespace Views.RightPanel
 
             var typedModel = (ReminderNodeModel)_model;
 
-            // Always update OutgoingPaths[1] = Reminder Path
+            // Update the reminder path visually
             typedModel.SetReminderPath(selectedObject.name, scriptName, methodName);
+
+            // Also update the structured instruction in the model via the controller
+            _controller.SetReminderInstruction(
+                typedModel.NodeID,
+                selectedObject.name,
+                $"{scriptName}.{methodName}"
+            );
         }
     }
 }

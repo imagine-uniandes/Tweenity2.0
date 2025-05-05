@@ -1,3 +1,5 @@
+// FILE: Controllers/GraphParser.cs
+
 using System.Text;
 using System.Collections.Generic;
 using Models.Nodes;
@@ -11,11 +13,7 @@ namespace Controllers
 {
     public static class GraphParser
     {
-
-        // ==========================
-        // Exporting Methods 
-        // ==========================
-       public static string ExportToTwee(List<TweenityNodeModel> nodes)
+        public static string ExportToTwee(List<TweenityNodeModel> nodes)
         {
             StringBuilder twee = new StringBuilder();
 
@@ -35,20 +33,21 @@ namespace Controllers
                     case MultipleChoiceNodeModel multiple:
                         SaveMultipleChoiceNode(twee, multiple);
                         break;
-                    case StartNodeModel start:
-                    case EndNodeModel end:
-                    case NoTypeNodeModel notype:
-                    case RandomNodeModel random:
+                    case StartNodeModel:
+                    case EndNodeModel:
+                    case NoTypeNodeModel:
+                    case RandomNodeModel:
                         SaveGenericNode(twee, node);
                         break;
                     default:
-                        Debug.LogWarning($"Unknown node type during export: {node.Title}");
+                        Debug.LogWarning($"Unknown node type during export: {node.GetType().Name}");
                         break;
                 }
             }
 
             return twee.ToString();
         }
+
         private static void SaveDialogueNode(StringBuilder twee, DialogueNodeModel node)
         {
             WriteHeader(twee, node);
@@ -94,9 +93,6 @@ namespace Controllers
             WriteInstructions(twee, node);
         }
 
-        // ==========================
-        // Helper Export Methods 
-        // ==========================
         private static void WriteHeader(StringBuilder twee, TweenityNodeModel node)
         {
             string pos = $"{node.Position.x},{node.Position.y}";
@@ -124,24 +120,26 @@ namespace Controllers
             var pathJsons = node.OutgoingPaths.Select(path =>
                 $"{{\"label\":\"{path.Label}\",\"trigger\":\"{path.Trigger}\",\"target\":\"{path.TargetNodeID}\"}}"
             );
-            string jsonLine = "[" + string.Join(",", pathJsons) + "]";
-            twee.AppendLine(jsonLine);
+            twee.AppendLine("[" + string.Join(",", pathJsons) + "]");
         }
 
         private static void WriteInstructions(StringBuilder twee, TweenityNodeModel node)
         {
             twee.AppendLine("<");
-            foreach (var instr in node.Instructions ?? new List<string>())
+            foreach (var instr in node.Instructions ?? new List<ActionInstruction>())
             {
-                twee.AppendLine(instr.Trim() + ",");
+                string line = instr.Type switch
+                {
+                    ActionInstructionType.Remind => $"Remind({instr.ObjectName}:{instr.MethodName})",
+                    ActionInstructionType.Wait => $"Wait({instr.Params})",
+                    _ => "// Unknown"
+                };
+                twee.AppendLine(line + ",");
             }
             twee.AppendLine(">");
             twee.AppendLine();
         }
 
-        // ==========================
-        // Importing Methods 
-        // ==========================
         public static List<TweenityNodeModel> ImportFromTwee(string tweeContent)
         {
             var nodes = new List<TweenityNodeModel>();
@@ -173,7 +171,7 @@ namespace Controllers
                 string special1 = "null";
                 string special2 = "null";
                 string pathJsonLine = "";
-                List<string> instructionLines = new List<string>();
+                var instructions = new List<ActionInstruction>();
 
                 for (int i = atIndex + 1; i < lines.Count; i++)
                 {
@@ -190,19 +188,27 @@ namespace Controllers
                     }
                     else if (line == "<")
                     {
-                        i++; // move to next line after <
+                        i++;
                         while (i < lines.Count && lines[i].Trim() != ">")
                         {
-                            string instrLine = lines[i].Trim().TrimEnd(',');
-                            if (!string.IsNullOrWhiteSpace(instrLine))
-                                instructionLines.Add(instrLine);
+                            var raw = lines[i].Trim().TrimEnd(',');
+                            if (raw.StartsWith("Wait("))
+                            {
+                                var content = raw.Replace("Wait(", "").Replace(")", "");
+                                instructions.Add(new ActionInstruction(ActionInstructionType.Wait, "", "", content));
+                            }
+                            else if (raw.StartsWith("Remind("))
+                            {
+                                var content = raw.Replace("Remind(", "").Replace(")", "");
+                                var parts = content.Split(':');
+                                if (parts.Length == 2)
+                                    instructions.Add(new ActionInstruction(ActionInstructionType.Remind, parts[0], parts[1]));
+                            }
                             i++;
                         }
-                        break; // done with this block
                     }
                 }
 
-                // Parse paths
                 var paths = new List<PathData>();
                 var pathRegex = new Regex(@"\{""label"":""(.*?)"",""trigger"":""(.*?)"",""target"":""(.*?)""\}");
                 foreach (Match m in pathRegex.Matches(pathJsonLine))
@@ -225,7 +231,7 @@ namespace Controllers
                 node.NodeID = nodeId;
                 node.Position = position;
                 node.Description = description;
-                node.Instructions = instructionLines;
+                node.Instructions = instructions;
 
                 if (node is DialogueNodeModel d && special1 != "null")
                     d.DialogueText = special1;
@@ -235,11 +241,10 @@ namespace Controllers
 
                 if (node is ReminderNodeModel r)
                 {
-                    if (float.TryParse(special2, out var timer))
+                    if (float.TryParse(special1, out var timer))
                         r.ReminderTimer = timer;
 
-                    r.OutgoingPaths.Clear(); // Just in case
-                    r.OutgoingPaths.AddRange(paths); // Expect two paths: Success and Reminder
+                    r.OutgoingPaths= paths;
                 }
                 else if (node is TimeoutNodeModel to)
                 {
@@ -257,78 +262,5 @@ namespace Controllers
 
             return nodes;
         }
-        // ==========================
-        // Helper Importing Methods 
-        // ==========================
-        private static TweenityNodeModel CreateNodeByType(string title, NodeType type, string special1, string special2, List<PathData> paths)
-        {
-            switch (type)
-            {
-                case NodeType.Dialogue:
-                    var dialogue = new DialogueNodeModel(title);
-                    if (special1 != "null")
-                        dialogue.DialogueText = special1;
-                    dialogue.OutgoingPaths = paths;
-                    return dialogue;
-
-                case NodeType.MultipleChoice:
-                    var multiple = new MultipleChoiceNodeModel(title);
-                    if (special1 != "null")
-                        multiple.Question = special1;
-                    multiple.OutgoingPaths = paths;
-                    return multiple;
-
-                case NodeType.Random:
-                    var random = new RandomNodeModel(title);
-                    random.OutgoingPaths = paths;
-                    return random;
-
-                case NodeType.Reminder:
-                    var reminder = new ReminderNodeModel(title);
-                    if (float.TryParse(special2, out var timerR))
-                        reminder.ReminderTimer = timerR;
-
-                    if (paths.Count >= 1)
-                    {
-                        reminder.OutgoingPaths[0].Label = paths[0].Label;
-                        reminder.OutgoingPaths[0].Trigger = paths[0].Trigger;
-                        reminder.OutgoingPaths[0].TargetNodeID = paths[0].TargetNodeID;
-                    }
-                    if (paths.Count >= 2)
-                    {
-                        reminder.OutgoingPaths[1].Label = paths[1].Label;
-                        reminder.OutgoingPaths[1].Trigger = paths[1].Trigger;
-                        reminder.OutgoingPaths[1].TargetNodeID = paths[1].TargetNodeID;
-                    }
-                    return reminder;
-
-                case NodeType.Timeout:
-                    var timeout = new TimeoutNodeModel(title);
-                    if (special1 != "null")
-                        timeout.Condition = special1;
-                    if (float.TryParse(special2, out var timerT))
-                        timeout.TimeoutDuration = timerT;
-                    timeout.OutgoingPaths = paths;
-                    return timeout;
-
-                case NodeType.Start:
-                    var start = new StartNodeModel(title);
-                    start.OutgoingPaths = paths;
-                    return start;
-
-                case NodeType.End:
-                    var end = new EndNodeModel(title);
-                    end.OutgoingPaths = paths;
-                    return end;
-
-                default:
-                    var notype = new NoTypeNodeModel(title);
-                    notype.OutgoingPaths = paths;
-                    return notype;
-            }
-        }
-
     }
-
-
 }
