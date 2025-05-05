@@ -138,7 +138,11 @@ namespace Views
 
                 AddElement(visualNode);
 
-                EditorApplication.delayCall += RenderConnections;
+                EditorApplication.delayCall += () =>
+                {
+                    RenderConnections();
+                    CenterOnNode(nodeModel.NodeID); // 🌀 Centro automáticamente tras renderizado
+                };
 
                 int count = this.graphElements.OfType<TweenityNode>().Count();
                 Debug.Log($"[RenderNode] Total visual nodes after AddElement: {count}");
@@ -331,7 +335,7 @@ namespace Views
             Debug.Log("[GraphView] Cleared all nodes and edges from view.");
         }
 
-        public void CenterOnNode(string nodeId)
+       public void CenterOnNode(string nodeId)
         {
             var target = this.graphElements
                 .OfType<TweenityNode>()
@@ -343,10 +347,23 @@ namespace Views
                 return;
             }
 
-            ClearSelection();            // Deselect others
-            AddToSelection(target);      // Select the node
+            var nodeBounds = target.GetPosition();
+            var viewCenter = contentViewContainer.WorldToLocal(layout.center);
 
-            FrameSelection();            // Center it visually
+            // Calculate offset to center node visually
+            var nodeCenter = new Vector2(nodeBounds.x + nodeBounds.width / 2, nodeBounds.y + nodeBounds.height / 2);
+            var offset = viewCenter - nodeCenter;
+
+            // Apply offset to content view container transform
+            contentViewContainer.transform.position += (Vector3)offset;
+
+            // Optional: Reset zoom to default if needed
+            // this.transform.scale = Vector3.one;
+
+            ClearSelection();
+            AddToSelection(target);
+
+            Debug.Log($"🎯 Centered view on node: {nodeId}");
         }
 
         public void ForceRemoveNodeById(string nodeId)

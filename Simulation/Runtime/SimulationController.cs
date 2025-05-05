@@ -4,12 +4,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
-using Simulation.Runtime;
 using System.Linq;
 
 #if UNITY_EDITOR
 using Models;
-using Tweenity2.EditorHelpers;
+using Views;
+using Controllers;
 #endif
 
 namespace Simulation.Runtime
@@ -27,6 +27,14 @@ namespace Simulation.Runtime
         public UnityEvent<Node> onEnteredNode = new();
 
         private CancellationTokenSource tokenSource = new();
+
+#if UNITY_EDITOR
+        private TweenityGraphView graphView;
+        public void SetGraphView(TweenityGraphView view)
+        {
+            graphView = view;
+        }
+#endif
 
         public Node GetCurrentNode() => curNode;
 
@@ -86,18 +94,14 @@ namespace Simulation.Runtime
             PrintOnDebug($"➡ Entering node: {node.NodeID} [{node.Type}]");
 
 #if UNITY_EDITOR
-            EditorGraphHelper.TryCenterNode(node.NodeID);
+            graphView?.CenterOnNode(node.NodeID);
 #endif
 
             onEnteredNode?.Invoke(node);
 
-            // Ejecuta acciones del simulador
             if (node.simulatorActions.Any())
-            {
                 await ExecuteSimulatorActions(node.simulatorActions);
-            }
 
-            // Lógica especial según tipo de nodo
             switch (node.Type)
             {
                 case NodeType.Reminder:
@@ -107,7 +111,7 @@ namespace Simulation.Runtime
                         if (float.TryParse(delay, out float seconds))
                             _ = ReminderAfterDelay(seconds, tokenSource.Token);
 
-                        curExpectedUserAction = node.userActions[1]; // el segundo
+                        curExpectedUserAction = node.userActions[1];
                     }
                     break;
 
@@ -118,14 +122,13 @@ namespace Simulation.Runtime
                         if (float.TryParse(delay, out float seconds))
                             _ = TimeoutAfterDelay(seconds, tokenSource.Token);
 
-                        curExpectedUserAction = node.userActions[1]; // el segundo
+                        curExpectedUserAction = node.userActions[1];
                     }
                     break;
 
                 default:
                     curExpectedUserAction = node.userActions.FirstOrDefault();
 
-                    // Avanza automáticamente si solo hay una respuesta y no espera acción
                     if (!node.userActions.Any() && node.responses.Count == 1)
                         ChooseResponse(0);
                     break;
@@ -137,9 +140,9 @@ namespace Simulation.Runtime
             try
             {
                 await Task.Delay((int)(seconds * 1000), token);
-                ChooseResponse(1); // Path 1 = Reminder path
+                ChooseResponse(1);
             }
-            catch { /* cancelado */ }
+            catch { }
         }
 
         private async Task TimeoutAfterDelay(float seconds, CancellationToken token)
@@ -147,9 +150,9 @@ namespace Simulation.Runtime
             try
             {
                 await Task.Delay((int)(seconds * 1000), token);
-                ChooseResponse(0); // Path 0 = Timeout path
+                ChooseResponse(0);
             }
-            catch { /* cancelado */ }
+            catch { }
         }
 
         public async Task<MethodInfo> ExecuteSimulatorActions(List<Action> actions)
