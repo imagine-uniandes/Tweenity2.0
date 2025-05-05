@@ -21,14 +21,10 @@ namespace Simulation.Runtime
 
         private SimulationScript currSim;
         private Node curNode;
-        private Action curReminder;
         private Action curExpectedUserAction;
         private List<Action> curSimulatorActions;
 
         public UnityEvent<Node> onEnteredNode = new();
-
-        private bool remember = true;
-        private bool timeout = true;
 
         private CancellationTokenSource tokenSource = new();
 
@@ -36,7 +32,7 @@ namespace Simulation.Runtime
 
         private void PrintOnDebug(string msg)
         {
-            if (debugLectura) Debug.Log(msg);
+            if (debugLectura) Debug.Log("[Simulation] " + msg);
         }
 
         public void SetSimulation(SimulationScript simulation)
@@ -46,7 +42,7 @@ namespace Simulation.Runtime
 
             if (curNode == null)
             {
-                Debug.LogError("❌ Simulation start node not found.");
+                Debug.LogError("❌ Start node not found.");
                 return;
             }
 
@@ -67,7 +63,7 @@ namespace Simulation.Runtime
         {
             if (index < 0 || index >= curNode.responses.Count) return;
 
-            string nextId = curNode.responses[index].DestinationNodeID;
+            var nextId = curNode.responses[index].DestinationNodeID;
             var nextNode = currSim.GetNode(nextId);
             if (nextNode == null)
             {
@@ -84,10 +80,10 @@ namespace Simulation.Runtime
             tokenSource = new CancellationTokenSource();
 
             curNode = node;
-            curExpectedUserAction = null;
             curSimulatorActions = node.simulatorActions;
+            curExpectedUserAction = null;
 
-            PrintOnDebug($"Entering node: {node.NodeID} [{node.Type}]");
+            PrintOnDebug($"➡ Entering node: {node.NodeID} [{node.Type}]");
 
 #if UNITY_EDITOR
             EditorGraphHelper.TryCenterNode(node.NodeID);
@@ -95,78 +91,122 @@ namespace Simulation.Runtime
 
             onEnteredNode?.Invoke(node);
 
+            // Ejecuta acciones del simulador
             if (node.simulatorActions.Any())
             {
                 await ExecuteSimulatorActions(node.simulatorActions);
             }
 
-            if (node.userActions.Any())
+            // Lógica especial según tipo de nodo
+            switch (node.Type)
             {
-                curExpectedUserAction = node.userActions.First();
+                case NodeType.Reminder:
+                    if (node.userActions.Count >= 2)
+                    {
+                        var delay = node.simulatorActions.FirstOrDefault(a => !string.IsNullOrEmpty(a.ActionParams))?.ActionParams;
+                        if (float.TryParse(delay, out float seconds))
+                            _ = ReminderAfterDelay(seconds, tokenSource.Token);
+
+                        curExpectedUserAction = node.userActions[1]; // el segundo
+                    }
+                    break;
+
+                case NodeType.Timeout:
+                    if (node.userActions.Count >= 2)
+                    {
+                        var delay = node.simulatorActions.FirstOrDefault(a => !string.IsNullOrEmpty(a.ActionParams))?.ActionParams;
+                        if (float.TryParse(delay, out float seconds))
+                            _ = TimeoutAfterDelay(seconds, tokenSource.Token);
+
+                        curExpectedUserAction = node.userActions[1]; // el segundo
+                    }
+                    break;
+
+                default:
+                    curExpectedUserAction = node.userActions.FirstOrDefault();
+
+                    // Avanza automáticamente si solo hay una respuesta y no espera acción
+                    if (!node.userActions.Any() && node.responses.Count == 1)
+                        ChooseResponse(0);
+                    break;
             }
-            else if (node.responses.Count == 1)
+        }
+
+        private async Task ReminderAfterDelay(float seconds, CancellationToken token)
+        {
+            try
             {
-                ChooseResponse(0);
+                await Task.Delay((int)(seconds * 1000), token);
+                ChooseResponse(1); // Path 1 = Reminder path
             }
+            catch { /* cancelado */ }
+        }
+
+        private async Task TimeoutAfterDelay(float seconds, CancellationToken token)
+        {
+            try
+            {
+                await Task.Delay((int)(seconds * 1000), token);
+                ChooseResponse(0); // Path 0 = Timeout path
+            }
+            catch { /* cancelado */ }
         }
 
         public async Task<MethodInfo> ExecuteSimulatorActions(List<Action> actions)
         {
-            MethodInfo taskResult = null;
+            MethodInfo result = null;
 
             foreach (var act in actions)
             {
-                if (string.IsNullOrEmpty(act.ObjectAction) || string.IsNullOrEmpty(act.ActionName))
-                    continue;
+                if (string.IsNullOrEmpty(act.ObjectAction) || string.IsNullOrEmpty(act.ActionName)) continue;
 
                 var obj = GameObject.Find(act.ObjectAction);
                 if (obj == null)
                 {
-                    Debug.LogWarning($"Object not found: {act.ObjectAction}");
+                    Debug.LogWarning($"🔍 Object not found: {act.ObjectAction}");
                     continue;
                 }
 
                 foreach (var script in obj.GetComponents<MonoBehaviour>())
                 {
                     if (script == null) continue;
+
                     var method = script.GetType().GetMethod(act.ActionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                     if (method != null && method.GetParameters().Length == 0)
                     {
                         method.Invoke(script, null);
-                        taskResult = method;
+                        result = method;
                         break;
                     }
                 }
             }
 
             await Task.Yield();
-            return taskResult;
+            return result;
         }
 
-        public void VerifyUserAction(Action action)
+        public void VerifyUserAction(Action received)
         {
-            if (action == null || curNode == null) return;
+            if (received == null || curNode == null) return;
 
-            var matching = curNode.userActions.FirstOrDefault(a =>
-                a.ObjectAction == action.ObjectAction && a.ActionName == action.ActionName);
+            var match = curNode.userActions.FirstOrDefault(a =>
+                a.ObjectAction == received.ObjectAction &&
+                a.ActionName == received.ActionName);
 
-            if (matching != null)
+            if (match != null)
             {
-                PrintOnDebug("User action verified.");
+                PrintOnDebug($"✅ User action matched: {received.ObjectAction}.{received.ActionName}");
 
-                if (!string.IsNullOrEmpty(matching.ResponseID))
+                var response = curNode.GetResponseByID(match.ResponseID);
+                if (response != null)
                 {
-                    var response = curNode.GetResponseByID(matching.ResponseID);
-                    if (response != null)
-                    {
-                        int index = curNode.responses.IndexOf(response);
-                        ChooseResponse(index);
-                    }
+                    var index = curNode.responses.IndexOf(response);
+                    ChooseResponse(index);
                 }
             }
             else
             {
-                PrintOnDebug("User action invalid.");
+                PrintOnDebug($"❌ User action mismatch: {received.ObjectAction}.{received.ActionName}");
             }
         }
     }
