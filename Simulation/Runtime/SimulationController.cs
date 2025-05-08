@@ -1,3 +1,4 @@
+// ACTUALIZADO: usa simulatorActions con ExecutionQueue
 using System.Reflection;
 using System.Collections.Generic;
 using System.Threading;
@@ -28,6 +29,7 @@ namespace Simulation.Runtime
         public UnityEvent<Node> onEnteredNode = new();
 
         private CancellationTokenSource tokenSource = new();
+        private ExecutionQueue _executionQueue;
 
 #if UNITY_EDITOR
         private TweenityGraphView graphView;
@@ -91,6 +93,8 @@ namespace Simulation.Runtime
 
         public void ChooseResponse(int index)
         {
+            _executionQueue.Clear();
+
             if (index < 0 || index >= curNode.responses.Count) return;
 
             var nextId = curNode.responses[index].DestinationNodeID;
@@ -110,6 +114,7 @@ namespace Simulation.Runtime
 
             tokenSource?.Cancel();
             tokenSource = new CancellationTokenSource();
+            _executionQueue.Clear();
 
             curNode = node;
             curSimulatorActions = node.simulatorActions;
@@ -121,10 +126,9 @@ namespace Simulation.Runtime
 
             onEnteredNode?.Invoke(node);
 
-            if (node.simulatorActions.Any())
+            foreach (var act in node.simulatorActions)
             {
-                Debug.Log($"⚙️ [Simulation] Executing {node.simulatorActions.Count} simulator actions...");
-                await ExecuteSimulatorActions(node.simulatorActions);
+                _executionQueue.AddLast(() => ExecuteSimulatorInstruction(act));
             }
 
             switch (node.Type)
@@ -138,7 +142,6 @@ namespace Simulation.Runtime
                             Debug.Log($"⏱ [Reminder] Waiting {seconds}s before reminder...");
                             _ = ReminderAfterDelay(seconds, tokenSource.Token);
                         }
-
                         curExpectedUserAction = node.userActions[1];
                     }
                     break;
@@ -152,20 +155,49 @@ namespace Simulation.Runtime
                             Debug.Log($"⏱ [Timeout] Waiting {seconds}s before timeout...");
                             _ = TimeoutAfterDelay(seconds, tokenSource.Token);
                         }
-
                         curExpectedUserAction = node.userActions[1];
                     }
                     break;
 
                 default:
                     curExpectedUserAction = node.userActions.FirstOrDefault();
-
                     if (!node.userActions.Any() && node.responses.Count == 1)
                     {
                         Debug.Log("📤 [Auto] Advancing to single response...");
                         ChooseResponse(0);
                     }
                     break;
+            }
+        }
+
+        private async Task ExecuteSimulatorInstruction(Action act)
+        {
+            if (string.IsNullOrEmpty(act.ObjectAction) || string.IsNullOrEmpty(act.ActionName)) return;
+
+            if (act.Type == ActionInstructionType.Wait && float.TryParse(act.ActionParams, out float delay))
+            {
+                await Task.Delay((int)(delay * 1000));
+                return;
+            }
+
+            var obj = GameObject.Find(act.ObjectAction);
+            if (obj == null)
+            {
+                Debug.LogWarning($"🔍 Object not found: {act.ObjectAction}");
+                return;
+            }
+
+            foreach (var script in obj.GetComponents<MonoBehaviour>())
+            {
+                if (script == null) continue;
+
+                var method = script.GetType().GetMethod(act.ActionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (method != null && method.GetParameters().Length == 0)
+                {
+                    Debug.Log($"✅ Invoking method: {act.ActionName} on {act.ObjectAction}");
+                    method.Invoke(script, null);
+                    break;
+                }
             }
         }
 
@@ -189,40 +221,6 @@ namespace Simulation.Runtime
                 ChooseResponse(0);
             }
             catch { Debug.Log("⚠️ Timeout cancelled."); }
-        }
-
-        public async Task<MethodInfo> ExecuteSimulatorActions(List<Action> actions)
-        {
-            MethodInfo result = null;
-
-            foreach (var act in actions)
-            {
-                if (string.IsNullOrEmpty(act.ObjectAction) || string.IsNullOrEmpty(act.ActionName)) continue;
-
-                var obj = GameObject.Find(act.ObjectAction);
-                if (obj == null)
-                {
-                    Debug.LogWarning($"🔍 Object not found: {act.ObjectAction}");
-                    continue;
-                }
-
-                foreach (var script in obj.GetComponents<MonoBehaviour>())
-                {
-                    if (script == null) continue;
-
-                    var method = script.GetType().GetMethod(act.ActionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                    if (method != null && method.GetParameters().Length == 0)
-                    {
-                        Debug.Log($"✅ Invoking method: {act.ActionName} on {act.ObjectAction}");
-                        method.Invoke(script, null);
-                        result = method;
-                        break;
-                    }
-                }
-            }
-
-            await Task.Yield();
-            return result;
         }
 
         public void VerifyUserAction(Action received)

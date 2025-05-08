@@ -164,7 +164,8 @@ namespace Simulation.Runtime
                         ObjectAction = instr.ObjectName,
                         ActionName = instr.MethodName,
                         ActionParams = instr.Params,
-                        ResponseID = null
+                        ResponseID = null,
+                        Type = (Simulation.Runtime.ActionInstructionType)instr.Type 
                     });
                 }
             }
