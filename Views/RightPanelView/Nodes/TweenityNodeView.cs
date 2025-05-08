@@ -4,6 +4,10 @@ using Models;
 using Models.Nodes;
 using Controllers;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
+using UnityEditor.UIElements;
 
 namespace Views.RightPanel
 {
@@ -27,34 +31,16 @@ namespace Views.RightPanel
             style.borderBottomRightRadius = 5;
             style.flexDirection = FlexDirection.Column;
 
-            // Title
             Add(new Label("Base Node Info") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
 
-            var titleLabel = new Label("Title") { style = { whiteSpace = WhiteSpace.Normal } };
-            var titleField = new TextField { value = _model.Title, name = "titleField" };
-            titleField.RegisterValueChangedCallback(evt =>
-            {
-                _controller.UpdateNodeTitle(_model, evt.newValue);
-            });
+            var titleField = new TextField("Title") { value = _model.Title };
+            titleField.RegisterValueChangedCallback(evt => _controller.UpdateNodeTitle(_model, evt.newValue));
 
-            // Description
-            var descriptionLabel = new Label("Description") { style = { whiteSpace = WhiteSpace.Normal } };
-            var descriptionField = new TextField
-            {
-                value = _model.Description,
-                multiline = true,
-                name = "descriptionField"
-            };
-            descriptionField.RegisterValueChangedCallback(evt =>
-            {
-                _controller.UpdateNodeDescription(_model, evt.newValue);
-            });
+            var descriptionField = new TextField("Description") { value = _model.Description, multiline = true };
+            descriptionField.RegisterValueChangedCallback(evt => _controller.UpdateNodeDescription(_model, evt.newValue));
 
-            // Type Dropdown
-            var typeLabel = new Label("Node Type") { style = { whiteSpace = WhiteSpace.Normal } };
-            var nodeTypes = new System.Collections.Generic.List<string>(Enum.GetNames(typeof(NodeType)));
-            var selectedType = _model.Type.ToString();
-            var typeDropdown = new DropdownField(nodeTypes, selectedType, null);
+            var nodeTypes = new List<string>(Enum.GetNames(typeof(NodeType)));
+            var typeDropdown = new DropdownField("Node Type", nodeTypes, _model.Type.ToString());
             typeDropdown.RegisterValueChangedCallback(evt =>
             {
                 if (Enum.TryParse<NodeType>(evt.newValue, out var newType))
@@ -64,15 +50,13 @@ namespace Views.RightPanel
                     {
                         typeDropdown.SetValueWithoutNotify(_model.Type.ToString());
 #if UNITY_EDITOR
-                        UnityEditor.EditorUtility.DisplayDialog("Invalid Node Type", errorMessage, "OK");
+                        EditorUtility.DisplayDialog("Invalid Node Type", errorMessage, "OK");
 #endif
                     }
                 }
             });
 
-            // Position (read-only display)
-            var positionLabel = new Label("Position");
-            var positionValue = new Label($"{_model.Position.x:F0}, {_model.Position.y:F0}")
+            var positionLabel = new Label($"Position: {_model.Position.x:F0}, {_model.Position.y:F0}")
             {
                 style =
                 {
@@ -82,16 +66,201 @@ namespace Views.RightPanel
                 }
             };
 
-            Add(titleLabel);
             Add(titleField);
-            Add(descriptionLabel);
             Add(descriptionField);
-            Add(typeLabel);
             Add(typeDropdown);
             Add(positionLabel);
-            Add(positionValue);
-
             Add(new VisualElement { style = { height = 10 } });
+
+            BuildInstructionSection();
+        }
+
+        private void BuildInstructionSection()
+        {
+            Add(new Label("Instructions (On Enter)")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
+            });
+
+            ListView instructionList = null;
+
+            instructionList = new ListView
+            {
+                itemsSource = _model.Instructions,
+                makeItem = () =>
+                {
+                    var row = new VisualElement
+                    {
+                        style =
+                        {
+                            flexDirection = FlexDirection.Row,
+                            alignItems = Align.Center,
+                            marginBottom = 10,
+                            paddingTop = 6,
+                            paddingBottom = 6,
+                            backgroundColor = new Color(0.12f, 0.12f, 0.12f, 0.2f),
+                            borderBottomLeftRadius = 4,
+                            borderBottomRightRadius = 4,
+                            borderTopLeftRadius = 4,
+                            borderTopRightRadius = 4
+                        }
+                    };
+
+                    // SVG icon grip (you can replace this with your own SVG path or asset)
+                    var gripIcon = new Image
+                    {
+                        image = EditorGUIUtility.IconContent("d_UnityEditor.SceneHierarchyWindow").image,
+                        scaleMode = ScaleMode.ScaleToFit,
+                        style =
+                        {
+                            width = 16,
+                            height = 16,
+                            marginLeft = 6,
+                            marginRight = 8,
+                            unityBackgroundImageTintColor = new Color(0.7f, 0.7f, 0.7f)
+                        }
+                    };
+
+                    row.Add(gripIcon);
+
+                    var container = new VisualElement
+                    {
+                        style =
+                        {
+                            flexDirection = FlexDirection.Column,
+                            flexGrow = 1,
+                            paddingRight = 6
+                        }
+                    };
+
+                    var typeDropdown = new PopupField<string>("Type", new List<string> { "Wait", "Action" }, 0);
+                    container.Add(typeDropdown);
+
+                    var waitField = new FloatField("Duration (s)") { value = 1.0f };
+                    waitField.style.display = DisplayStyle.None;
+                    container.Add(waitField);
+
+                    var objectField = new ObjectField("Target Object") { objectType = typeof(GameObject) };
+                    var methodDropdown = new PopupField<string>("Trigger Method", new List<string>(), 0);
+                    methodDropdown.style.display = DisplayStyle.None;
+
+                    container.Add(objectField);
+                    container.Add(methodDropdown);
+
+                    var deleteButton = new Button { text = "Remove Instruction" };
+                    deleteButton.style.marginTop = 4;
+                    container.Add(deleteButton);
+
+                    row.Add(container);
+
+                    return row;
+                },
+
+                bindItem = (element, i) =>
+                {
+                    var row = (VisualElement)element;
+                    var container = row.ElementAt(1);
+
+                    var instruction = _model.Instructions[i];
+
+                    var typeDropdown = container.ElementAt(0) as PopupField<string>;
+                    var waitField = container.ElementAt(1) as FloatField;
+                    var objectField = container.ElementAt(2) as ObjectField;
+                    var methodDropdown = container.ElementAt(3) as PopupField<string>;
+                    var deleteButton = container.ElementAt(4) as Button;
+
+                    typeDropdown.SetValueWithoutNotify(instruction.Type.ToString());
+                    waitField.SetValueWithoutNotify(float.TryParse(instruction.Params, out var p) ? p : 1f);
+
+                    waitField.style.display = instruction.Type == ActionInstructionType.Wait ? DisplayStyle.Flex : DisplayStyle.None;
+                    objectField.style.display = instruction.Type == ActionInstructionType.Action ? DisplayStyle.Flex : DisplayStyle.None;
+                    methodDropdown.style.display = instruction.Type == ActionInstructionType.Action ? DisplayStyle.Flex : DisplayStyle.None;
+
+                    if (instruction.Type == ActionInstructionType.Action && !string.IsNullOrEmpty(instruction.ObjectName))
+                    {
+                        var obj = GameObject.Find(instruction.ObjectName);
+                        if (obj != null)
+                        {
+                            objectField.SetValueWithoutNotify(obj);
+                            var available = TriggerAssignmentController.GetAvailableEvents(obj);
+                            methodDropdown.choices = available;
+                            methodDropdown.SetValueWithoutNotify(available.Contains(instruction.MethodName) ? instruction.MethodName : available.FirstOrDefault());
+                        }
+                    }
+
+                    typeDropdown.RegisterValueChangedCallback(evt =>
+                    {
+                        if (Enum.TryParse(evt.newValue, out ActionInstructionType newType))
+                        {
+                            instruction.Type = newType;
+                            waitField.style.display = newType == ActionInstructionType.Wait ? DisplayStyle.Flex : DisplayStyle.None;
+                            objectField.style.display = newType == ActionInstructionType.Action ? DisplayStyle.Flex : DisplayStyle.None;
+                            methodDropdown.style.display = newType == ActionInstructionType.Action ? DisplayStyle.Flex : DisplayStyle.None;
+                            _controller.MarkDirty();
+                        }
+                    });
+
+                    waitField.RegisterValueChangedCallback(evt =>
+                    {
+                        instruction.Params = evt.newValue.ToString();
+                        _controller.MarkDirty();
+                    });
+
+                    objectField.RegisterValueChangedCallback(evt =>
+                    {
+                        var obj = evt.newValue as GameObject;
+                        if (obj != null)
+                        {
+                            instruction.ObjectName = obj.name;
+                            var methods = TriggerAssignmentController.GetAvailableEvents(obj);
+                            methodDropdown.choices = methods;
+                            if (methods.Count > 0)
+                            {
+                                instruction.MethodName = methods[0];
+                                methodDropdown.SetValueWithoutNotify(methods[0]);
+                                methodDropdown.style.display = DisplayStyle.Flex;
+                            }
+                            else
+                            {
+                                methodDropdown.style.display = DisplayStyle.None;
+                            }
+                            _controller.MarkDirty();
+                        }
+                    });
+
+                    methodDropdown.RegisterValueChangedCallback(evt =>
+                    {
+                        instruction.MethodName = evt.newValue;
+                        _controller.MarkDirty();
+                    });
+
+                    deleteButton.clicked += () =>
+                    {
+                        _model.Instructions.RemoveAt(i);
+                        instructionList.Rebuild();
+                        _controller.MarkDirty();
+                    };
+                },
+
+                selectionType = SelectionType.None,
+                reorderable = true,
+                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight
+            };
+
+            Add(instructionList);
+
+            var addButton = new Button(() =>
+            {
+                _model.Instructions.Add(new ActionInstruction(ActionInstructionType.Wait, "", "", "1"));
+                instructionList.Rebuild();
+                _controller.MarkDirty();
+            })
+            {
+                text = "Add Instruction",
+                style = { marginTop = 6 }
+            };
+
+            Add(addButton);
         }
     }
 }

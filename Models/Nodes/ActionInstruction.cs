@@ -20,7 +20,8 @@ namespace Models.Nodes
     public enum ActionInstructionType
     {
         Remind,
-        Wait
+        Wait,
+        Action
     }
 
     /// <summary>

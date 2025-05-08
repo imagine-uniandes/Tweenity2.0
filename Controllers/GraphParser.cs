@@ -131,7 +131,8 @@ namespace Controllers
                 string line = instr.Type switch
                 {
                     ActionInstructionType.Remind => $"Remind({instr.ObjectName}:{instr.MethodName})",
-                    ActionInstructionType.Wait => $"Wait({instr.Params})",
+                    ActionInstructionType.Wait   => $"Wait({instr.Params})",
+                    ActionInstructionType.Action => $"Action({instr.ObjectName}:{instr.MethodName})",
                     _ => "// Unknown"
                 };
                 twee.AppendLine(line + ",");
@@ -192,6 +193,7 @@ namespace Controllers
                         while (i < lines.Count && lines[i].Trim() != ">")
                         {
                             var raw = lines[i].Trim().TrimEnd(',');
+
                             if (raw.StartsWith("Wait("))
                             {
                                 var content = raw.Replace("Wait(", "").Replace(")", "");
@@ -202,8 +204,34 @@ namespace Controllers
                                 var content = raw.Replace("Remind(", "").Replace(")", "");
                                 var parts = content.Split(':');
                                 if (parts.Length == 2)
-                                    instructions.Add(new ActionInstruction(ActionInstructionType.Remind, parts[0], parts[1]));
+                                {
+                                    instructions.Add(new ActionInstruction(ActionInstructionType.Remind, parts[0].Trim(), parts[1].Trim()));
+                                }
                             }
+                            else if (raw.StartsWith("Action("))
+                            {
+                                var content = raw.Replace("Action(", "").Replace(")", "");
+                                var parts = content.Split(':');
+                                if (parts.Length == 2)
+                                {
+                                    string objName = parts[0].Trim();
+                                    string methodName = parts[1].Trim();
+
+                                    if (!string.IsNullOrEmpty(objName) && !string.IsNullOrEmpty(methodName))
+                                    {
+                                        instructions.Add(new ActionInstruction(ActionInstructionType.Action, objName, methodName));
+                                    }
+                                    else
+                                    {
+                                        Debug.LogWarning($"⚠️ [ImportFromTwee] Ignored invalid Action instruction: {raw}");
+                                    }
+                                }
+                                else
+                                {
+                                    Debug.LogWarning($"⚠️ [ImportFromTwee] Malformed Action instruction: {raw}");
+                                }
+                            }
+
                             i++;
                         }
                     }
@@ -244,7 +272,7 @@ namespace Controllers
                     if (float.TryParse(special1, out var timer))
                         r.ReminderTimer = timer;
 
-                    r.OutgoingPaths= paths;
+                    r.OutgoingPaths = paths;
                 }
                 else if (node is TimeoutNodeModel to)
                 {
