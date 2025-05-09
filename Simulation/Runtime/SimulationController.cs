@@ -1,4 +1,4 @@
-// ACTUALIZADO: usa simulatorActions con ExecutionQueue
+// ACTUALIZADO: usa TweenityNodeModel directamente, navegación por trigger o tipo
 using System.Reflection;
 using System.Collections.Generic;
 using System.Threading;
@@ -10,6 +10,7 @@ using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 using Models;
+using Models.Nodes;
 using Views;
 using Controllers;
 #endif
@@ -21,15 +22,14 @@ namespace Simulation.Runtime
         public bool debugCarga = false;
         public bool debugLectura = false;
 
-        private SimulationScript currSim;
-        private Node curNode;
-        private Action curExpectedUserAction;
-        private List<Action> curSimulatorActions;
+        private List<TweenityNodeModel> allNodes;
+        private TweenityNodeModel curNode;
 
-        public UnityEvent<Node> onEnteredNode = new();
-
-        private CancellationTokenSource tokenSource = new();
         private ExecutionQueue _executionQueue;
+        private CancellationTokenSource tokenSource = new();
+        private TaskCompletionSource<bool> userActionAwaiter;
+
+        public UnityEvent<TweenityNodeModel> onEnteredNode = new();
 
 #if UNITY_EDITOR
         private TweenityGraphView graphView;
@@ -39,7 +39,10 @@ namespace Simulation.Runtime
         }
 #endif
 
-        public Node GetCurrentNode() => curNode;
+        /// <summary>
+        /// Retorna el nodo actual en ejecución.
+        /// </summary>
+        public TweenityNodeModel GetCurrentNode() => curNode;
 
         private void PrintOnDebug(string msg)
         {
@@ -47,18 +50,16 @@ namespace Simulation.Runtime
                 Debug.Log("[Simulation] " + msg);
         }
 
-        public void SetSimulation(SimulationScript simulation)
+        /// <summary>
+        /// Inicializa la simulación cargando el grafo y arrancando desde el nodo Start.
+        /// </summary>
+        public void SetSimulationFromGraph(GraphModel model)
         {
-            currSim = simulation;
+            Debug.Log("🛠 [SimulationController] Using graph model directly...");
+            allNodes = model.Nodes;
+            _executionQueue = new ExecutionQueue();
 
-            if (currSim == null)
-            {
-                Debug.LogError("❌ SimulationScript is null!");
-                return;
-            }
-
-            curNode = currSim.GetStartNode();
-            Debug.Log($"🧠 [SetSimulation] Start node = {(curNode == null ? "null" : curNode.NodeID)}");
+            curNode = allNodes.FirstOrDefault(n => n.Type == NodeType.Start);
 
             if (curNode == null)
             {
@@ -69,161 +70,118 @@ namespace Simulation.Runtime
 #if UNITY_EDITOR
             EditorApplication.delayCall += () =>
             {
-                EditorApplication.delayCall += () =>
-                {
-                    Debug.Log($"⏳ [Simulation] Delayed enter to: {curNode.NodeID}");
-                    EnterNode(curNode);
-                };
+                EditorApplication.delayCall += () => EnterNode(curNode);
             };
 #else
             EnterNode(curNode);
 #endif
         }
 
-#if UNITY_EDITOR
-        public void SetSimulationFromGraph(GraphModel model)
+        /// <summary>
+        /// Devuelve la lista de paths disponibles desde el nodo actual.
+        /// </summary>
+        public List<PathData> GetCurrentResponses() => curNode.OutgoingPaths;
+
+        /// <summary>
+        /// Carga el nodo especificado, reinicia la cola de ejecución e inicia las instrucciones.
+        /// </summary>
+        private async void EnterNode(TweenityNodeModel node)
         {
-            Debug.Log("🛠 [SimulationController] Building runtime graph from model...");
-            var runtimeGraph = RuntimeGraphBuilder.FromGraphModel(model);
-            SetSimulation(runtimeGraph);
-        }
-#endif
-
-        public List<Response> GetCurrentResponses() => curNode.responses;
-
-        public void ChooseResponse(int index)
-        {
-            _executionQueue.Clear();
-
-            if (index < 0 || index >= curNode.responses.Count) return;
-
-            var nextId = curNode.responses[index].DestinationNodeID;
-            var nextNode = currSim.GetNode(nextId);
-            if (nextNode == null)
-            {
-                Debug.LogError($"❌ Node with ID {nextId} not found.");
-                return;
-            }
-
-            EnterNode(nextNode);
-        }
-
-        private async void EnterNode(Node node)
-        {
-            Debug.Log($"➡️ [Simulation] EnterNode called for: {node.NodeID} [{node.Type}]");
+            Debug.Log($"➡️ [Simulation] EnterNode: {node.NodeID} [{node.Type}]");
 
             tokenSource?.Cancel();
             tokenSource = new CancellationTokenSource();
             _executionQueue.Clear();
-
+            userActionAwaiter = null;
             curNode = node;
-            curSimulatorActions = node.simulatorActions;
-            curExpectedUserAction = null;
 
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
             graphView?.CenterOnNode(node.NodeID);
-#endif
+        #endif
 
             onEnteredNode?.Invoke(node);
 
-            foreach (var act in node.simulatorActions)
+            // Ejecutar todas las instrucciones en orden
+            foreach (var instr in node.Instructions)
             {
-                _executionQueue.AddLast(() => ExecuteSimulatorInstruction(act));
+                _executionQueue.AddLast(() => ExecuteInstruction(instr));
             }
 
-            switch (node.Type)
+            // Si el nodo requiere esperar input del usuario, forzamos AwaitAction al final
+            if (node.Type == NodeType.Reminder || node.Type == NodeType.Timeout ||
+                node.Type == NodeType.MultipleChoice || node.Type == NodeType.Dialogue)
             {
-                case NodeType.Reminder:
-                    if (node.userActions.Count >= 2)
-                    {
-                        var delay = node.simulatorActions.FirstOrDefault(a => !string.IsNullOrEmpty(a.ActionParams))?.ActionParams;
-                        if (float.TryParse(delay, out float seconds))
-                        {
-                            Debug.Log($"⏱ [Reminder] Waiting {seconds}s before reminder...");
-                            _ = ReminderAfterDelay(seconds, tokenSource.Token);
-                        }
-                        curExpectedUserAction = node.userActions[1];
-                    }
-                    break;
+                var awaitInstruction = new ActionInstruction(ActionInstructionType.AwaitAction, "", "", "");
+                _executionQueue.AddLast(() => ExecuteInstruction(awaitInstruction));
+            }
 
-                case NodeType.Timeout:
-                    if (node.userActions.Count >= 2)
-                    {
-                        var delay = node.simulatorActions.FirstOrDefault(a => !string.IsNullOrEmpty(a.ActionParams))?.ActionParams;
-                        if (float.TryParse(delay, out float seconds))
-                        {
-                            Debug.Log($"⏱ [Timeout] Waiting {seconds}s before timeout...");
-                            _ = TimeoutAfterDelay(seconds, tokenSource.Token);
-                        }
-                        curExpectedUserAction = node.userActions[1];
-                    }
-                    break;
-
-                default:
-                    curExpectedUserAction = node.userActions.FirstOrDefault();
-                    if (!node.userActions.Any() && node.responses.Count == 1)
-                    {
-                        Debug.Log("📤 [Auto] Advancing to single response...");
-                        ChooseResponse(0);
-                    }
-                    break;
+            // Auto-avanza si solo hay un path y no requiere trigger.
+            if (!node.OutgoingPaths.Any(p => !string.IsNullOrEmpty(p.Trigger)) && node.OutgoingPaths.Count == 1)
+            {
+                Debug.Log("📤 [Auto] Advancing to single response...");
+                try { NavigateFirstAvailable(); }
+                catch (System.Exception e) { Debug.LogError("❌ Auto-advance failed: " + e.Message); }
             }
         }
 
-        private async Task ExecuteSimulatorInstruction(Action act)
+        /// <summary>
+        /// Ejecuta una instrucción del nodo. Puede ser Wait, Action, Remind o AwaitAction.
+        /// </summary>
+        private async Task ExecuteInstruction(ActionInstruction instr)
         {
-            if (string.IsNullOrEmpty(act.ObjectAction) || string.IsNullOrEmpty(act.ActionName)) return;
-
-            if (act.Type == ActionInstructionType.Wait && float.TryParse(act.ActionParams, out float delay))
+            switch (instr.Type)
             {
-                await Task.Delay((int)(delay * 1000));
-                return;
-            }
-
-            var obj = GameObject.Find(act.ObjectAction);
-            if (obj == null)
-            {
-                Debug.LogWarning($"🔍 Object not found: {act.ObjectAction}");
-                return;
-            }
-
-            foreach (var script in obj.GetComponents<MonoBehaviour>())
-            {
-                if (script == null) continue;
-
-                var method = script.GetType().GetMethod(act.ActionName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (method != null && method.GetParameters().Length == 0)
-                {
-                    Debug.Log($"✅ Invoking method: {act.ActionName} on {act.ObjectAction}");
-                    method.Invoke(script, null);
+                case ActionInstructionType.Wait:
+                    if (float.TryParse(instr.Params, out var delay))
+                        await Task.Delay((int)(delay * 1000));
                     break;
-                }
+
+                case ActionInstructionType.Action:
+                case ActionInstructionType.Remind:
+                    var obj = GameObject.Find(instr.ObjectName);
+                    if (obj != null)
+                    {
+                        var components = obj.GetComponents<MonoBehaviour>();
+                        foreach (var comp in components)
+                        {
+                            var method = comp.GetType().GetMethod(instr.MethodName);
+                            if (method != null && method.GetParameters().Length == 0)
+                            {
+                                method.Invoke(comp, null);
+                                break;
+                            }
+                        }
+                    }
+                    break;
+
+                case ActionInstructionType.AwaitAction:
+                    Debug.Log("⏸ Awaiting user action...");
+                    userActionAwaiter = new TaskCompletionSource<bool>();
+                    await userActionAwaiter.Task;
+                    break;
             }
         }
 
-        private async Task ReminderAfterDelay(float seconds, CancellationToken token)
-        {
-            try
-            {
-                await Task.Delay((int)(seconds * 1000), token);
-                Debug.Log("🔔 Reminder fired.");
-                ChooseResponse(1);
-            }
-            catch { Debug.Log("⚠️ Reminder cancelled."); }
-        }
-
+        /// <summary>
+        /// Inicia un temporizador que, si no es cancelado, redirige al path de fallo por timeout.
+        /// </summary>
         private async Task TimeoutAfterDelay(float seconds, CancellationToken token)
         {
             try
             {
                 await Task.Delay((int)(seconds * 1000), token);
                 Debug.Log("⏰ Timeout fired.");
-                ChooseResponse(0);
+                _executionQueue.ForceStop();
+                NavigateTimeoutFailure();
             }
             catch { Debug.Log("⚠️ Timeout cancelled."); }
         }
 
-        public void VerifyUserAction(Action received)
+        /// <summary>
+        /// Recibe acciones desde el exterior (por ejemplo: un clic en el mundo)
+        /// y verifica si hay un trigger que coincida. Si lo hay, navega.
+        /// </summary>
+        public void VerifyUserAction(ActionInstruction received)
         {
             if (received == null || curNode == null)
             {
@@ -231,33 +189,72 @@ namespace Simulation.Runtime
                 return;
             }
 
-            Debug.Log($"📥 [VerifyUserAction] Received: {received.ObjectAction}.{received.ActionName}");
-            Debug.Log($"🧠 [VerifyUserAction] Current node: {curNode.NodeID} [{curNode.Type}]");
-            Debug.Log("📋 [VerifyUserAction] Registered userActions in this node:");
-            foreach (var a in curNode.userActions)
-            {
-                Debug.Log($" - {a.ObjectAction}.{a.ActionName} (ResponseID: {a.ResponseID})");
-            }
+            var trigger = $"{received.ObjectName}:{received.MethodName}";
+            Debug.Log($"📥 [VerifyUserAction] Received trigger: {trigger}");
 
-            var match = curNode.userActions.FirstOrDefault(a =>
-                a.ObjectAction == received.ObjectAction &&
-                a.ActionName == received.ActionName);
-
-            if (match != null)
+            try
             {
-                PrintOnDebug($"✅ User action matched: {received.ObjectAction}.{received.ActionName}");
-
-                var response = curNode.GetResponseByID(match.ResponseID);
-                if (response != null)
-                {
-                    var index = curNode.responses.IndexOf(response);
-                    ChooseResponse(index);
-                }
+                var targetId = GetTriggerTargetNode(trigger);
+                _executionQueue.ForceStop();
+                userActionAwaiter?.TrySetResult(true);
+                NavigateToNodeID(targetId);
             }
-            else
+            catch (System.Exception e)
             {
-                Debug.LogWarning($"❌ [VerifyUserAction] No matching user action for: {received.ObjectAction}.{received.ActionName}");
+                Debug.LogWarning($"❌ [VerifyUserAction] {e.Message}");
             }
+        }
+
+        /// <summary>
+        /// Devuelve el ID del nodo de destino asociado a un trigger.
+        /// Lanza excepción si no se encuentra.
+        /// </summary>
+        public string GetTriggerTargetNode(string trigger)
+        {
+            var match = curNode.OutgoingPaths.FirstOrDefault(p => p.Trigger == trigger);
+            if (match == null)
+                throw new System.Exception($"No trigger match for '{trigger}' in node {curNode.NodeID}.");
+            return match.TargetNodeID;
+        }
+
+        /// <summary>
+        /// Navega a un nodo específico por su ID.
+        /// </summary>
+        private void NavigateToNodeID(string nodeId)
+        {
+            var nextNode = allNodes.FirstOrDefault(n => n.NodeID == nodeId);
+            if (nextNode == null)
+                throw new System.Exception($"❌ Cannot navigate: node '{nodeId}' not found.");
+            EnterNode(nextNode);
+        }
+
+        /// <summary>
+        /// Navega al path índice 0 del nodo actual (usado como Timeout Failure).
+        /// </summary>
+        private void NavigateTimeoutFailure()
+        {
+            var nodeId = curNode.OutgoingPaths[0].TargetNodeID;
+            NavigateToNodeID(nodeId);
+        }
+
+        /// <summary>
+        /// Navega al path índice 1 del nodo actual (usado como Timeout Success).
+        /// </summary>
+        private void NavigateTimeoutSuccess()
+        {
+            var nodeId = curNode.OutgoingPaths[1].TargetNodeID;
+            NavigateToNodeID(nodeId);
+        }
+
+        /// <summary>
+        /// Navega al primer path disponible con TargetNodeID no vacío.
+        /// </summary>
+        private void NavigateFirstAvailable()
+        {
+            var valid = curNode.OutgoingPaths.FirstOrDefault(p => !string.IsNullOrEmpty(p.TargetNodeID));
+            if (valid == null)
+                throw new System.Exception($"❌ No available path from node {curNode.NodeID}.");
+            NavigateToNodeID(valid.TargetNodeID);
         }
     }
 }

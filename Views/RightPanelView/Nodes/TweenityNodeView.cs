@@ -82,6 +82,8 @@ namespace Views.RightPanel
                 style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
             });
 
+            bool allowRemindCreation = _model.Type == NodeType.Reminder;
+
             ListView instructionList = null;
 
             instructionList = new ListView
@@ -106,7 +108,6 @@ namespace Views.RightPanel
                         }
                     };
 
-                    // SVG icon grip (you can replace this with your own SVG path or asset)
                     var gripIcon = new Image
                     {
                         image = EditorGUIUtility.IconContent("d_UnityEditor.SceneHierarchyWindow").image,
@@ -133,7 +134,11 @@ namespace Views.RightPanel
                         }
                     };
 
-                    var typeDropdown = new PopupField<string>("Type", new List<string> { "Wait", "Action" }, 0);
+                    var options = allowRemindCreation
+                        ? new List<string> { "Wait", "Action", "Remind" }
+                        : new List<string> { "Wait", "Action" };
+
+                    var typeDropdown = new PopupField<string>("Type", options, 0);
                     container.Add(typeDropdown);
 
                     var waitField = new FloatField("Duration (s)") { value = 1.0f };
@@ -169,14 +174,19 @@ namespace Views.RightPanel
                     var methodDropdown = container.ElementAt(3) as PopupField<string>;
                     var deleteButton = container.ElementAt(4) as Button;
 
-                    typeDropdown.SetValueWithoutNotify(instruction.Type.ToString());
+                    // Ensure current type is in dropdown
+                    var typeStr = instruction.Type.ToString();
+                    if (!typeDropdown.choices.Contains(typeStr))
+                        typeDropdown.choices.Add(typeStr);
+
+                    typeDropdown.SetValueWithoutNotify(typeStr);
                     waitField.SetValueWithoutNotify(float.TryParse(instruction.Params, out var p) ? p : 1f);
 
                     waitField.style.display = instruction.Type == ActionInstructionType.Wait ? DisplayStyle.Flex : DisplayStyle.None;
-                    objectField.style.display = instruction.Type == ActionInstructionType.Action ? DisplayStyle.Flex : DisplayStyle.None;
-                    methodDropdown.style.display = instruction.Type == ActionInstructionType.Action ? DisplayStyle.Flex : DisplayStyle.None;
+                    objectField.style.display = instruction.Type == ActionInstructionType.Action || instruction.Type == ActionInstructionType.Remind ? DisplayStyle.Flex : DisplayStyle.None;
+                    methodDropdown.style.display = instruction.Type == ActionInstructionType.Action || instruction.Type == ActionInstructionType.Remind ? DisplayStyle.Flex : DisplayStyle.None;
 
-                    if (instruction.Type == ActionInstructionType.Action && !string.IsNullOrEmpty(instruction.ObjectName))
+                    if ((instruction.Type == ActionInstructionType.Action || instruction.Type == ActionInstructionType.Remind) && !string.IsNullOrEmpty(instruction.ObjectName))
                     {
                         var obj = GameObject.Find(instruction.ObjectName);
                         if (obj != null)
@@ -194,8 +204,9 @@ namespace Views.RightPanel
                         {
                             instruction.Type = newType;
                             waitField.style.display = newType == ActionInstructionType.Wait ? DisplayStyle.Flex : DisplayStyle.None;
-                            objectField.style.display = newType == ActionInstructionType.Action ? DisplayStyle.Flex : DisplayStyle.None;
-                            methodDropdown.style.display = newType == ActionInstructionType.Action ? DisplayStyle.Flex : DisplayStyle.None;
+                            bool showFields = newType == ActionInstructionType.Action || newType == ActionInstructionType.Remind;
+                            objectField.style.display = showFields ? DisplayStyle.Flex : DisplayStyle.None;
+                            methodDropdown.style.display = showFields ? DisplayStyle.Flex : DisplayStyle.None;
                             _controller.MarkDirty();
                         }
                     });
@@ -262,5 +273,6 @@ namespace Views.RightPanel
 
             Add(addButton);
         }
+
     }
 }

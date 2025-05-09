@@ -21,7 +21,8 @@ namespace Models.Nodes
     {
         Remind,
         Wait,
-        Action
+        Action,
+        AwaitAction
     }
 
     /// <summary>

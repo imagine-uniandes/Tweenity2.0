@@ -461,14 +461,11 @@ namespace Controllers
             if (simulationController == null)
                 simulationController = new SimulationController();
 
-            // ✅ Pasar referencia de GraphView si aplica
             simulationController.SetGraphView(GraphView);
-
             TweenityEvents.RegisterSimulationController(simulationController);
 
-            var simulationScript = RuntimeGraphBuilder.FromGraphModel(Graph);
-            Debug.Log("🧠 [GraphController] Runtime graph built. Starting simulation...");
-            simulationController.SetSimulation(simulationScript);
+            // 🔁 Cargar el modelo directamente en el runtime
+            simulationController.SetSimulationFromGraph(Graph);
 
             Debug.Log("✅ [GraphController] SimulationController started successfully.");
         }

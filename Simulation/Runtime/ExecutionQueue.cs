@@ -1,4 +1,4 @@
-// ExecutionQueue: versión sin MonoBehaviour, controlado externamente
+// ExecutionQueue: versión robusta y secuencial sin MonoBehaviour
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +19,7 @@ namespace Simulation.Runtime
         public void AddLast(Func<Task> action)
         {
             _queue.Enqueue(action);
-            TryExecuteNext();
+            StartExecutionIfNeeded();
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Simulation.Runtime
             _queue.Enqueue(action);
             foreach (var item in current)
                 _queue.Enqueue(item);
-            TryExecuteNext();
+            StartExecutionIfNeeded();
         }
 
         /// <summary>
@@ -57,28 +57,40 @@ namespace Simulation.Runtime
         /// <summary>
         /// Inicia la ejecución si no hay otra en curso.
         /// </summary>
-        private async void TryExecuteNext()
+        private void StartExecutionIfNeeded()
         {
-            if (_isExecuting || _queue.Count == 0)
-                return;
-
-            _isExecuting = true;
-            _cts = new CancellationTokenSource();
-
-            while (_queue.Count > 0 && !_cts.IsCancellationRequested)
+            if (!_isExecuting)
             {
-                var action = _queue.Dequeue();
-                try
+                _isExecuting = true;
+                _cts = new CancellationTokenSource();
+                _ = ExecuteAllAsync(_cts.Token);
+            }
+        }
+
+        /// <summary>
+        /// Ejecuta todas las tareas en la cola de forma secuencial.
+        /// </summary>
+        private async Task ExecuteAllAsync(CancellationToken token)
+        {
+            try
+            {
+                while (_queue.Count > 0 && !token.IsCancellationRequested)
                 {
-                    await action();
-                }
-                catch (Exception e)
-                {
-                    UnityEngine.Debug.LogError("[ExecutionQueue] Error ejecutando acción: " + e.Message);
+                    var action = _queue.Dequeue();
+                    try
+                    {
+                        await action();
+                    }
+                    catch (Exception e)
+                    {
+                        UnityEngine.Debug.LogError("[ExecutionQueue] Error ejecutando acción: " + e.Message);
+                    }
                 }
             }
-
-            _isExecuting = false;
+            finally
+            {
+                _isExecuting = false;
+            }
         }
     }
 }
