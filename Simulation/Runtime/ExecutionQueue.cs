@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace Simulation.Runtime
 {
@@ -91,6 +92,21 @@ namespace Simulation.Runtime
             {
                 _isExecuting = false;
             }
+        }
+        public Task WaitUntilComplete(CancellationToken token)
+        {
+            return Task.Run(async () =>
+            {
+                try
+                {
+                    while (_isExecuting && !token.IsCancellationRequested)
+                        await Task.Delay(50, token);
+                }
+                catch (TaskCanceledException)
+                {
+                    Debug.Log("🛑 [ExecutionQueue] Wait cancelled — normal during node transitions.");
+                }
+            });
         }
     }
 }

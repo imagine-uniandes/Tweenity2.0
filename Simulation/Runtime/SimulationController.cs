@@ -85,7 +85,7 @@ namespace Simulation.Runtime
         /// <summary>
         /// Carga el nodo especificado, reinicia la cola de ejecución e inicia las instrucciones.
         /// </summary>
-        private async void EnterNode(TweenityNodeModel node)
+       private async void EnterNode(TweenityNodeModel node)
         {
             Debug.Log($"➡️ [Simulation] EnterNode: {node.NodeID} [{node.Type}]");
 
@@ -101,21 +101,21 @@ namespace Simulation.Runtime
 
             onEnteredNode?.Invoke(node);
 
-            // Ejecutar todas las instrucciones en orden
+            // Enqueue instructions
             foreach (var instr in node.Instructions)
-            {
                 _executionQueue.AddLast(() => ExecuteInstruction(instr));
-            }
 
-            // Si el nodo requiere esperar input del usuario, forzamos AwaitAction al final
-            if (node.Type == NodeType.Reminder || node.Type == NodeType.Timeout ||
-                node.Type == NodeType.MultipleChoice || node.Type == NodeType.Dialogue)
+            // Add AwaitAction if necessary
+            if (node.Type is NodeType.Reminder or NodeType.Timeout or NodeType.MultipleChoice or NodeType.Dialogue)
             {
                 var awaitInstruction = new ActionInstruction(ActionInstructionType.AwaitAction, "", "", "");
                 _executionQueue.AddLast(() => ExecuteInstruction(awaitInstruction));
             }
 
-            // Auto-avanza si solo hay un path y no requiere trigger.
+            // Wait until the current execution finishes
+            await _executionQueue.WaitUntilComplete(tokenSource.Token);
+
+            // If still valid and no triggers, auto-advance
             if (!node.OutgoingPaths.Any(p => !string.IsNullOrEmpty(p.Trigger)) && node.OutgoingPaths.Count == 1)
             {
                 Debug.Log("📤 [Auto] Advancing to single response...");
@@ -144,13 +144,28 @@ namespace Simulation.Runtime
                         var components = obj.GetComponents<MonoBehaviour>();
                         foreach (var comp in components)
                         {
-                            var method = comp.GetType().GetMethod(instr.MethodName);
-                            if (method != null && method.GetParameters().Length == 0)
+                            if (instr.MethodName.Contains('.'))
                             {
-                                method.Invoke(comp, null);
-                                break;
+                                var parts = instr.MethodName.Split('.');
+                                var className = parts[0];
+                                var methodName = parts[1];
+
+                                if (comp.GetType().Name == className)
+                                {
+                                    var method = comp.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                                    if (method != null && method.GetParameters().Length == 0)
+                                    {
+                                        Debug.Log($"✅ Invoking method: {instr.MethodName} on {instr.ObjectName}");
+                                        method.Invoke(comp, null);
+                                        break;
+                                    }
+                                }
                             }
                         }
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"❌ Object not found: {instr.ObjectName}");
                     }
                     break;
 
