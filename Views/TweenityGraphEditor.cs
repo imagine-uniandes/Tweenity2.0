@@ -39,7 +39,6 @@ public class TweenityGraphEditor : EditorWindow
         root.Add(TweenityToolbar.CreateToolbar(graphController));
 
         VisualElement mainLayout = new VisualElement { style = { flexDirection = FlexDirection.Row, flexGrow = 1 } };
-        mainLayout.Add(TweenityLeftPanel.CreateLeftPanel(graphController));
         mainLayout.Add(graphView);
 
         VisualElement rightPanelRoot = TweenityRightPanel.CreateRightPanel();
