@@ -101,27 +101,33 @@ namespace Simulation.Runtime
 
             onEnteredNode?.Invoke(node);
 
+            // ⚠️ Warn if Reminder has no Remind instruction
+            if (node.Type == NodeType.Reminder && !node.Instructions.Any(i => i.Type == ActionInstructionType.Remind))
+            {
+                Debug.LogWarning($"⚠️ [Simulation] Reminder node '{node.Title}' has no Remind instruction. It will wait for user trigger but perform no reminder behavior.");
+            }
+
             // Enqueue all node instructions
             foreach (var instr in node.Instructions)
                 _executionQueue.AddLast(() => ExecuteInstruction(instr));
 
-            // ⏲️ Si es nodo Timeout, programar su expiración automática en paralelo
+            // ⏲️ If Timeout node, start automatic timeout path
             if (node.Type == NodeType.Timeout && node is TimeoutNodeModel timeoutModel && timeoutModel.TimeoutDuration > 0)
             {
                 _ = TimeoutAfterDelay(timeoutModel.TimeoutDuration, tokenSource.Token);
             }
 
-            // Add AwaitAction if required by the node type
+            // Add AwaitAction if applicable
             if (node.Type is NodeType.Reminder or NodeType.Timeout or NodeType.MultipleChoice or NodeType.Dialogue)
             {
                 var awaitInstruction = new ActionInstruction(ActionInstructionType.AwaitAction);
                 _executionQueue.AddLast(() => ExecuteInstruction(awaitInstruction));
             }
 
-            // Wait for the execution queue to complete
+            // Wait for instructions to finish
             await _executionQueue.WaitUntilComplete(tokenSource.Token);
 
-            // Auto-advance if there's only one path with no trigger
+            // Auto-advance if only one non-triggered path
             if (!node.OutgoingPaths.Any(p => !string.IsNullOrEmpty(p.Trigger)) && node.OutgoingPaths.Count == 1)
             {
                 Debug.Log("📤 [Auto] Advancing to single response...");
