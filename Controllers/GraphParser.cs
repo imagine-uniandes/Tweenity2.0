@@ -61,7 +61,7 @@ namespace Controllers
         {
             WriteHeader(twee, node);
             WriteDescription(twee, node);
-            WriteSpecialFields(twee, "null", node.ReminderTimer.ToString());
+            WriteSpecialFields(twee, "null", "null");
             WritePaths(twee, node);
             WriteInstructions(twee, node);
         }
@@ -269,9 +269,6 @@ namespace Controllers
 
                 if (node is ReminderNodeModel r)
                 {
-                    if (float.TryParse(special1, out var timer))
-                        r.ReminderTimer = timer;
-
                     r.OutgoingPaths = paths;
                 }
                 else if (node is TimeoutNodeModel to)

@@ -226,14 +226,6 @@ namespace Controllers
             GraphView.RefreshNodeVisual(model.NodeID);
             MarkDirty();
         }
-        public void UpdateReminderTimer(ReminderNodeModel model, float newTimer)
-        {
-            if (!IsEditingEnabled || GraphView == null) return;
-
-            model.ReminderTimer = newTimer;
-            GraphView.RefreshNodeVisual(model.NodeID);
-            MarkDirty();
-        }
 
         public void AddRandomPath(RandomNodeModel model)
         {

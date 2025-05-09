@@ -28,19 +28,6 @@ namespace Views.RightPanel
 
             var typedModel = (ReminderNodeModel)_model;
 
-            var timerLabel = new Label("Reminder Timer (seconds)");
-            timerLabel.style.whiteSpace = WhiteSpace.Normal;
-            Add(timerLabel);
-
-            var timerField = new FloatField();
-            timerField.SetValueWithoutNotify(typedModel.ReminderTimer);
-            timerField.RegisterValueChangedCallback(evt =>
-            {
-                typedModel.ReminderTimer = evt.newValue;
-                controller.MarkDirty();
-            });
-            Add(timerField);
-
             Add(new Label("Success Trigger Assignment")
             {
                 style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }

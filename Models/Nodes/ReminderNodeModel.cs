@@ -5,11 +5,9 @@ namespace Models.Nodes
 {
     public class ReminderNodeModel : TweenityNodeModel
     {
-        public float ReminderTimer { get; set; }
-
+        
         public ReminderNodeModel(string title) : base(title, NodeType.Reminder)
         {
-            ReminderTimer = 0f;
 
             // Add default Remind instruction (empty but typed)
             Instructions.Add(new ActionInstruction(ActionInstructionType.Remind));
