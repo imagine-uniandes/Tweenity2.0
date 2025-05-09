@@ -36,8 +36,23 @@ namespace Views.RightPanel
             var titleField = new TextField("Title") { value = _model.Title };
             titleField.RegisterValueChangedCallback(evt => _controller.UpdateNodeTitle(_model, evt.newValue));
 
-            var descriptionField = new TextField("Description") { value = _model.Description, multiline = true };
+            var descriptionField = new TextField("Description")
+            {
+                value = _model.Description,
+                multiline = true
+            };
             descriptionField.RegisterValueChangedCallback(evt => _controller.UpdateNodeDescription(_model, evt.newValue));
+
+            // Auto-expansión vertical
+            descriptionField.style.whiteSpace = WhiteSpace.Normal;
+            descriptionField.style.flexGrow = 0;
+            descriptionField.style.height = StyleKeyword.Auto;
+            descriptionField.style.unityTextAlign = TextAnchor.UpperLeft;
+            descriptionField.style.overflow = Overflow.Visible;
+            descriptionField.RegisterCallback<GeometryChangedEvent>(_ =>
+            {
+                descriptionField.style.height = StyleKeyword.Auto;
+            });
 
             var nodeTypes = new List<string>(Enum.GetNames(typeof(NodeType)));
             var typeDropdown = new DropdownField("Node Type", nodeTypes, _model.Type.ToString());
@@ -174,7 +189,6 @@ namespace Views.RightPanel
                     var methodDropdown = container.ElementAt(3) as PopupField<string>;
                     var deleteButton = container.ElementAt(4) as Button;
 
-                    // Ensure current type is in dropdown
                     var typeStr = instruction.Type.ToString();
                     if (!typeDropdown.choices.Contains(typeStr))
                         typeDropdown.choices.Add(typeStr);
@@ -273,6 +287,7 @@ namespace Views.RightPanel
 
             Add(addButton);
 
+            // Separación visual antes de detalles
             Add(new VisualElement
             {
                 style = {
@@ -281,7 +296,7 @@ namespace Views.RightPanel
                     marginBottom = 6
                 }
             });
-            
+
             Add(new VisualElement
             {
                 style = {
@@ -291,7 +306,6 @@ namespace Views.RightPanel
                     marginBottom = 4
                 }
             });
-
         }
     }
 }
