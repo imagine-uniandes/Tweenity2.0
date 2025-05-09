@@ -92,7 +92,7 @@ namespace Views.RightPanel
 
         private void BuildInstructionSection()
         {
-            Add(new Label("Instructions (On Enter)")
+            Add(new Label("Simulator Actions")
             {
                 style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
             });

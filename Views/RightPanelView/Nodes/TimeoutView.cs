@@ -12,9 +12,14 @@ namespace Views.RightPanel
     {
         public TimeoutView(TimeoutNodeModel model, GraphController controller) : base(model, controller)
         {
-            Add(new Label("Timeout Node Details")
+            Add(new Label("Details")
             {
-                style = { unityFontStyleAndWeight = FontStyle.Bold, whiteSpace = WhiteSpace.Normal }
+                style = {
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    whiteSpace = WhiteSpace.Normal,
+                    marginBottom = 10,
+                    marginTop = 10
+                }
             });
 
             var typedModel = (TimeoutNodeModel)_model;

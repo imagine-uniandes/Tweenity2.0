@@ -14,9 +14,14 @@ namespace Views.RightPanel
         {
             var typedModel = (DialogueNodeModel)_model;
 
-            Add(new Label("Dialogue Node Details")
+            Add(new Label("Details")
             {
-                style = { unityFontStyleAndWeight = FontStyle.Bold, whiteSpace = WhiteSpace.Normal }
+                style = {
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    whiteSpace = WhiteSpace.Normal,
+                    marginBottom = 10,
+                    marginTop = 10
+                }
             });
 
             Add(new Label("Dialogue Text") { style = { whiteSpace = WhiteSpace.Normal } });

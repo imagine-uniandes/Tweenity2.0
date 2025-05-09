@@ -9,17 +9,11 @@ namespace Views.RightPanel
     {
         public StartView(StartNodeModel model, GraphController controller) : base(model, controller)
         {
-            var title = new Label("Start Node Details");
+            var title = new Label("Details");
             title.style.unityFontStyleAndWeight = FontStyle.Bold;
             title.style.whiteSpace = WhiteSpace.Normal;
+            title.style.marginTop = 10;
             Add(title);
-
-            var note = new Label("This is a Start Node. It does not contain any editable properties.");
-            note.style.unityFontStyleAndWeight = FontStyle.Italic;
-            note.style.marginTop = 10;
-            note.style.whiteSpace = WhiteSpace.Normal;
-            note.style.flexShrink = 0;
-            Add(note);
 
             if (model.OutgoingPaths.Count == 0)
             {
@@ -35,7 +29,8 @@ namespace Views.RightPanel
                 {
                     text = "Connect"
                 };
-                connectButton.style.marginTop = 15;
+
+                connectButton.style.marginTop = 10;
                 Add(connectButton);
             }
             else

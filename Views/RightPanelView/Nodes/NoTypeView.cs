@@ -9,17 +9,15 @@ namespace Views.RightPanel
     {
         public NoTypeView(NoTypeNodeModel model, GraphController controller) : base(model, controller)
         {
-            var title = new Label("Generic Node Details");
-            title.style.unityFontStyleAndWeight = FontStyle.Bold;
-            title.style.whiteSpace = WhiteSpace.Normal;
-            Add(title);
-
-            var label = new Label("This node has no specific properties.");
-            label.style.unityFontStyleAndWeight = FontStyle.Italic;
-            label.style.marginTop = 10;
-            label.style.whiteSpace = WhiteSpace.Normal;
-            label.style.flexShrink = 0;
-            Add(label);
+            Add(new Label("Details")
+            {
+                style = {
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    whiteSpace = WhiteSpace.Normal,
+                    marginBottom = 10,
+                    marginTop = 10
+                }
+            });
 
             if (model.OutgoingPaths.Count == 0)
             {
