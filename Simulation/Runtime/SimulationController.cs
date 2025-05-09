@@ -85,7 +85,7 @@ namespace Simulation.Runtime
         /// <summary>
         /// Carga el nodo especificado, reinicia la cola de ejecución e inicia las instrucciones.
         /// </summary>
-       private async void EnterNode(TweenityNodeModel node)
+        private async void EnterNode(TweenityNodeModel node)
         {
             Debug.Log($"➡️ [Simulation] EnterNode: {node.NodeID} [{node.Type}]");
 
@@ -101,21 +101,27 @@ namespace Simulation.Runtime
 
             onEnteredNode?.Invoke(node);
 
-            // Enqueue instructions
+            // Enqueue all node instructions
             foreach (var instr in node.Instructions)
                 _executionQueue.AddLast(() => ExecuteInstruction(instr));
 
-            // Add AwaitAction if necessary
+            // ⏲️ Si es nodo Timeout, programar su expiración automática en paralelo
+            if (node.Type == NodeType.Timeout && node is TimeoutNodeModel timeoutModel && timeoutModel.TimeoutDuration > 0)
+            {
+                _ = TimeoutAfterDelay(timeoutModel.TimeoutDuration, tokenSource.Token);
+            }
+
+            // Add AwaitAction if required by the node type
             if (node.Type is NodeType.Reminder or NodeType.Timeout or NodeType.MultipleChoice or NodeType.Dialogue)
             {
-                var awaitInstruction = new ActionInstruction(ActionInstructionType.AwaitAction, "", "", "");
+                var awaitInstruction = new ActionInstruction(ActionInstructionType.AwaitAction);
                 _executionQueue.AddLast(() => ExecuteInstruction(awaitInstruction));
             }
 
-            // Wait until the current execution finishes
+            // Wait for the execution queue to complete
             await _executionQueue.WaitUntilComplete(tokenSource.Token);
 
-            // If still valid and no triggers, auto-advance
+            // Auto-advance if there's only one path with no trigger
             if (!node.OutgoingPaths.Any(p => !string.IsNullOrEmpty(p.Trigger)) && node.OutgoingPaths.Count == 1)
             {
                 Debug.Log("📤 [Auto] Advancing to single response...");
