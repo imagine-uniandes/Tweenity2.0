@@ -528,7 +528,7 @@ namespace Controllers
 
         public void ShowHelp()
         {
-            Debug.Log("Help clicked (controller)");
+            Application.OpenURL("https://github.com/imagine-uniandes/Tweenity2.0/wiki");
         }
     }
 }
