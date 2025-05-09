@@ -272,7 +272,26 @@ namespace Views.RightPanel
             };
 
             Add(addButton);
-        }
 
+            Add(new VisualElement
+            {
+                style = {
+                    height = 12,
+                    marginTop = 6,
+                    marginBottom = 6
+                }
+            });
+            
+            Add(new VisualElement
+            {
+                style = {
+                    height = 1,
+                    backgroundColor = new Color(0.3f, 0.3f, 0.3f),
+                    marginTop = 4,
+                    marginBottom = 4
+                }
+            });
+
+        }
     }
 }
