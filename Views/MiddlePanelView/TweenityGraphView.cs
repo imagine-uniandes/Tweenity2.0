@@ -335,7 +335,7 @@ namespace Views
             Debug.Log("[GraphView] Cleared all nodes and edges from view.");
         }
 
-       public void CenterOnNode(string nodeId)
+        public void CenterOnNode(string nodeId)
         {
             var target = this.graphElements
                 .OfType<TweenityNode>()
@@ -357,11 +357,11 @@ namespace Views
             // Apply offset to content view container transform
             contentViewContainer.transform.position += (Vector3)offset;
 
-            // Optional: Reset zoom to default if needed
-            // this.transform.scale = Vector3.one;
-
             ClearSelection();
             AddToSelection(target);
+
+            // ✅ También mostrar el detalle en el panel derecho
+            _controller?.OnNodeSelected(target.NodeModel);
 
             Debug.Log($"🎯 Centered view on node: {nodeId}");
         }

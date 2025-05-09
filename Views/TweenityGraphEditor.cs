@@ -114,5 +114,28 @@ public class TweenityGraphEditor : EditorWindow
             Debug.Log("✅ Calling StartRuntime()");
             controller.StartRuntime();
         }
+        else if (state == PlayModeStateChange.ExitingPlayMode)
+        {
+            Debug.Log("⏹ Exiting Play Mode. Resetting editor state...");
+
+            var controller = GraphController.ActiveEditorGraphController;
+            if (controller != null)
+            {
+                // 1. Marcar simulación como terminada
+                var simField = typeof(GraphController).GetField("isSimulationRunning", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                simField?.SetValue(controller, false);
+
+                // 2. Reactivar edición
+                controller.GraphView?.SetEditingEnabled(true);
+
+                // 3. Recargar grafo desde el último archivo guardado
+                string lastPath = EditorPrefs.GetString("Tweenity_LastGraphPath", "");
+                if (!string.IsNullOrEmpty(lastPath) && File.Exists(lastPath))
+                {
+                    controller.LoadGraphFrom(lastPath);
+                    Debug.Log($"♻ Graph reloaded after PlayMode exit: {lastPath}");
+                }
+            }
+        }
     }
 }
