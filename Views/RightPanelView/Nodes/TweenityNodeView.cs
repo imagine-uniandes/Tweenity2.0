@@ -71,20 +71,9 @@ namespace Views.RightPanel
                 }
             });
 
-            var positionLabel = new Label($"Position: {_model.Position.x:F0}, {_model.Position.y:F0}")
-            {
-                style =
-                {
-                    unityFontStyleAndWeight = FontStyle.Italic,
-                    color = new Color(0.4f, 0.4f, 0.4f),
-                    marginBottom = 6
-                }
-            };
-
             Add(titleField);
             Add(descriptionField);
             Add(typeDropdown);
-            Add(positionLabel);
             Add(new VisualElement { style = { height = 10 } });
 
             BuildInstructionSection();
