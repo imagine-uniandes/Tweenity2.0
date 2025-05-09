@@ -26,12 +26,27 @@ namespace Views.RightPanel
 
             Add(new Label("Question") { style = { whiteSpace = WhiteSpace.Normal } });
 
-            var questionField = new TextField { value = typedModel.Question };
+            var questionField = new TextField
+            {
+                value = typedModel.Question,
+                multiline = true
+            };
             questionField.RegisterValueChangedCallback(evt =>
             {
                 typedModel.Question = evt.newValue;
                 controller.MarkDirty();
             });
+
+            questionField.style.whiteSpace = WhiteSpace.Normal;
+            questionField.style.flexGrow = 0;
+            questionField.style.height = StyleKeyword.Auto;
+            questionField.style.unityTextAlign = TextAnchor.UpperLeft;
+            questionField.style.overflow = Overflow.Visible;
+            questionField.RegisterCallback<GeometryChangedEvent>(_ =>
+            {
+                questionField.style.height = StyleKeyword.Auto;
+            });
+
             Add(questionField);
 
             Add(new Label("Choices")
@@ -49,12 +64,27 @@ namespace Views.RightPanel
                     style = { marginTop = 6, flexDirection = FlexDirection.Column }
                 };
 
-                var choiceField = new TextField { value = path.Label };
+                var choiceField = new TextField
+                {
+                    value = path.Label,
+                    multiline = true
+                };
                 choiceField.RegisterValueChangedCallback(evt =>
                 {
                     typedModel.UpdateChoice(index, evt.newValue);
                     controller.MarkDirty();
                 });
+
+                choiceField.style.whiteSpace = WhiteSpace.Normal;
+                choiceField.style.flexGrow = 0;
+                choiceField.style.height = StyleKeyword.Auto;
+                choiceField.style.unityTextAlign = TextAnchor.UpperLeft;
+                choiceField.style.overflow = Overflow.Visible;
+                choiceField.RegisterCallback<GeometryChangedEvent>(_ =>
+                {
+                    choiceField.style.height = StyleKeyword.Auto;
+                });
+
                 row.Add(choiceField);
 
                 if (string.IsNullOrEmpty(path.TargetNodeID))
@@ -172,6 +202,5 @@ namespace Views.RightPanel
             var triggerString = $"{objectName}:{methodName}";
             model.OutgoingPaths[choiceIndex].Trigger = triggerString;
         }
-
     }
 }

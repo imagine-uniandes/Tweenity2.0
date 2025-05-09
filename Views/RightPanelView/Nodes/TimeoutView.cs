@@ -24,16 +24,6 @@ namespace Views.RightPanel
 
             var typedModel = (TimeoutNodeModel)_model;
 
-            Add(new Label("Timeout Condition") { style = { whiteSpace = WhiteSpace.Normal } });
-
-            var conditionField = new TextField { value = typedModel.Condition };
-            conditionField.RegisterValueChangedCallback(evt =>
-            {
-                typedModel.Condition = evt.newValue;
-                controller.MarkDirty();
-            });
-            Add(conditionField);
-
             Add(new Label("Timeout Timer (seconds)") { style = { whiteSpace = WhiteSpace.Normal } });
 
             var timeoutTimerField = new FloatField { value = typedModel.TimeoutDuration };

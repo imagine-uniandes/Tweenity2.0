@@ -26,12 +26,27 @@ namespace Views.RightPanel
 
             Add(new Label("Dialogue Text") { style = { whiteSpace = WhiteSpace.Normal } });
 
-            var dialogueTextField = new TextField { value = typedModel.DialogueText };
+            var dialogueTextField = new TextField
+            {
+                value = typedModel.DialogueText,
+                multiline = true
+            };
             dialogueTextField.RegisterValueChangedCallback(evt =>
             {
                 typedModel.DialogueText = evt.newValue;
                 controller.MarkDirty();
             });
+
+            dialogueTextField.style.whiteSpace = WhiteSpace.Normal;
+            dialogueTextField.style.flexGrow = 0;
+            dialogueTextField.style.height = StyleKeyword.Auto;
+            dialogueTextField.style.unityTextAlign = TextAnchor.UpperLeft;
+            dialogueTextField.style.overflow = Overflow.Visible;
+            dialogueTextField.RegisterCallback<GeometryChangedEvent>(_ =>
+            {
+                dialogueTextField.style.height = StyleKeyword.Auto;
+            });
+
             Add(dialogueTextField);
 
             Add(new Label("Responses")
@@ -49,12 +64,27 @@ namespace Views.RightPanel
                     style = { marginTop = 6, flexDirection = FlexDirection.Column }
                 };
 
-                var responseField = new TextField { value = path.Label };
+                var responseField = new TextField
+                {
+                    value = path.Label,
+                    multiline = true
+                };
                 responseField.RegisterValueChangedCallback(evt =>
                 {
                     typedModel.UpdateResponse(index, evt.newValue);
                     controller.MarkDirty();
                 });
+
+                responseField.style.whiteSpace = WhiteSpace.Normal;
+                responseField.style.flexGrow = 0;
+                responseField.style.height = StyleKeyword.Auto;
+                responseField.style.unityTextAlign = TextAnchor.UpperLeft;
+                responseField.style.overflow = Overflow.Visible;
+                responseField.RegisterCallback<GeometryChangedEvent>(_ =>
+                {
+                    responseField.style.height = StyleKeyword.Auto;
+                });
+
                 row.Add(responseField);
 
                 if (string.IsNullOrEmpty(path.TargetNodeID))
