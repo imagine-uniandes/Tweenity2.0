@@ -1,10 +1,12 @@
-:: My Start [start] {"position":"-398,362","id":"start-1"}
+:: My Start [start] {"position":"-400,361","id":"start-1"}
 This is the beginning of the simulation.
 @
 - null
 - null
 [{"label":"Next","trigger":"","target":"dialogue-1"}]
 <
+Wait(15),
+Action(Cylinder:CylinderClickTest.FlashCylinder),
 >
 
 :: Dialogue Example [dialogue] {"position":"-48,349","id":"dialogue-1"}
@@ -25,14 +27,15 @@ This node asks the user to make a decision.
 <
 >
 
-:: Reminder Node [reminder] {"position":"433,645","id":"reminder-1"}
+:: Reminder Node [reminder] {"position":"434,645","id":"reminder-1"}
 This node reminds the user after some time.
 @
 - null
-- 10
+- null
 [{"label":"Success","trigger":"Cylinder:CylinderClickTest.PullCylinder","target":"random-1"},{"label":"Reminder","trigger":"Cylinder:CylinderClickTest.FlashCylinderReminder","target":""}]
 <
-Remind(Cylinder:CylinderClickTest.FlashCylinderReminder),
+Wait(10),
+Remind(Cylinder:CylinderClickTest.FlashCylinder),
 >
 
 :: Timeout Node [timeout] {"position":"378,-21","id":"timeout-1"}

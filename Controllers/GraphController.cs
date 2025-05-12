@@ -44,7 +44,6 @@ namespace Controllers
             GraphView = graphView;
 #if UNITY_EDITOR
             ActiveEditorGraphController = this;
-            Debug.Log("✅ ActiveEditorGraphController set!");
 #endif
         }
 
@@ -409,7 +408,6 @@ namespace Controllers
         {
             string twee = GraphParser.ExportToTwee(Graph.Nodes);
             File.WriteAllText(path, twee);
-            Debug.Log("✅ Graph exported to: " + path);
         }
 
         public void LoadGraphFrom(string path)
@@ -424,8 +422,6 @@ namespace Controllers
 
             lastSavedPath = path;
             IsDirty = false;
-
-            Debug.Log("✅ Graph loaded from: " + path);
         }
 
         // ==========================
@@ -433,10 +429,8 @@ namespace Controllers
         // ==========================
         public void StartRuntime()
         {
-            Debug.Log("🚀 [GraphController] StartRuntime called!");
             if (isSimulationRunning || GraphView == null)
             {
-                Debug.LogWarning($"⚠️ [GraphController] Cannot start runtime: isSimulationRunning={isSimulationRunning}, GraphView={(GraphView == null ? "null" : "ok")}");
                 return;
             }
 
@@ -446,7 +440,6 @@ namespace Controllers
             var startNode = Graph.Nodes.FirstOrDefault(n => n.Type == NodeType.Start);
             if (startNode == null)
             {
-                Debug.LogError("❌ [GraphController] No Start node found in graph.");
                 return;
             }
 
@@ -456,10 +449,8 @@ namespace Controllers
             simulationController.SetGraphView(GraphView);
             TweenityEvents.RegisterSimulationController(simulationController);
 
-            // 🔁 Cargar el modelo directamente en el runtime
+            // Cargar el modelo directamente en el runtime
             simulationController.SetSimulationFromGraph(Graph);
-
-            Debug.Log("✅ [GraphController] SimulationController started successfully.");
         }
 
         // ==========================

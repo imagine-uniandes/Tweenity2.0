@@ -34,7 +34,6 @@ public static class TriggerAssignmentController
         _onTriggerConfirmed = onTriggerSelected;
         _onObjectSelectedImmediate = onObjectSelectedImmediate;
         _selectedObject = null;
-        Debug.Log("Trigger assignment started. Select an object from the scene or Hierarchy.");
     }
 
     public static void ConfirmObjectSelection()
@@ -43,7 +42,6 @@ public static class TriggerAssignmentController
 
         if (selected == null)
         {
-            Debug.LogWarning("No object selected.");
             return;
         }
 
@@ -51,14 +49,11 @@ public static class TriggerAssignmentController
         var prefabType = PrefabUtility.GetPrefabAssetType(selected);
         if (prefabType != PrefabAssetType.NotAPrefab && !selected.scene.IsValid())
         {
-            Debug.LogWarning("Selected object is a prefab asset. Please select an instance from the scene (Hierarchy).");
             return;
         }
 
-        // 🔁 Allow re-selection of the same object (force UI refresh)
+        // Allow re-selection of the same object (force UI refresh)
         _selectedObject = selected;
-        Debug.Log($"🎯 Object selected from Hierarchy: {_selectedObject.name}", _selectedObject);
-
         _onObjectSelectedImmediate?.Invoke();
         _onObjectSelectedImmediate = null;
     }
@@ -74,18 +69,15 @@ public static class TriggerAssignmentController
     {
         if (_selectedObject == null)
         {
-            Debug.LogWarning("No valid object selected. Trigger not saved.");
             return;
         }
 
         if (_onTriggerConfirmed == null)
         {
-            Debug.LogWarning("No trigger confirmation callback set.");
             return;
         }
 
         string trigger = $"{_selectedObject.name}:{selectedEvent}";
-        Debug.Log($"✅ Trigger saved: {trigger}", _selectedObject);
         _onTriggerConfirmed?.Invoke(trigger);
         Reset();
     }

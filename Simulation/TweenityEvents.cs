@@ -36,7 +36,6 @@ namespace Simulation
             );
 
             var triggerString = $"{instruction.ObjectName}:{instruction.MethodName}";
-            Debug.Log($"📨 [TweenityEvents] Reporting trigger: {triggerString}");
 
             _simulationController.VerifyUserAction(instruction);
         }

@@ -22,7 +22,6 @@ namespace Views.MiddlePanel
             this.NodeID = nodeID;
             this.title = "New Node";
 
-            // Info labels
             _typeLabel = new Label("Type: NoType")
             {
                 style = { unityFontStyleAndWeight = FontStyle.Italic, marginTop = 4, marginLeft = 5 }

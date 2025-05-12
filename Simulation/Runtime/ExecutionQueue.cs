@@ -104,7 +104,7 @@ namespace Simulation.Runtime
                 }
                 catch (TaskCanceledException)
                 {
-                    Debug.Log("🛑 [ExecutionQueue] Wait cancelled — normal during node transitions.");
+                    
                 }
             });
         }

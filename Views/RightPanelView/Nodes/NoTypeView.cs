@@ -23,7 +23,6 @@ namespace Views.RightPanel
             {
                 var connectButton = new Button(() =>
                 {
-                    Debug.Log($"[NoTypeView] Connect clicked for NodeID: {model.NodeID}");
                     controller.StartConnectionFrom(model.NodeID, (targetNodeId) =>
                     {
                         model.OutgoingPaths.Add(new PathData("Next", "", targetNodeId));

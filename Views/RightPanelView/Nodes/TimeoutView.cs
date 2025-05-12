@@ -172,7 +172,6 @@ namespace Views.RightPanel
                 });
             }
 
-            // Always create initial Wait() instruction
             UpdateWaitInstruction(typedModel);
         }
 
@@ -181,13 +180,11 @@ namespace Views.RightPanel
             var triggerString = $"{objectName}:{methodName}";
             model.OutgoingPaths[1].Trigger = triggerString;
 
-            controller.MarkDirty(); // No toca model.Instructions
+            controller.MarkDirty(); 
         }
 
         private void UpdateWaitInstruction(TimeoutNodeModel model)
         {
-            // Esta función debe quedar vacía o eliminarse completamente
-            // ya que el timeout se maneja en runtime y no requiere instrucciones en el modelo
         }
     }
 }

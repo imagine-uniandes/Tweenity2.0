@@ -43,7 +43,6 @@ namespace Views.RightPanel
             };
             descriptionField.RegisterValueChangedCallback(evt => _controller.UpdateNodeDescription(_model, evt.newValue));
 
-            // Auto-expansión vertical
             descriptionField.style.whiteSpace = WhiteSpace.Normal;
             descriptionField.style.flexGrow = 0;
             descriptionField.style.height = StyleKeyword.Auto;
@@ -276,7 +275,6 @@ namespace Views.RightPanel
 
             Add(addButton);
 
-            // Separación visual antes de detalles
             Add(new VisualElement
             {
                 style = {

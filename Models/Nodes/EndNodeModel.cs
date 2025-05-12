@@ -6,7 +6,6 @@ namespace Models.Nodes
         {
         }
 
-        // Por claridad, se puede prevenir explícitamente agregar caminos
         public void ClearOutgoingPaths()
         {
             OutgoingPaths.Clear();

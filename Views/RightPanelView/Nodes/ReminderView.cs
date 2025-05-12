@@ -43,7 +43,7 @@ namespace Views.RightPanel
             successTriggerDropdown.RegisterValueChangedCallback(OnSuccessTriggerSelected);
             Add(successTriggerDropdown);
 
-            // Preload Success Trigger (if exists)
+            // Preload Success Trigger
             if (typedModel.OutgoingPaths.Count >= 1 && !string.IsNullOrEmpty(typedModel.OutgoingPaths[0].Trigger))
             {
                 var trigger = typedModel.OutgoingPaths[0].Trigger;

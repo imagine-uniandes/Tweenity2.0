@@ -31,7 +31,6 @@ public class TweenityGraphEditor : EditorWindow
         GraphController graphController = new GraphController();
         TweenityGraphView graphView = new TweenityGraphView();
         graphController.SetGraphView(graphView);
-        Debug.Log("✅ Created GraphController in CreateGUI()");
         graphView.SetController(graphController);
         graphView.OnNodeSelected = graphController.OnNodeSelected;
 
@@ -48,7 +47,7 @@ public class TweenityGraphEditor : EditorWindow
         root.Add(mainLayout);
         root.Add(TweenityBottomToolbar.CreateBottomToolbar(graphController));
 
-        // ✅ Defer graph restore after Editor is ready
+        // Defer graph restore after Editor is ready
         EditorApplication.delayCall += () =>
         {
             string lastPath = EditorPrefs.GetString("Tweenity_LastGraphPath", "");
@@ -62,8 +61,6 @@ public class TweenityGraphEditor : EditorWindow
                     graphController.ClearGraph();
                     foreach (var node in importedNodes)
                         graphController.AddNode(node);
-
-                    Debug.Log($"✅ Graph restored after PlayMode reload from: {lastPath} ({importedNodes.Count} nodes)");
                 }
                 catch (Exception e)
                 {
@@ -74,17 +71,15 @@ public class TweenityGraphEditor : EditorWindow
 
 #if UNITY_EDITOR
         EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-        Debug.Log("📌 Subscribed to PlayModeStateChange in static constructor.");
 #endif
 
-        // 🔁 Runtime startup check
+        // Runtime startup check
         if (EditorApplication.isPlaying)
         {
             EditorApplication.delayCall += () =>
             {
                 if (GraphController.ActiveEditorGraphController != null)
                 {
-                    Debug.Log("🎯 Automatically calling StartRuntime() after controller set.");
                     GraphController.ActiveEditorGraphController.StartRuntime();
                 }
                 else
@@ -97,25 +92,20 @@ public class TweenityGraphEditor : EditorWindow
 
     private static void OnPlayModeStateChanged(PlayModeStateChange state)
     {
-        Debug.Log("🎮 PlayMode state changed: " + state);
 
         if (state == PlayModeStateChange.EnteredPlayMode)
         {
-            Debug.Log("▶ PlayModeStateChange: EnteredPlayMode!");
 
             var controller = GraphController.ActiveEditorGraphController;
             if (controller == null)
             {
-                Debug.LogWarning("❌ No ActiveEditorGraphController at PlayMode start.");
                 return;
             }
 
-            Debug.Log("✅ Calling StartRuntime()");
             controller.StartRuntime();
         }
         else if (state == PlayModeStateChange.ExitingPlayMode)
         {
-            Debug.Log("⏹ Exiting Play Mode. Resetting editor state...");
 
             var controller = GraphController.ActiveEditorGraphController;
             if (controller != null)
@@ -132,7 +122,6 @@ public class TweenityGraphEditor : EditorWindow
                 if (!string.IsNullOrEmpty(lastPath) && File.Exists(lastPath))
                 {
                     controller.LoadGraphFrom(lastPath);
-                    Debug.Log($"♻ Graph reloaded after PlayMode exit: {lastPath}");
                 }
             }
         }

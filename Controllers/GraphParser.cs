@@ -40,7 +40,6 @@ namespace Controllers
                         SaveGenericNode(twee, node);
                         break;
                     default:
-                        Debug.LogWarning($"Unknown node type during export: {node.GetType().Name}");
                         break;
                 }
             }

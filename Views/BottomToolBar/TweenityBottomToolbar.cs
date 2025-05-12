@@ -24,7 +24,6 @@ namespace Views
             bottomBar.style.paddingRight = 8;
             bottomBar.style.alignItems = Align.Center;
 
-            // LEFT: Center on selection
             var leftContainer = new VisualElement
             {
                 style = {
@@ -62,7 +61,6 @@ namespace Views
             leftContainer.Add(centerButton);
             bottomBar.Add(leftContainer);
 
-            // RIGHT: Search bar
             var rightContainer = new VisualElement
             {
                 style = {

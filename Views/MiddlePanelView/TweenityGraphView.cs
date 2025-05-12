@@ -56,13 +56,11 @@ namespace Views
                                     string toId = inputNode.NodeID;
 
                                     outputNode.NodeModel?.DisconnectFrom(toId);
-                                    Debug.Log($"[GraphViewChanged] Removed model connection: {fromId} -> {toId}");
                                 }
                                 break;
 
                             case TweenityNode node:
                                 string nodeId = node.NodeID;
-                                Debug.Log($"[GraphViewChanged] Removing node: {nodeId}"); 
                                 _controller?.RemoveNode(nodeId); 
                                 break;
                         }
@@ -73,7 +71,7 @@ namespace Views
             };
             RegisterCallback<KeyDownEvent>(evt =>
             {
-                if (!_editingEnabled) return; // ← PROTECCIÓN
+                if (!_editingEnabled) return; 
 
                 if (evt.keyCode is KeyCode.Delete or KeyCode.Backspace)
                 {
@@ -81,13 +79,11 @@ namespace Views
 
                     if (selectedNodes.Count == 0)
                     {
-                        Debug.Log("[DeleteKey] No node selected.");
                         return;
                     }
 
                     foreach (var node in selectedNodes)
                     {
-                        Debug.Log($"[DeleteKey] Removing node: {node.NodeID}");
                         _controller?.RemoveNode(node.NodeID);
                     }
 
@@ -141,11 +137,10 @@ namespace Views
                 EditorApplication.delayCall += () =>
                 {
                     RenderConnections();
-                    CenterOnNode(nodeModel.NodeID); // 🌀 Centro automáticamente tras renderizado
+                    CenterOnNode(nodeModel.NodeID); 
                 };
 
                 int count = this.graphElements.OfType<TweenityNode>().Count();
-                Debug.Log($"[RenderNode] Total visual nodes after AddElement: {count}");
             };
         }
 
@@ -157,7 +152,6 @@ namespace Views
 
             if (target != null)
             {
-                Debug.Log($"[GraphView] Removing node and its edges from view: {nodeId}");
 
                 var connectedEdges = this.graphElements
                     .OfType<Edge>()
@@ -209,13 +203,11 @@ namespace Views
         public void RenderConnections()
         {
             var allNodes = this.graphElements.OfType<TweenityNode>().ToList();
-            Debug.Log($"[RenderConnections] Total nodes in GraphView: {allNodes.Count}");
 
             foreach (var sourceNode in allNodes)
             {
                 if (sourceNode.NodeModel == null || sourceNode.OutputPort == null)
                 {
-                    Debug.LogWarning($"[RenderConnections] Skipping node {sourceNode?.NodeID} due to null model or output port.");
                     continue;
                 }
 
@@ -223,12 +215,9 @@ namespace Views
                 {
                     string targetId = path.TargetNodeID;
 
-                    Debug.Log($"[RenderConnections] {sourceNode.NodeID} trying to connect to {targetId}");
-
                     var targetNode = allNodes.FirstOrDefault(n => n.NodeID == targetId);
                     if (targetNode == null || targetNode.InputPort == null)
                     {
-                        Debug.LogWarning($"[RenderConnections] Target node {targetId} not found or has no input port.");
                         continue;
                     }
 
@@ -237,7 +226,6 @@ namespace Views
 
                     if (alreadyConnected)
                     {
-                        Debug.Log($"[RenderConnections] Edge already exists from {sourceNode.NodeID} to {targetId}");
                         continue;
                     }
 
@@ -250,8 +238,6 @@ namespace Views
                     edge.output.Connect(edge);
                     edge.input.Connect(edge);
                     AddElement(edge);
-
-                    Debug.Log($"[RenderConnections] Edge created from {sourceNode.NodeID} to {targetId}");
                 }
             }
         }
@@ -280,7 +266,6 @@ namespace Views
         {
             _editingEnabled = enabled;
 
-            // Toggle manipulators
             if (_contentDragger != null) this.RemoveManipulator(_contentDragger);
             if (_selectionDragger != null) this.RemoveManipulator(_selectionDragger);
             if (_rectangleSelector != null) this.RemoveManipulator(_rectangleSelector);
@@ -296,7 +281,6 @@ namespace Views
                 this.AddManipulator(_rectangleSelector);
             }
 
-            // Mostrar u ocultar mensaje de runtime
             if (_runtimeLabel == null)
             {
                 _runtimeLabel = new Label("⚠ Editing disabled during simulation");
@@ -308,7 +292,6 @@ namespace Views
                 _runtimeLabel.style.display = DisplayStyle.None;
                 _runtimeLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
 
-                // Lo insertamos después del fondo
                 this.Insert(1, _runtimeLabel);
             }
 
@@ -316,14 +299,12 @@ namespace Views
         }
         public void ClearGraphView()
         {
-            // Remove all nodes
             var nodes = this.graphElements.OfType<TweenityNode>().ToList();
             foreach (var node in nodes)
             {
                 RemoveElement(node);
             }
 
-            // Remove all edges
             var edges = this.graphElements.OfType<Edge>().ToList();
             foreach (var edge in edges)
             {
@@ -331,8 +312,6 @@ namespace Views
                 edge.output?.Disconnect(edge);
                 RemoveElement(edge);
             }
-
-            Debug.Log("[GraphView] Cleared all nodes and edges from view.");
         }
 
         public void CenterOnNode(string nodeId)
@@ -343,27 +322,21 @@ namespace Views
 
             if (target == null)
             {
-                Debug.LogWarning($"[GraphView] Cannot center on node: {nodeId} not found.");
                 return;
             }
 
             var nodeBounds = target.GetPosition();
             var viewCenter = contentViewContainer.WorldToLocal(layout.center);
 
-            // Calculate offset to center node visually
             var nodeCenter = new Vector2(nodeBounds.x + nodeBounds.width / 2, nodeBounds.y + nodeBounds.height / 2);
             var offset = viewCenter - nodeCenter;
 
-            // Apply offset to content view container transform
             contentViewContainer.transform.position += (Vector3)offset;
 
             ClearSelection();
             AddToSelection(target);
 
-            // ✅ También mostrar el detalle en el panel derecho
             _controller?.OnNodeSelected(target.NodeModel);
-
-            Debug.Log($"🎯 Centered view on node: {nodeId}");
         }
 
         public void ForceRemoveNodeById(string nodeId)
@@ -390,7 +363,5 @@ namespace Views
                 RemoveElement(element);
             }
         }
-
-
     }
 }

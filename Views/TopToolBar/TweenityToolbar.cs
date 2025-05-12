@@ -2,16 +2,16 @@ using UnityEditor;
 using UnityEngine;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
-using Controllers; // So we can access GraphController
-using Models.Nodes; // For TweenityNodeModel
-using Models; // For NodeType
-using Views; // Assuming this is your shared namespace
+using Controllers; 
+using Models.Nodes; 
+using Models; 
+using Views; 
 
 namespace Views
 {
     public static class TweenityToolbar
     {
-        private static GraphController _graphController; // stored reference
+        private static GraphController _graphController; 
 
         public static Toolbar CreateToolbar(GraphController graphController)
         {
@@ -24,7 +24,7 @@ namespace Views
 
             fileMenu.menu.AppendAction("Save", action =>
             {
-                _graphController.SaveCurrentGraph(); // Uses stored path or prompts on first save
+                _graphController.SaveCurrentGraph(); 
             });
 
             fileMenu.menu.AppendAction("Export", action =>
@@ -79,7 +79,7 @@ namespace Views
             };
             toolbar.Add(helpButton);
 
-            // 🔄 Clear All Button 
+            // Clear All Button 
             ToolbarButton clearAllButton = new ToolbarButton(() =>
             {
                 if (EditorUtility.DisplayDialog("Clear Graph", "Are you sure you want to clear the entire graph?", "Yes", "Cancel"))
@@ -92,7 +92,7 @@ namespace Views
             };
             toolbar.Add(clearAllButton);
 
-            // ➕ Add Node Button
+            // Add Node Button
             ToolbarButton addNodeButton = new ToolbarButton(() =>
             {
                 _graphController.CreateNewNode();
