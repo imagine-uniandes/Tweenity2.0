@@ -1,0 +1,90 @@
+:: Inicio de la Simulación [start] {"position":"-563,303","id":"start-1"}
+Iniciar la simulación y preparar el entorno inicial.
+@
+- null
+- null
+[{"label":"Iniciar simulación","trigger":"","target":"briefing-1"}]
+<
+>
+
+:: Diálogo de Bienvenida [dialogue] {"position":"-248,301","id":"briefing-1"}
+Reproducir efectos de sonido de alarma e instrucciones iniciales.
+@
+- ¡Atención! Se ha reportado un incendio en el cuarto eléctrico.
+- null
+[{"label":"Entendido","trigger":"","target":"zona-1"}]
+<
+>
+
+:: Ingreso a la Zona de Fuego [notype] {"position":"150,300","id":"zona-1"}
+Detectar entrada del jugador a la zona peligrosa.
+@
+- null
+- null
+[{"label":"Avanzar","trigger":"","target":"eleccion-extintor-1"}]
+<
+>
+
+:: Elección de Extintor [multiplechoice] {"position":"450,300","id":"eleccion-extintor-1"}
+Mostrar opciones visuales de extintores.
+@
+- ¿Cuál extintor usarías para un incendio eléctrico?
+- null
+[{"label":"Agua","trigger":"","target":"fallo-1"},{"label":"CO₂","trigger":"","target":"usar-co2-1"},{"label":"Espuma","trigger":"","target":"fallo-1"}]
+<
+>
+
+:: Agarrar Extintor CO₂ [notype] {"position":"700,200","id":"usar-co2-1"}
+Detectar que el jugador tomó el extintor correcto.
+@
+- null
+- null
+[{"label":"Usar extintor","trigger":"","target":"activar-1"}]
+<
+>
+
+:: Activar Extintor [notype] {"position":"1005,200","id":"activar-1"}
+Reproducir animación y sonido del extintor en uso.
+@
+- null
+- null
+[{"label":"Apagar fuego","trigger":"","target":"timeout-1"}]
+<
+>
+
+:: Tiempo para Apagar Fuego [timeout] {"position":"1273,327","id":"timeout-1"}
+Temporizador de 10 segundos para evaluar reacción.
+@
+- 10
+- 0
+[{"label":"Fuego extinguido","trigger":"","target":"exito-1"},{"label":"Muy tarde","trigger":"","target":"fallo-1"}]
+<
+>
+
+:: Resultado Exitoso [dialogue] {"position":"1630,326","id":"exito-1"}
+Mostrar mensaje de éxito y reproducir sonido de alivio.
+@
+- ¡Buen trabajo! Elegiste el extintor correcto y controlaste el fuego.
+- null
+[{"label":"Finalizar","trigger":"","target":"fin-1"}]
+<
+>
+
+:: Resultado Fallido [dialogue] {"position":"692,481","id":"fallo-1"}
+Mostrar retroalimentación por error y reiniciar simulación.
+@
+- Esa no era la mejor opción. Inténtalo nuevamente.
+- null
+[{"label":"Reintentar","trigger":"","target":"start-1"}]
+<
+>
+
+:: Fin de la Simulación [end] {"position":"2014,325","id":"fin-1"}
+Cerrar simulación y mostrar resumen de desempeño.
+@
+- null
+- null
+[]
+<
+>
+
