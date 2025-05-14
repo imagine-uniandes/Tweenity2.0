@@ -1,8 +1,9 @@
 using UnityEngine;
 using Models.Nodes;
 using Simulation.Runtime;
+using Simulation;
 
-namespace Simulation
+namespace Tweenity
 {
     public static class TweenityEvents
     {

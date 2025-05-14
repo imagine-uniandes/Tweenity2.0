@@ -1,7 +1,7 @@
 using System;
+using Simulation;
 
-namespace Simulation
-{
+namespace Tweenity {
     /// <summary>
     /// Marker attribute to indicate which methods are valid Tweenity simulation triggers.
     /// 
@@ -9,7 +9,7 @@ namespace Simulation
     ///     TweenityEvents.ReportAction(gameObject.name, nameof(MethodName), parameters);
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, Inherited = true, AllowMultiple = false)]
-    public class TweenityTriggerAttribute : Attribute
+    public class TweenityEventAttribute : Attribute
     {
     }
 }

@@ -27,6 +27,44 @@ namespace Views.RightPanel
 
             var typedModel = (ReminderNodeModel)_model;
 
+            // ----- Connection UI -----
+            if (typedModel.OutgoingPaths.Count == 0 || string.IsNullOrEmpty(typedModel.OutgoingPaths[0].TargetNodeID))
+            {
+                var connectButton = new Button(() =>
+                {
+                    controller.StartConnectionFrom(typedModel.NodeID, (targetNodeId) =>
+                    {
+                        if (typedModel.OutgoingPaths.Count == 0)
+                            typedModel.OutgoingPaths.Add(new PathData("Success", "", targetNodeId));
+                        else
+                            typedModel.OutgoingPaths[0].TargetNodeID = targetNodeId;
+
+                        controller.GraphView.RenderConnections();
+                    });
+                })
+                {
+                    text = "Connect"
+                };
+                connectButton.style.marginTop = 10;
+                Add(connectButton);
+            }
+            else
+            {
+                Add(new Label("Outgoing Connection")
+                {
+                    style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
+                });
+
+                var path = typedModel.OutgoingPaths[0];
+                var connectedModel = controller.GetNode(path.TargetNodeID);
+                var connectionLabel = new Label($"→ {connectedModel?.Title ?? "(Unknown)"}")
+                {
+                    style = { whiteSpace = WhiteSpace.Normal }
+                };
+                Add(connectionLabel);
+            }
+
+            // ----- Trigger Assignment Section -----
             Add(new Label("Success Trigger Assignment")
             {
                 style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
@@ -116,7 +154,9 @@ namespace Views.RightPanel
 
             var typedModel = (ReminderNodeModel)_model;
 
-            // Always update OutgoingPaths[0] = Success Path
+            if (typedModel.OutgoingPaths.Count == 0)
+                typedModel.OutgoingPaths.Add(new PathData("Success", "", ""));
+
             typedModel.SetSuccessPath(selectedObject.name, scriptName, methodName, typedModel.OutgoingPaths[0].TargetNodeID);
         }
     }
