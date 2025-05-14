@@ -1,10 +1,11 @@
-:: Inicio de la Simulación [start] {"position":"-563,303","id":"start-1"}
+:: Inicio de la Simulación [start] {"position":"-591,301","id":"start-1"}
 Iniciar la simulación y preparar el entorno inicial.
 @
 - null
 - null
 [{"label":"Iniciar simulación","trigger":"","target":"briefing-1"}]
 <
+Wait(2),
 >
 
 :: Diálogo de Bienvenida [dialogue] {"position":"-176,303","id":"briefing-1"}
@@ -12,20 +13,12 @@ se le da la bienvenida al usuario
 @
 - Bienvenido
 - null
-[{"label":"New Response","trigger":"Welcome Canvas:WelcomeCanvasController.OnWelcomeButtonClicked","target":"a7c68ce8-3382-45ea-a377-9b62d1086917"}]
+[{"label":"New Response","trigger":"DialoguePanel:DialoguePanelController.OnButtonClicked","target":"d881861e-cdb2-426e-9477-2ca3fa1aa0d8"}]
 <
+Action(DialogueManager:DialogueManager.ShowWelcomeDialogue),
 >
 
-:: Escoger Tipo de Incendio [random] {"position":"75,302","id":"a7c68ce8-3382-45ea-a377-9b62d1086917"}
-Se escoge el color del fuego al azar
-@
-- null
-- null
-[{"label":"Path 1","trigger":"","target":"dd0c7db2-e3b3-433d-9c68-11fbba921b1b"},{"label":"Path 2","trigger":"","target":"81774aea-742d-4601-bc54-7a1932ee2f02"}]
-<
->
-
-:: Preparar Fuego Rojo [notype] {"position":"373,126","id":"dd0c7db2-e3b3-433d-9c68-11fbba921b1b"}
+:: Preparar Fuego Rojo [notype] {"position":"373,125","id":"dd0c7db2-e3b3-433d-9c68-11fbba921b1b"}
 
 @
 - null
@@ -219,6 +212,15 @@ Se le explica al usuario que se quedo sin tiempo para apagar el incendio
 - 
 - null
 [{"label":"OK","trigger":"","target":"c395fc71-65fe-4893-9126-16573a41f0c3"}]
+<
+>
+
+:: Escoger Fuego [random] {"position":"111,301","id":"d881861e-cdb2-426e-9477-2ca3fa1aa0d8"}
+
+@
+- null
+- null
+[{"label":"Path 1","trigger":"","target":"dd0c7db2-e3b3-433d-9c68-11fbba921b1b"},{"label":"Path 2","trigger":"","target":"81774aea-742d-4601-bc54-7a1932ee2f02"}]
 <
 >
 
