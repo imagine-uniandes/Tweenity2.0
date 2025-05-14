@@ -101,7 +101,8 @@ namespace Controllers
 
         public bool AddNode(TweenityNodeModel node)
         {
-            if (!IsEditingEnabled || GraphView == null) return false;
+            if (!IsEditingEnabled || GraphView == null)
+                return false;
 
             if (Graph.AddNode(node))
             {

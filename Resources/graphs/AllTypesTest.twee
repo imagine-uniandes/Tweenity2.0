@@ -35,10 +35,10 @@ This node reminds the user after some time.
 [{"label":"Success","trigger":"Cylinder:CylinderClickTest.PullCylinder","target":"random-1"},{"label":"Reminder","trigger":"Cylinder:CylinderClickTest.FlashCylinderReminder","target":""}]
 <
 Wait(10),
-Remind(Cylinder:CylinderClickTest.FlashCylinder),
+Remind(Cube:CubeClickTest.FlashCube),
 >
 
-:: Timeout Node [timeout] {"position":"378,-21","id":"timeout-1"}
+:: Timeout Node [timeout] {"position":"377,-21","id":"timeout-1"}
 This node waits for user input, then times out.
 @
 - UserPressButton
@@ -63,14 +63,16 @@ You've reached the end.
 - null
 []
 <
+Action(Cylinder:CylinderClickTest.FlashCylinder),
 >
 
-:: My No Type Node [notype] {"position":"582,191","id":"9e4b4e9f-98a1-47a0-bc81-b27a59110caf"}
+:: My No Type Node [notype] {"position":"583,191","id":"9e4b4e9f-98a1-47a0-bc81-b27a59110caf"}
 NoType Description Test
 @
 - null
 - null
 [{"label":"Next","trigger":"","target":"end-1"}]
 <
+Action(Cube:CubeClickTest.FlashCube),
 >
 
