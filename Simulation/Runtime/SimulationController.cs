@@ -123,6 +123,19 @@ namespace Simulation.Runtime
             // Wait for instructions to finish
             await _executionQueue.WaitUntilComplete(tokenSource.Token);
 
+            // 🎲 Auto-navigate if Random node with multiple untriggered paths
+            if (node.Type == NodeType.Random && node.OutgoingPaths.Count > 1 && node.OutgoingPaths.All(p => string.IsNullOrEmpty(p.Trigger)))
+            {
+                var options = node.OutgoingPaths.Where(p => !string.IsNullOrEmpty(p.TargetNodeID)).ToList();
+                if (options.Count > 0)
+                {
+                    var randomPath = options[Random.Range(0, options.Count)];
+                    Debug.Log($"🎲 Random node: selecting path to {randomPath.TargetNodeID}");
+                    NavigateToNodeID(randomPath.TargetNodeID);
+                    return;
+                }
+            }
+
             // Auto-advance if only one non-triggered path
             if (!node.OutgoingPaths.Any(p => !string.IsNullOrEmpty(p.Trigger)) && node.OutgoingPaths.Count == 1)
             {
