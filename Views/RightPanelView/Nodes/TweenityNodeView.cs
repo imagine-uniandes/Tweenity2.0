@@ -63,9 +63,9 @@ namespace Views.RightPanel
                     if (!success)
                     {
                         typeDropdown.SetValueWithoutNotify(_model.Type.ToString());
-#if UNITY_EDITOR
+    #if UNITY_EDITOR
                         EditorUtility.DisplayDialog("Invalid Node Type", errorMessage, "OK");
-#endif
+    #endif
                     }
                 }
             });
@@ -96,8 +96,7 @@ namespace Views.RightPanel
                 {
                     var row = new VisualElement
                     {
-                        style =
-                        {
+                        style = {
                             flexDirection = FlexDirection.Row,
                             alignItems = Align.Center,
                             marginBottom = 10,
@@ -115,8 +114,7 @@ namespace Views.RightPanel
                     {
                         image = EditorGUIUtility.IconContent("d_UnityEditor.SceneHierarchyWindow").image,
                         scaleMode = ScaleMode.ScaleToFit,
-                        style =
-                        {
+                        style = {
                             width = 16,
                             height = 16,
                             marginLeft = 6,
@@ -129,8 +127,7 @@ namespace Views.RightPanel
 
                     var container = new VisualElement
                     {
-                        style =
-                        {
+                        style = {
                             flexDirection = FlexDirection.Column,
                             flexGrow = 1,
                             paddingRight = 6
@@ -185,10 +182,11 @@ namespace Views.RightPanel
                     waitField.SetValueWithoutNotify(float.TryParse(instruction.Params, out var p) ? p : 1f);
 
                     waitField.style.display = instruction.Type == ActionInstructionType.Wait ? DisplayStyle.Flex : DisplayStyle.None;
-                    objectField.style.display = instruction.Type == ActionInstructionType.Action || instruction.Type == ActionInstructionType.Remind ? DisplayStyle.Flex : DisplayStyle.None;
-                    methodDropdown.style.display = instruction.Type == ActionInstructionType.Action || instruction.Type == ActionInstructionType.Remind ? DisplayStyle.Flex : DisplayStyle.None;
+                    bool showFields = instruction.Type == ActionInstructionType.Action || instruction.Type == ActionInstructionType.Remind;
+                    objectField.style.display = showFields ? DisplayStyle.Flex : DisplayStyle.None;
+                    methodDropdown.style.display = showFields ? DisplayStyle.Flex : DisplayStyle.None;
 
-                    if ((instruction.Type == ActionInstructionType.Action || instruction.Type == ActionInstructionType.Remind) && !string.IsNullOrEmpty(instruction.ObjectName))
+                    if (showFields && !string.IsNullOrEmpty(instruction.ObjectName))
                     {
                         var obj = GameObject.Find(instruction.ObjectName);
                         if (obj != null)
@@ -198,6 +196,14 @@ namespace Views.RightPanel
                             methodDropdown.choices = available;
                             methodDropdown.SetValueWithoutNotify(available.Contains(instruction.MethodName) ? instruction.MethodName : available.FirstOrDefault());
                         }
+                        else
+                        {
+                            objectField.label = "Objeto no disponible en escena";
+                            objectField.value = null;
+
+                            methodDropdown.choices = new List<string> { instruction.MethodName };
+                            methodDropdown.SetValueWithoutNotify(instruction.MethodName);
+                        }
                     }
 
                     typeDropdown.RegisterValueChangedCallback(evt =>
@@ -206,9 +212,9 @@ namespace Views.RightPanel
                         {
                             instruction.Type = newType;
                             waitField.style.display = newType == ActionInstructionType.Wait ? DisplayStyle.Flex : DisplayStyle.None;
-                            bool showFields = newType == ActionInstructionType.Action || newType == ActionInstructionType.Remind;
-                            objectField.style.display = showFields ? DisplayStyle.Flex : DisplayStyle.None;
-                            methodDropdown.style.display = showFields ? DisplayStyle.Flex : DisplayStyle.None;
+                            bool show = newType == ActionInstructionType.Action || newType == ActionInstructionType.Remind;
+                            objectField.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+                            methodDropdown.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
                             _controller.MarkDirty();
                         }
                     });

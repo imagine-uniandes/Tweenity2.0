@@ -31,7 +31,7 @@ namespace Views.RightPanel
             {
                 typedModel.TimeoutDuration = evt.newValue;
                 UpdateWaitInstruction(typedModel);
-                controller.MarkDirty();
+                _controller.MarkDirty();
             });
             Add(timeoutTimerField);
 
@@ -44,12 +44,12 @@ namespace Views.RightPanel
             {
                 var timeoutBtn = new Button(() =>
                 {
-                    controller.StartConnectionFrom(typedModel.NodeID, targetId =>
+                    _controller.StartConnectionFrom(typedModel.NodeID, targetId =>
                     {
                         typedModel.SetTimeoutPath("Timeout", targetId);
-                        controller.GraphView.RenderConnections();
-                        controller.CancelConnection();
-                        controller.OnNodeSelected(typedModel);
+                        _controller.GraphView.RenderConnections();
+                        _controller.CancelConnection();
+                        _controller.OnNodeSelected(typedModel);
                     });
                 })
                 {
@@ -60,7 +60,7 @@ namespace Views.RightPanel
             }
             else if (typedModel.OutgoingPaths.Count >= 1)
             {
-                var connectedModel = controller.GetNode(typedModel.OutgoingPaths[0].TargetNodeID);
+                var connectedModel = _controller.GetNode(typedModel.OutgoingPaths[0].TargetNodeID);
                 var connectedLabel = new Label($"Timeout → {connectedModel?.Title ?? "(Unknown)"}")
                 {
                     style = { marginTop = 4 }
@@ -72,12 +72,12 @@ namespace Views.RightPanel
             {
                 var successBtn = new Button(() =>
                 {
-                    controller.StartConnectionFrom(typedModel.NodeID, targetId =>
+                    _controller.StartConnectionFrom(typedModel.NodeID, targetId =>
                     {
                         typedModel.SetSuccessPath("Success", targetId);
-                        controller.GraphView.RenderConnections();
-                        controller.CancelConnection();
-                        controller.OnNodeSelected(typedModel);
+                        _controller.GraphView.RenderConnections();
+                        _controller.CancelConnection();
+                        _controller.OnNodeSelected(typedModel);
                     });
                 })
                 {
@@ -88,7 +88,7 @@ namespace Views.RightPanel
             }
             else if (typedModel.OutgoingPaths.Count >= 2)
             {
-                var connectedModel = controller.GetNode(typedModel.OutgoingPaths[1].TargetNodeID);
+                var connectedModel = _controller.GetNode(typedModel.OutgoingPaths[1].TargetNodeID);
                 var connectedLabel = new Label($"Success → {connectedModel?.Title ?? "(Unknown)"}")
                 {
                     style = { marginTop = 4 }
@@ -96,7 +96,6 @@ namespace Views.RightPanel
                 Add(connectedLabel);
             }
 
-            // --- Trigger Assignment for Success Path ---
             if (typedModel.OutgoingPaths.Count >= 2 && !string.IsNullOrEmpty(typedModel.OutgoingPaths[1].TargetNodeID))
             {
                 Add(new Label("Success Trigger Assignment")
@@ -119,7 +118,7 @@ namespace Views.RightPanel
                     if (parts.Length == 2)
                     {
                         var objName = parts[0];
-                        var methodName = parts[1];
+                        var methodFull = parts[1];
 
                         var obj = GameObject.Find(objName);
                         if (obj != null)
@@ -127,12 +126,21 @@ namespace Views.RightPanel
                             objectField.SetValueWithoutNotify(obj);
 
                             var availableMethods = TriggerAssignmentController.GetAvailableEvents(obj);
-                            if (availableMethods.Count > 0)
-                            {
-                                methodDropdown.choices = availableMethods;
-                                methodDropdown.SetValueWithoutNotify(availableMethods.Contains(methodName) ? methodName : availableMethods[0]);
-                                methodDropdown.style.display = DisplayStyle.Flex;
-                            }
+                            methodDropdown.choices = availableMethods;
+
+                            methodDropdown.SetValueWithoutNotify(
+                                availableMethods.Contains(methodFull) ? methodFull : availableMethods[0]
+                            );
+                            methodDropdown.style.display = DisplayStyle.Flex;
+                        }
+                        else
+                        {
+                            objectField.label = "Objeto no disponible en escena";
+                            objectField.value = null;
+
+                            methodDropdown.choices = new List<string> { methodFull };
+                            methodDropdown.SetValueWithoutNotify(methodFull);
+                            methodDropdown.style.display = DisplayStyle.Flex;
                         }
                     }
                 }
@@ -149,7 +157,7 @@ namespace Views.RightPanel
                             methodDropdown.index = 0;
                             methodDropdown.style.display = DisplayStyle.Flex;
 
-                            UpdateTrigger(typedModel, selectedObj.name, methodDropdown.value, controller);
+                            SetTriggerFromCombinedString(typedModel, selectedObj.name, availableMethods[0]);
                         }
                         else
                         {
@@ -167,7 +175,7 @@ namespace Views.RightPanel
                     var selectedObj = objectField.value as GameObject;
                     if (selectedObj != null && !string.IsNullOrEmpty(evt.newValue))
                     {
-                        UpdateTrigger(typedModel, selectedObj.name, evt.newValue, controller);
+                        SetTriggerFromCombinedString(typedModel, selectedObj.name, evt.newValue);
                     }
                 });
             }
@@ -175,12 +183,17 @@ namespace Views.RightPanel
             UpdateWaitInstruction(typedModel);
         }
 
-        private void UpdateTrigger(TimeoutNodeModel model, string objectName, string methodName, GraphController controller)
+        private void SetTriggerFromCombinedString(TimeoutNodeModel model, string objectName, string combined)
         {
-            var triggerString = $"{objectName}:{methodName}";
+            var parts = combined.Split('.');
+            if (parts.Length != 2) return;
+
+            var scriptName = parts[0];
+            var methodName = parts[1];
+            var triggerString = $"{objectName}:{scriptName}.{methodName}";
             model.OutgoingPaths[1].Trigger = triggerString;
 
-            controller.MarkDirty(); 
+            _controller.MarkDirty();
         }
 
         private void UpdateWaitInstruction(TimeoutNodeModel model)

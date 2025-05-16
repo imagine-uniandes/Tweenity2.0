@@ -34,7 +34,7 @@ namespace Views.RightPanel
             dialogueTextField.RegisterValueChangedCallback(evt =>
             {
                 typedModel.DialogueText = evt.newValue;
-                controller.MarkDirty();
+                _controller.MarkDirty();
             });
 
             dialogueTextField.style.whiteSpace = WhiteSpace.Normal;
@@ -72,7 +72,7 @@ namespace Views.RightPanel
                 responseField.RegisterValueChangedCallback(evt =>
                 {
                     typedModel.UpdateResponse(index, evt.newValue);
-                    controller.MarkDirty();
+                    _controller.MarkDirty();
                 });
 
                 responseField.style.whiteSpace = WhiteSpace.Normal;
@@ -91,12 +91,12 @@ namespace Views.RightPanel
                 {
                     var connectButton = new Button(() =>
                     {
-                        controller.StartConnectionFrom(typedModel.NodeID, targetId =>
+                        _controller.StartConnectionFrom(typedModel.NodeID, targetId =>
                         {
                             typedModel.ConnectResponseTo(index, targetId);
-                            controller.GraphView.RenderConnections();
-                            controller.CancelConnection();
-                            controller.OnNodeSelected(typedModel);
+                            _controller.GraphView.RenderConnections();
+                            _controller.CancelConnection();
+                            _controller.OnNodeSelected(typedModel);
                         });
                     })
                     {
@@ -107,7 +107,7 @@ namespace Views.RightPanel
                 }
                 else
                 {
-                    var connectedLabel = new Label($"→ {controller.GetNode(path.TargetNodeID)?.Title ?? "(Unknown)"}");
+                    var connectedLabel = new Label($"→ {_controller.GetNode(path.TargetNodeID)?.Title ?? "(Unknown)"}");
                     connectedLabel.style.marginTop = 4;
                     row.Add(connectedLabel);
                 }
@@ -130,7 +130,7 @@ namespace Views.RightPanel
                     if (parts.Length == 2)
                     {
                         var objName = parts[0];
-                        var methodName = parts[1];
+                        var methodFull = parts[1];
 
                         var obj = GameObject.Find(objName);
                         if (obj != null)
@@ -138,12 +138,21 @@ namespace Views.RightPanel
                             objectField.SetValueWithoutNotify(obj);
 
                             var availableMethods = TriggerAssignmentController.GetAvailableEvents(obj);
-                            if (availableMethods.Count > 0)
-                            {
-                                methodDropdown.choices = availableMethods;
-                                methodDropdown.SetValueWithoutNotify(availableMethods.Contains(methodName) ? methodName : availableMethods[0]);
-                                methodDropdown.style.display = DisplayStyle.Flex;
-                            }
+                            methodDropdown.choices = availableMethods;
+
+                            methodDropdown.SetValueWithoutNotify(
+                                availableMethods.Contains(methodFull) ? methodFull : availableMethods[0]
+                            );
+                            methodDropdown.style.display = DisplayStyle.Flex;
+                        }
+                        else
+                        {
+                            objectField.label = "Objeto no disponible en escena";
+                            objectField.value = null;
+
+                            methodDropdown.choices = new List<string> { methodFull };
+                            methodDropdown.SetValueWithoutNotify(methodFull);
+                            methodDropdown.style.display = DisplayStyle.Flex;
                         }
                     }
                 }
@@ -160,7 +169,7 @@ namespace Views.RightPanel
                             methodDropdown.index = 0;
                             methodDropdown.style.display = DisplayStyle.Flex;
 
-                            UpdateTrigger(typedModel, index, selectedObj.name, methodDropdown.value);
+                            SetTriggerFromCombinedString(typedModel, index, selectedObj.name, availableMethods[0]);
                         }
                         else
                         {
@@ -178,7 +187,7 @@ namespace Views.RightPanel
                     var selectedObj = objectField.value as GameObject;
                     if (selectedObj != null && !string.IsNullOrEmpty(evt.newValue))
                     {
-                        UpdateTrigger(typedModel, index, selectedObj.name, evt.newValue);
+                        SetTriggerFromCombinedString(typedModel, index, selectedObj.name, evt.newValue);
                     }
                 });
 
@@ -188,7 +197,7 @@ namespace Views.RightPanel
             var addResponseBtn = new Button(() =>
             {
                 typedModel.AddResponse("New Response");
-                controller.OnNodeSelected(typedModel);
+                _controller.OnNodeSelected(typedModel);
             })
             {
                 text = "Add Response",
@@ -197,10 +206,17 @@ namespace Views.RightPanel
             Add(addResponseBtn);
         }
 
-        private void UpdateTrigger(DialogueNodeModel model, int responseIndex, string objectName, string methodName)
+        private void SetTriggerFromCombinedString(DialogueNodeModel model, int index, string objectName, string combined)
         {
-            var triggerString = $"{objectName}:{methodName}";
-            model.OutgoingPaths[responseIndex].Trigger = triggerString;
+            var parts = combined.Split('.');
+            if (parts.Length != 2) return;
+
+            var scriptName = parts[0];
+            var methodName = parts[1];
+            var triggerString = $"{objectName}:{scriptName}.{methodName}";
+            model.OutgoingPaths[index].Trigger = triggerString;
+
+            _controller.MarkDirty();
         }
     }
 }

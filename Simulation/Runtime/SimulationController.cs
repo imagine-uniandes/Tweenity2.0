@@ -241,9 +241,20 @@ namespace Simulation.Runtime
         /// </summary>
         public string GetTriggerTargetNode(string trigger)
         {
+            Debug.Log($"🔍 [Simulation] Verifying trigger: '{trigger}' in node '{curNode.NodeID}'");
+
+            for (int i = 0; i < curNode.OutgoingPaths.Count; i++)
+            {
+                var path = curNode.OutgoingPaths[i];
+                Debug.Log($"   [Path {i}] Trigger = '[{path.Trigger}]', Target = '{path.TargetNodeID}'");
+            }
+
             var match = curNode.OutgoingPaths.FirstOrDefault(p => p.Trigger == trigger);
+
             if (match == null)
                 throw new System.Exception($"No trigger match for '{trigger}' in node {curNode.NodeID}.");
+
+            Debug.Log($"✅ [Simulation] Trigger matched: '{match.Trigger}' → '{match.TargetNodeID}'");
             return match.TargetNodeID;
         }
 
