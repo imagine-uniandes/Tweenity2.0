@@ -14,6 +14,8 @@ namespace Views.RightPanel
         {
             var typedModel = (DialogueNodeModel)_model;
 
+            Debug.Log($"🔧 [DialogueView] Construyendo vista para nodo: {typedModel.Title} ({typedModel.NodeID}) con {typedModel.OutgoingPaths.Count} salidas.");
+
             Add(new Label("Details")
             {
                 style = {
@@ -54,10 +56,19 @@ namespace Views.RightPanel
                 style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
             });
 
-            for (int i = 0; i < typedModel.OutgoingPaths.Count; i++)
+            var outgoingPaths = typedModel.OutgoingPaths;
+            if (outgoingPaths == null)
             {
-                int index = i;
-                var path = typedModel.OutgoingPaths[index];
+                Debug.LogWarning($"⚠️ [DialogueView] OutgoingPaths está en null para nodo: {typedModel.NodeID}");
+                return;
+            }
+
+            for (int i = 0; i < outgoingPaths.Count; i++)
+            {
+                var index = i;
+                var path = outgoingPaths[i];
+
+                Debug.Log($"🧩 [DialogueView] Renderizando respuesta {index}: '{path.Label}' → {path.TargetNodeID}");
 
                 var row = new VisualElement
                 {
@@ -71,7 +82,7 @@ namespace Views.RightPanel
                 };
                 responseField.RegisterValueChangedCallback(evt =>
                 {
-                    typedModel.UpdateResponse(index, evt.newValue);
+                    path.Label = evt.newValue;
                     _controller.MarkDirty();
                 });
 
@@ -93,7 +104,8 @@ namespace Views.RightPanel
                     {
                         _controller.StartConnectionFrom(typedModel.NodeID, targetId =>
                         {
-                            typedModel.ConnectResponseTo(index, targetId);
+                            Debug.Log($"✅ [DialogueView] Ejecutando conexión directa con targetId: {targetId}");
+                            path.TargetNodeID = targetId;
                             _controller.GraphView.RenderConnections();
                             _controller.CancelConnection();
                             _controller.OnNodeSelected(typedModel);
@@ -107,7 +119,17 @@ namespace Views.RightPanel
                 }
                 else
                 {
-                    var connectedLabel = new Label($"→ {_controller.GetNode(path.TargetNodeID)?.Title ?? "(Unknown)"}");
+                    var connectedNode = _controller.GetNode(path.TargetNodeID);
+                    if (connectedNode == null)
+                    {
+                        Debug.LogWarning($"⚠️ [DialogueView] El nodo de destino '{path.TargetNodeID}' no existe en el grafo.");
+                    }
+                    else
+                    {
+                        Debug.Log($"🔗 [DialogueView] Respuesta conectada a nodo: {connectedNode.Title} ({connectedNode.NodeID})");
+                    }
+
+                    var connectedLabel = new Label($"→ {connectedNode?.Title ?? "(Unknown)"}");
                     connectedLabel.style.marginTop = 4;
                     row.Add(connectedLabel);
                 }
@@ -147,6 +169,7 @@ namespace Views.RightPanel
                         }
                         else
                         {
+                            Debug.LogWarning($"⚠️ [DialogueView] Objeto '{objName}' no encontrado en escena. Trigger cargado: {methodFull}");
                             objectField.label = "Objeto no disponible en escena";
                             objectField.value = null;
 
@@ -169,7 +192,7 @@ namespace Views.RightPanel
                             methodDropdown.index = 0;
                             methodDropdown.style.display = DisplayStyle.Flex;
 
-                            SetTriggerFromCombinedString(typedModel, index, selectedObj.name, availableMethods[0]);
+                            SetTriggerFromCombinedString(path, selectedObj.name, availableMethods[0]);
                         }
                         else
                         {
@@ -187,7 +210,7 @@ namespace Views.RightPanel
                     var selectedObj = objectField.value as GameObject;
                     if (selectedObj != null && !string.IsNullOrEmpty(evt.newValue))
                     {
-                        SetTriggerFromCombinedString(typedModel, index, selectedObj.name, evt.newValue);
+                        SetTriggerFromCombinedString(path, selectedObj.name, evt.newValue);
                     }
                 });
 
@@ -206,7 +229,7 @@ namespace Views.RightPanel
             Add(addResponseBtn);
         }
 
-        private void SetTriggerFromCombinedString(DialogueNodeModel model, int index, string objectName, string combined)
+        private void SetTriggerFromCombinedString(PathData path, string objectName, string combined)
         {
             var parts = combined.Split('.');
             if (parts.Length != 2) return;
@@ -214,7 +237,7 @@ namespace Views.RightPanel
             var scriptName = parts[0];
             var methodName = parts[1];
             var triggerString = $"{objectName}:{scriptName}.{methodName}";
-            model.OutgoingPaths[index].Trigger = triggerString;
+            path.Trigger = triggerString;
 
             _controller.MarkDirty();
         }
