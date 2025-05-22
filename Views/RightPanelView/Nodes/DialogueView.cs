@@ -14,8 +14,6 @@ namespace Views.RightPanel
         {
             var typedModel = (DialogueNodeModel)_model;
 
-            Debug.Log($"🔧 [DialogueView] Construyendo vista para nodo: {typedModel.Title} ({typedModel.NodeID}) con {typedModel.OutgoingPaths.Count} salidas.");
-
             Add(new Label("Details")
             {
                 style = {
@@ -59,7 +57,6 @@ namespace Views.RightPanel
             var outgoingPaths = typedModel.OutgoingPaths;
             if (outgoingPaths == null)
             {
-                Debug.LogWarning($"⚠️ [DialogueView] OutgoingPaths está en null para nodo: {typedModel.NodeID}");
                 return;
             }
 
@@ -67,8 +64,6 @@ namespace Views.RightPanel
             {
                 var index = i;
                 var path = outgoingPaths[i];
-
-                Debug.Log($"🧩 [DialogueView] Renderizando respuesta {index}: '{path.Label}' → {path.TargetNodeID}");
 
                 var row = new VisualElement
                 {
@@ -104,7 +99,6 @@ namespace Views.RightPanel
                     {
                         _controller.StartConnectionFrom(typedModel.NodeID, targetId =>
                         {
-                            Debug.Log($"✅ [DialogueView] Ejecutando conexión directa con targetId: {targetId}");
                             path.TargetNodeID = targetId;
                             _controller.GraphView.RenderConnections();
                             _controller.CancelConnection();
@@ -120,14 +114,6 @@ namespace Views.RightPanel
                 else
                 {
                     var connectedNode = _controller.GetNode(path.TargetNodeID);
-                    if (connectedNode == null)
-                    {
-                        Debug.LogWarning($"⚠️ [DialogueView] El nodo de destino '{path.TargetNodeID}' no existe en el grafo.");
-                    }
-                    else
-                    {
-                        Debug.Log($"🔗 [DialogueView] Respuesta conectada a nodo: {connectedNode.Title} ({connectedNode.NodeID})");
-                    }
 
                     var connectedLabel = new Label($"→ {connectedNode?.Title ?? "(Unknown)"}");
                     connectedLabel.style.marginTop = 4;
@@ -146,37 +132,38 @@ namespace Views.RightPanel
                 methodDropdown.style.display = DisplayStyle.None;
                 row.Add(methodDropdown);
 
-                if (!string.IsNullOrEmpty(path.Trigger) && path.Trigger.Contains(":"))
+                if (TryParseTrigger(path.Trigger, out string objName, out string methodFull))
                 {
-                    var parts = path.Trigger.Split(':');
-                    if (parts.Length == 2)
+                    var obj = GameObject.Find(objName);
+                    if (obj != null)
                     {
-                        var objName = parts[0];
-                        var methodFull = parts[1];
+                        objectField.SetValueWithoutNotify(obj);
 
-                        var obj = GameObject.Find(objName);
-                        if (obj != null)
+                        var availableMethods = TriggerAssignmentController.GetAvailableEvents(obj);
+                        methodDropdown.choices = availableMethods;
+
+                        if (availableMethods.Count > 0)
                         {
-                            objectField.SetValueWithoutNotify(obj);
-
-                            var availableMethods = TriggerAssignmentController.GetAvailableEvents(obj);
-                            methodDropdown.choices = availableMethods;
-
                             methodDropdown.SetValueWithoutNotify(
                                 availableMethods.Contains(methodFull) ? methodFull : availableMethods[0]
                             );
-                            methodDropdown.style.display = DisplayStyle.Flex;
                         }
                         else
                         {
-                            Debug.LogWarning($"⚠️ [DialogueView] Objeto '{objName}' no encontrado en escena. Trigger cargado: {methodFull}");
-                            objectField.label = "Objeto no disponible en escena";
-                            objectField.value = null;
-
                             methodDropdown.choices = new List<string> { methodFull };
                             methodDropdown.SetValueWithoutNotify(methodFull);
-                            methodDropdown.style.display = DisplayStyle.Flex;
                         }
+
+                        methodDropdown.style.display = DisplayStyle.Flex;
+                    }
+                    else
+                    {
+                        objectField.label = "Objeto no disponible en escena";
+                        objectField.value = null;
+
+                        methodDropdown.choices = new List<string> { methodFull };
+                        methodDropdown.SetValueWithoutNotify(methodFull);
+                        methodDropdown.style.display = DisplayStyle.Flex;
                     }
                 }
 
@@ -240,6 +227,20 @@ namespace Views.RightPanel
             path.Trigger = triggerString;
 
             _controller.MarkDirty();
+        }
+
+        private static bool TryParseTrigger(string trigger, out string objName, out string methodFull)
+        {
+            objName = null;
+            methodFull = null;
+            if (string.IsNullOrEmpty(trigger)) return false;
+
+            var parts = trigger.Split(new[] { ':' }, 2);
+            if (parts.Length != 2) return false;
+
+            objName = parts[0];
+            methodFull = parts[1];
+            return true;
         }
     }
 }

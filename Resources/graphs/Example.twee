@@ -5,16 +5,17 @@ Iniciar la simulación y preparar el entorno inicial.
 - null
 [{"label":"Iniciar simulación","trigger":"","target":"briefing-1"}]
 <
-Wait(2),
+Wait(1),
 >
 
-:: Diálogo de Bienvenida [dialogue] {"position":"-176,303","id":"briefing-1"}
+:: Diálogo de Bienvenida [dialogue] {"position":"-176,302","id":"briefing-1"}
 se le da la bienvenida al usuario
 @
 - Bienvenido
 - null
-[{"label":"New Response","trigger":"DialoguePanel:DialoguePanelController.OnButtonClicked","target":"d881861e-cdb2-426e-9477-2ca3fa1aa0d8"}]
+[{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"d881861e-cdb2-426e-9477-2ca3fa1aa0d8"}]
 <
+Wait(1),
 Action(DialogueManager:DialogueManager.ShowWelcomeDialogue),
 >
 
@@ -113,22 +114,13 @@ Action(ExtintorManager:ExtintorManager.DesactivarExtintorAzul),
 Action(FireManager:FireManager.DeactivateRedFire),
 >
 
-:: Final [end] {"position":"3065,136","id":"c395fc71-65fe-4893-9126-16573a41f0c3"}
-Se termino la simulacion
-@
-- null
-- null
-[]
-<
->
-
-:: Dar Feedback [dialogue] {"position":"1947,129","id":"51fec734-cf25-456e-83e7-e1cbcfc8a024"}
+:: Dar Feedback [dialogue] {"position":"1947,127","id":"51fec734-cf25-456e-83e7-e1cbcfc8a024"}
 Se explica que los fuegos rojos 
 deberian ser apagados con extintores de color Rojo
 @
 - 
 - null
-[{"label":"OK","trigger":"DialoguePanel:DialoguePanelController.OnButtonClicked","target":"c395fc71-65fe-4893-9126-16573a41f0c3"}]
+[{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
 Action(DialogueManager:DialogueManager.ShowExtinguisherFeedback),
 >
@@ -153,12 +145,12 @@ Se le dan 15 segundos para que el usuario apague el incendio
 <
 >
 
-:: Dar Feedback [dialogue] {"position":"2392,-59","id":"2ab4ede8-4a40-4c0a-a864-c0d272a3bb8f"}
+:: Dar Feedback [dialogue] {"position":"2389,-59","id":"2ab4ede8-4a40-4c0a-a864-c0d272a3bb8f"}
 Se le explica al usuario que se quedo sin tiempo para apagar el incendio
 @
 - 
 - null
-[{"label":"OK","trigger":"DialoguePanel:DialoguePanelController.OnButtonClicked","target":"c395fc71-65fe-4893-9126-16573a41f0c3"}]
+[{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
 Action(DialogueManager:DialogueManager.ShowTimeoutFailureMessage),
 Action(FireManager:FireManager.DeactivateRedFire),
@@ -169,7 +161,7 @@ Se le felicita al usuario por completar el escenario
 @
 - 
 - null
-[{"label":"OK","trigger":"DialoguePanel:DialoguePanelController.OnButtonClicked","target":"c395fc71-65fe-4893-9126-16573a41f0c3"}]
+[{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
 Action(DialogueManager:DialogueManager.ShowCongratulations),
 >
@@ -211,7 +203,7 @@ deberian ser apagados con extintores de color Azul
 @
 - 
 - null
-[{"label":"OK","trigger":"DialoguePanel:DialoguePanelController.OnButtonClicked","target":"c395fc71-65fe-4893-9126-16573a41f0c3"}]
+[{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
 Action(DialogueManager:DialogueManager.ShowExtinguisherFeedback),
 >
@@ -221,7 +213,7 @@ Se le felicita al usuario por completar el escenario
 @
 - 
 - null
-[{"label":"OK","trigger":"DialoguePanel:DialoguePanelController.OnButtonClicked","target":"c395fc71-65fe-4893-9126-16573a41f0c3"}]
+[{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
 Action(DialogueManager:DialogueManager.ShowCongratulations),
 >
@@ -231,7 +223,7 @@ Se le explica al usuario que se quedo sin tiempo para apagar el incendio
 @
 - 
 - null
-[{"label":"OK","trigger":"DialoguePanel:DialoguePanelController.OnButtonClicked","target":"c395fc71-65fe-4893-9126-16573a41f0c3"}]
+[{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
 Action(DialogueManager:DialogueManager.ShowTimeoutFailureMessage),
 Action(FireManager:FireManager.DeactivateOrangeFire),
@@ -246,8 +238,21 @@ Action(FireManager:FireManager.DeactivateOrangeFire),
 <
 >
 
-:: New Node [notype] {"position":"1670,732","id":"d9e493bc-845f-4e4e-a419-741d224d5c31"}
-yo
+:: Restart? [dialogue] {"position":"3114,174","id":"8409b072-632f-49ee-a4ea-0a9715524e01"}
+Se le pregunta al usuario si quiere 
+reiniciar la simulacion o 
+entrar en freemode
+@
+- 
+- null
+[{"label":"FreeRoam","trigger":"DialogueManager:DialogueManager.ReportButtonClickB","target":"702330aa-8578-44f0-adb7-754919db7a95"},{"label":"Reiniciar","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"briefing-1"}]
+<
+Wait(2),
+Action(DialogueManager:DialogueManager.AskRestartOrRoam),
+>
+
+:: Final [end] {"position":"3591,172","id":"702330aa-8578-44f0-adb7-754919db7a95"}
+
 @
 - null
 - null
