@@ -8,7 +8,7 @@ Iniciar la simulación y preparar el entorno inicial.
 Wait(1),
 >
 
-:: Diálogo de Bienvenida [dialogue] {"position":"-176,302","id":"briefing-1"}
+:: Diálogo de Bienvenida [dialogue] {"position":"-313,300","id":"briefing-1"}
 se le da la bienvenida al usuario
 @
 - Bienvenido
@@ -19,7 +19,7 @@ Wait(1),
 Action(DialogueManager:DialogueManager.ShowWelcomeDialogue),
 >
 
-:: Preparar Fuego Rojo [notype] {"position":"373,125","id":"dd0c7db2-e3b3-433d-9c68-11fbba921b1b"}
+:: Preparar Fuego Rojo [notype] {"position":"-3,142","id":"dd0c7db2-e3b3-433d-9c68-11fbba921b1b"}
 
 @
 - null
@@ -29,7 +29,7 @@ Action(DialogueManager:DialogueManager.ShowWelcomeDialogue),
 Action(FireManager:FireManager.ActivateRedFire),
 >
 
-:: Preparar Fuego Naranja [notype] {"position":"362,448","id":"81774aea-742d-4601-bc54-7a1932ee2f02"}
+:: Preparar Fuego Naranja [notype] {"position":"-3,571","id":"81774aea-742d-4601-bc54-7a1932ee2f02"}
 
 @
 - null
@@ -39,7 +39,7 @@ Action(FireManager:FireManager.ActivateRedFire),
 Action(FireManager:FireManager.ActivateOrangeFire),
 >
 
-:: Esperar a entrar a zona [reminder] {"position":"653,111","id":"ffb57e07-5792-4112-8d59-bc0391fa437c"}
+:: Esperar a entrar a zona [reminder] {"position":"172,141","id":"ffb57e07-5792-4112-8d59-bc0391fa437c"}
 
 @
 - null
@@ -50,7 +50,7 @@ Wait(15),
 Remind(DialogueManager:DialogueManager.RemindStepIntoPlayArea),
 >
 
-:: Esperar a entrar a zona [reminder] {"position":"653,446","id":"24eceee2-ff45-4f34-852a-6f2ead97d4ca"}
+:: Esperar a entrar a zona [reminder] {"position":"186,568","id":"24eceee2-ff45-4f34-852a-6f2ead97d4ca"}
 
 @
 - null
@@ -61,7 +61,7 @@ Wait(15),
 Remind(DialogueManager:DialogueManager.RemindStepIntoPlayArea),
 >
 
-:: Preparar Extintores [notype] {"position":"922,120","id":"bdd07cb5-2abb-473d-ad2d-d2364878af2a"}
+:: Preparar Extintores [notype] {"position":"375,142","id":"bdd07cb5-2abb-473d-ad2d-d2364878af2a"}
 
 @
 - null
@@ -72,7 +72,7 @@ Action(ExtintorManager:ExtintorManager.ActivarExtintorRojo),
 Action(ExtintorManager:ExtintorManager.ActivarExtintorAzul),
 >
 
-:: Preparar Extintores [notype] {"position":"929,448","id":"e0b37f64-52f7-4e96-83c0-8031dbf47797"}
+:: Preparar Extintores [notype] {"position":"372,567","id":"e0b37f64-52f7-4e96-83c0-8031dbf47797"}
 
 @
 - null
@@ -83,7 +83,7 @@ Action(ExtintorManager:ExtintorManager.ActivarExtintorRojo),
 Action(ExtintorManager:ExtintorManager.ActivarExtintorAzul),
 >
 
-:: Escoger Extintor [multiplechoice] {"position":"1180,119","id":"a32ed749-74b4-483c-867c-b77cbc17d4dc"}
+:: Escoger Extintor [multiplechoice] {"position":"541,144","id":"a32ed749-74b4-483c-867c-b77cbc17d4dc"}
 
 @
 - 
@@ -92,7 +92,7 @@ Action(ExtintorManager:ExtintorManager.ActivarExtintorAzul),
 <
 >
 
-:: Escoger Extintor [multiplechoice] {"position":"1164,447","id":"2bcfb802-1115-451e-846b-baa91d31ef2e"}
+:: Escoger Extintor [multiplechoice] {"position":"556,564","id":"2bcfb802-1115-451e-846b-baa91d31ef2e"}
 
 @
 - 
@@ -101,7 +101,7 @@ Action(ExtintorManager:ExtintorManager.ActivarExtintorAzul),
 <
 >
 
-:: Fallo: Limpiar Escena [notype] {"position":"1547,128","id":"e16fc6e1-e7ba-4702-9ac3-4b8d086da3aa"}
+:: Fallo: Limpiar Escena [notype] {"position":"716,142","id":"e16fc6e1-e7ba-4702-9ac3-4b8d086da3aa"}
 Se borra el otro extintor y se muestr aun dialogo
 de Fallo
 @
@@ -114,7 +114,7 @@ Action(ExtintorManager:ExtintorManager.DesactivarExtintorAzul),
 Action(FireManager:FireManager.DeactivateRedFire),
 >
 
-:: Dar Feedback [dialogue] {"position":"1947,127","id":"51fec734-cf25-456e-83e7-e1cbcfc8a024"}
+:: Dar Feedback [dialogue] {"position":"1004,143","id":"51fec734-cf25-456e-83e7-e1cbcfc8a024"}
 Se explica que los fuegos rojos 
 deberian ser apagados con extintores de color Rojo
 @
@@ -125,7 +125,7 @@ deberian ser apagados con extintores de color Rojo
 Action(DialogueManager:DialogueManager.ShowExtinguisherFeedback),
 >
 
-:: Exito: Limpiar Escena [notype] {"position":"1557,-65","id":"0b10cf8d-7822-407a-9764-88871448515e"}
+:: Exito: Limpiar Escena [notype] {"position":"650,3","id":"0b10cf8d-7822-407a-9764-88871448515e"}
 Se escogio el correcto entonces se desvanece
 el otro extintor
 @
@@ -136,7 +136,7 @@ el otro extintor
 Action(ExtintorManager:ExtintorManager.DesactivarExtintorAzul),
 >
 
-:: Apagar El incendio [timeout] {"position":"1923,-60","id":"d65fc5d3-00f9-4074-b7ad-5d19cc05838d"}
+:: Apagar El incendio [timeout] {"position":"928,5","id":"d65fc5d3-00f9-4074-b7ad-5d19cc05838d"}
 Se le dan 15 segundos para que el usuario apague el incendio
 @
 - 15
@@ -145,7 +145,7 @@ Se le dan 15 segundos para que el usuario apague el incendio
 <
 >
 
-:: Dar Feedback [dialogue] {"position":"2389,-59","id":"2ab4ede8-4a40-4c0a-a864-c0d272a3bb8f"}
+:: Dar Feedback [dialogue] {"position":"1280,6","id":"2ab4ede8-4a40-4c0a-a864-c0d272a3bb8f"}
 Se le explica al usuario que se quedo sin tiempo para apagar el incendio
 @
 - 
@@ -156,7 +156,7 @@ Action(DialogueManager:DialogueManager.ShowTimeoutFailureMessage),
 Action(FireManager:FireManager.DeactivateRedFire),
 >
 
-:: Felicitar al usuario [dialogue] {"position":"2448,-258","id":"79580699-b63f-49de-9cbb-ec6fe301a74d"}
+:: Felicitar al usuario [dialogue] {"position":"1139,-139","id":"79580699-b63f-49de-9cbb-ec6fe301a74d"}
 Se le felicita al usuario por completar el escenario
 @
 - 
@@ -166,7 +166,7 @@ Se le felicita al usuario por completar el escenario
 Action(DialogueManager:DialogueManager.ShowCongratulations),
 >
 
-:: Exito: Limpiar Escena [notype] {"position":"1436,385","id":"e1bb38a1-aba7-4254-b552-0c22ec3c90db"}
+:: Exito: Limpiar Escena [notype] {"position":"666,446","id":"e1bb38a1-aba7-4254-b552-0c22ec3c90db"}
 
 @
 - null
@@ -176,7 +176,7 @@ Action(DialogueManager:DialogueManager.ShowCongratulations),
 Action(ExtintorManager:ExtintorManager.DesactivarExtintorRojo),
 >
 
-:: Fallo: Limpiar Escena [notype] {"position":"1431,579","id":"6791ded3-37d6-480a-823f-ac4c703ee081"}
+:: Fallo: Limpiar Escena [notype] {"position":"725,562","id":"6791ded3-37d6-480a-823f-ac4c703ee081"}
 
 @
 - null
@@ -188,7 +188,7 @@ Action(ExtintorManager:ExtintorManager.DesactivarExtintorAzul),
 Action(FireManager:FireManager.DeactivateOrangeFire),
 >
 
-:: Apagar el Incendio [timeout] {"position":"1945,384","id":"bd1fcd7f-f427-49f7-8383-e9e88e9ff1e4"}
+:: Apagar el Incendio [timeout] {"position":"857,443","id":"bd1fcd7f-f427-49f7-8383-e9e88e9ff1e4"}
 Se le dan 15 segundos para que el usuario apague el incendio
 @
 - 15
@@ -197,7 +197,7 @@ Se le dan 15 segundos para que el usuario apague el incendio
 <
 >
 
-:: Dar Feedback [dialogue] {"position":"1965,574","id":"4809a3e1-54d9-43ff-847c-35a9fe4471f7"}
+:: Dar Feedback [dialogue] {"position":"931,558","id":"4809a3e1-54d9-43ff-847c-35a9fe4471f7"}
 Se explica que los fuegos naranjas 
 deberian ser apagados con extintores de color Azul
 @
@@ -208,7 +208,7 @@ deberian ser apagados con extintores de color Azul
 Action(DialogueManager:DialogueManager.ShowExtinguisherFeedback),
 >
 
-:: Felicitar al usuario [dialogue] {"position":"2385,269","id":"2fd88992-cc14-406e-b552-70f8094bf90b"}
+:: Felicitar al usuario [dialogue] {"position":"1134,329","id":"2fd88992-cc14-406e-b552-70f8094bf90b"}
 Se le felicita al usuario por completar el escenario
 @
 - 
@@ -218,7 +218,7 @@ Se le felicita al usuario por completar el escenario
 Action(DialogueManager:DialogueManager.ShowCongratulations),
 >
 
-:: Dar Feedback [dialogue] {"position":"2361,401","id":"9fb906b4-ce7c-4ebc-b8db-4a90d139b696"}
+:: Dar Feedback [dialogue] {"position":"1214,442","id":"9fb906b4-ce7c-4ebc-b8db-4a90d139b696"}
 Se le explica al usuario que se quedo sin tiempo para apagar el incendio
 @
 - 
@@ -229,7 +229,7 @@ Action(DialogueManager:DialogueManager.ShowTimeoutFailureMessage),
 Action(FireManager:FireManager.DeactivateOrangeFire),
 >
 
-:: Escoger Fuego [random] {"position":"111,301","id":"d881861e-cdb2-426e-9477-2ca3fa1aa0d8"}
+:: Escoger Fuego [random] {"position":"-112,299","id":"d881861e-cdb2-426e-9477-2ca3fa1aa0d8"}
 
 @
 - null
@@ -238,7 +238,7 @@ Action(FireManager:FireManager.DeactivateOrangeFire),
 <
 >
 
-:: Restart? [dialogue] {"position":"3114,174","id":"8409b072-632f-49ee-a4ea-0a9715524e01"}
+:: Restart? [dialogue] {"position":"1691,192","id":"8409b072-632f-49ee-a4ea-0a9715524e01"}
 Se le pregunta al usuario si quiere 
 reiniciar la simulacion o 
 entrar en freemode
@@ -251,7 +251,7 @@ Wait(2),
 Action(DialogueManager:DialogueManager.AskRestartOrRoam),
 >
 
-:: Final [end] {"position":"3591,172","id":"702330aa-8578-44f0-adb7-754919db7a95"}
+:: Final [end] {"position":"1905,191","id":"702330aa-8578-44f0-adb7-754919db7a95"}
 
 @
 - null
