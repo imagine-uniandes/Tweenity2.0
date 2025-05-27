@@ -16,9 +16,6 @@ namespace Views.RightPanel
         {
             var typedModel = (MultipleChoiceNodeModel)_model;
 
-            Debug.Log($"🧪 [MultipleChoiceView] Creando vista para nodo: {typedModel.Title} ({typedModel.NodeID})");
-            Debug.Log($"📦 Modelo completo: {JsonUtility.ToJson(typedModel, true)}");
-
             if (typedModel.OutgoingPaths == null || typedModel.OutgoingPaths.Count == 0)
             {
                 Debug.LogWarning($"⚠️ [MultipleChoiceView] OutgoingPaths vacío al construir: {typedModel.Title}. Reintentando más tarde.");
