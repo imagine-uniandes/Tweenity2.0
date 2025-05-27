@@ -51,7 +51,7 @@ namespace Controllers
         {
             WriteHeader(twee, node);
             WriteDescription(twee, node);
-            WriteSpecialFields(twee, node.DialogueText ?? "null", "null");
+            WriteSpecialFields(twee, CleanSpecial(node.DialogueText), "null");
             WritePaths(twee, node);
             WriteInstructions(twee, node);
         }
@@ -69,7 +69,7 @@ namespace Controllers
         {
             WriteHeader(twee, node);
             WriteDescription(twee, node);
-            WriteSpecialFields(twee, node.Condition ?? "null", node.TimeoutDuration.ToString());
+            WriteSpecialFields(twee, CleanSpecial(node.Condition), node.TimeoutDuration.ToString());
             WritePaths(twee, node);
             WriteInstructions(twee, node);
         }
@@ -78,7 +78,7 @@ namespace Controllers
         {
             WriteHeader(twee, node);
             WriteDescription(twee, node);
-            WriteSpecialFields(twee, node.Question ?? "null", "null");
+            WriteSpecialFields(twee, CleanSpecial(node.Question), "null");
             WritePaths(twee, node);
             WriteInstructions(twee, node);
         }
@@ -92,14 +92,19 @@ namespace Controllers
             WriteInstructions(twee, node);
         }
 
+        private static string CleanSpecial(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return "null";
+            return input.Replace("\"", "'").Trim();
+        }
+
         private static void WriteHeader(StringBuilder twee, TweenityNodeModel node)
         {
             string pos = $"{node.Position.x},{node.Position.y}";
             string id = node.NodeID;
             twee.Append(":: ").Append(node.Title)
                 .Append(" [").Append(node.Type.ToString().ToLower()).Append("] ")
-                .Append($"{{\"position\":\"{pos}\",\"id\":\"{id}\"}}")
-                .AppendLine();
+                .Append($"{{\"position\":\"{pos}\",\"id\":\"{id}\"}}").AppendLine();
         }
 
         private static void WriteDescription(StringBuilder twee, TweenityNodeModel node)
@@ -110,16 +115,22 @@ namespace Controllers
 
         private static void WriteSpecialFields(StringBuilder twee, string specialField1, string specialField2)
         {
-            twee.AppendLine($"- {specialField1}");
-            twee.AppendLine($"- {specialField2}");
+            twee.AppendLine("- " + specialField1);
+            twee.AppendLine("- " + specialField2);
         }
 
         private static void WritePaths(StringBuilder twee, TweenityNodeModel node)
         {
             var pathJsons = node.OutgoingPaths.Select(path =>
-                $"{{\"label\":\"{path.Label}\",\"trigger\":\"{path.Trigger}\",\"target\":\"{path.TargetNodeID}\"}}"
+                $"{{\"label\":\"{EscapeJson(path.Label)}\",\"trigger\":\"{EscapeJson(path.Trigger)}\",\"target\":\"{EscapeJson(path.TargetNodeID)}\"}}"
             );
             twee.AppendLine("[" + string.Join(",", pathJsons) + "]");
+        }
+
+        private static string EscapeJson(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            return input.Replace("\\", "\\\\").Replace("\"", "\\\"");
         }
 
         private static void WriteInstructions(StringBuilder twee, TweenityNodeModel node)
@@ -268,17 +279,21 @@ namespace Controllers
 
                 if (node is ReminderNodeModel r)
                 {
-                    r.OutgoingPaths = paths;
+                    r.OutgoingPaths.Clear();
+                    r.OutgoingPaths.AddRange(paths);
                 }
                 else if (node is TimeoutNodeModel to)
                 {
                     if (special1 != "null") to.Condition = special1;
                     if (float.TryParse(special2, out var timer)) to.TimeoutDuration = timer;
-                    to.OutgoingPaths = paths;
+
+                    to.OutgoingPaths.Clear();
+                    to.OutgoingPaths.AddRange(paths);
                 }
                 else
                 {
-                    node.OutgoingPaths = paths;
+                    node.OutgoingPaths.Clear();
+                    node.OutgoingPaths.AddRange(paths);
                 }
 
                 nodes.Add(node);
@@ -286,5 +301,6 @@ namespace Controllers
 
             return nodes;
         }
+
     }
 }

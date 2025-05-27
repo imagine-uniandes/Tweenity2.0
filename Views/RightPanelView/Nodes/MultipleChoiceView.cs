@@ -1,10 +1,12 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEditor;
 using UnityEditor.UIElements;
 using System.Collections.Generic;
 using Models.Nodes;
 using Controllers;
 using Models;
+using System.Linq;
 
 namespace Views.RightPanel
 {
@@ -13,6 +15,20 @@ namespace Views.RightPanel
         public MultipleChoiceView(MultipleChoiceNodeModel model, GraphController controller) : base(model, controller)
         {
             var typedModel = (MultipleChoiceNodeModel)_model;
+
+            Debug.Log($"🧪 [MultipleChoiceView] Creando vista para nodo: {typedModel.Title} ({typedModel.NodeID})");
+            Debug.Log($"📦 Modelo completo: {JsonUtility.ToJson(typedModel, true)}");
+
+            if (typedModel.OutgoingPaths == null || typedModel.OutgoingPaths.Count == 0)
+            {
+                Debug.LogWarning($"⚠️ [MultipleChoiceView] OutgoingPaths vacío al construir: {typedModel.Title}. Reintentando más tarde.");
+                EditorApplication.delayCall += () =>
+                {
+                    if (_controller.GetNode(typedModel.NodeID) is MultipleChoiceNodeModel retryModel)
+                        _controller.OnNodeSelected(retryModel);
+                };
+                return;
+            }
 
             Add(new Label("Details")
             {
@@ -54,10 +70,9 @@ namespace Views.RightPanel
                 style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
             });
 
-            for (int i = 0; i < typedModel.OutgoingPaths.Count; i++)
+            foreach (var path in typedModel.OutgoingPaths.ToList())
             {
-                int index = i;
-                var path = typedModel.OutgoingPaths[index];
+                var capturedPath = path;
 
                 var row = new VisualElement
                 {
@@ -66,12 +81,12 @@ namespace Views.RightPanel
 
                 var choiceField = new TextField
                 {
-                    value = path.Label,
+                    value = capturedPath.Label,
                     multiline = true
                 };
                 choiceField.RegisterValueChangedCallback(evt =>
                 {
-                    typedModel.UpdateChoice(index, evt.newValue);
+                    capturedPath.Label = evt.newValue;
                     _controller.MarkDirty();
                 });
 
@@ -87,13 +102,13 @@ namespace Views.RightPanel
 
                 row.Add(choiceField);
 
-                if (string.IsNullOrEmpty(path.TargetNodeID))
+                if (string.IsNullOrEmpty(capturedPath.TargetNodeID))
                 {
                     var connectButton = new Button(() =>
                     {
                         _controller.StartConnectionFrom(typedModel.NodeID, targetId =>
                         {
-                            typedModel.ConnectChoiceTo(index, targetId);
+                            capturedPath.TargetNodeID = targetId;
                             _controller.GraphView.RenderConnections();
                             _controller.CancelConnection();
                             _controller.OnNodeSelected(typedModel);
@@ -107,26 +122,29 @@ namespace Views.RightPanel
                 }
                 else
                 {
-                    var connectedLabel = new Label($"→ {_controller.GetNode(path.TargetNodeID)?.Title ?? "(Unknown)"}");
+                    var connectedLabel = new Label($"→ {_controller.GetNode(capturedPath.TargetNodeID)?.Title ?? "(Unknown)"}");
                     connectedLabel.style.marginTop = 4;
                     row.Add(connectedLabel);
                 }
 
                 row.Add(new Label("Target Object") { style = { marginTop = 6 } });
 
-                var objectField = new ObjectField();
-                objectField.objectType = typeof(GameObject);
-                objectField.style.marginTop = 2;
+                var objectField = new ObjectField
+                {
+                    objectType = typeof(GameObject),
+                    style = { marginTop = 2 }
+                };
                 row.Add(objectField);
 
-                var methodDropdown = new PopupField<string>("Trigger Method", new List<string>(), 0);
-                methodDropdown.style.marginTop = 2;
-                methodDropdown.style.display = DisplayStyle.None;
+                var methodDropdown = new PopupField<string>("Trigger Method", new List<string>(), 0)
+                {
+                    style = { marginTop = 2, display = DisplayStyle.None }
+                };
                 row.Add(methodDropdown);
 
-                if (!string.IsNullOrEmpty(path.Trigger) && path.Trigger.Contains(":"))
+                if (!string.IsNullOrEmpty(capturedPath.Trigger) && capturedPath.Trigger.Contains(":"))
                 {
-                    var parts = path.Trigger.Split(':');
+                    var parts = capturedPath.Trigger.Split(':');
                     if (parts.Length == 2)
                     {
                         var objName = parts[0];
@@ -141,7 +159,7 @@ namespace Views.RightPanel
                             methodDropdown.choices = availableMethods;
 
                             methodDropdown.SetValueWithoutNotify(
-                                availableMethods.Contains(methodFull) ? methodFull : availableMethods[0]
+                                availableMethods.Contains(methodFull) ? methodFull : availableMethods.FirstOrDefault()
                             );
                             methodDropdown.style.display = DisplayStyle.Flex;
                         }
@@ -169,7 +187,7 @@ namespace Views.RightPanel
                             methodDropdown.index = 0;
                             methodDropdown.style.display = DisplayStyle.Flex;
 
-                            SetTriggerFromCombinedString(typedModel, index, selectedObj.name, availableMethods[0]);
+                            SetTriggerFromCombinedString(capturedPath, selectedObj.name, availableMethods[0]);
                         }
                         else
                         {
@@ -187,7 +205,7 @@ namespace Views.RightPanel
                     var selectedObj = objectField.value as GameObject;
                     if (selectedObj != null && !string.IsNullOrEmpty(evt.newValue))
                     {
-                        SetTriggerFromCombinedString(typedModel, index, selectedObj.name, evt.newValue);
+                        SetTriggerFromCombinedString(capturedPath, selectedObj.name, evt.newValue);
                     }
                 });
 
@@ -206,7 +224,7 @@ namespace Views.RightPanel
             Add(addChoiceBtn);
         }
 
-        private void SetTriggerFromCombinedString(MultipleChoiceNodeModel model, int choiceIndex, string objectName, string combined)
+        private void SetTriggerFromCombinedString(PathData path, string objectName, string combined)
         {
             var parts = combined.Split('.');
             if (parts.Length != 2) return;
@@ -214,7 +232,7 @@ namespace Views.RightPanel
             var scriptName = parts[0];
             var methodName = parts[1];
             var triggerString = $"{objectName}:{scriptName}.{methodName}";
-            model.OutgoingPaths[choiceIndex].Trigger = triggerString;
+            path.Trigger = triggerString;
 
             _controller.MarkDirty();
         }

@@ -1,11 +1,13 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Models.Nodes
 {
+    [System.Serializable]
     public class TimeoutNodeModel : TweenityNodeModel
     {
-        public string Condition { get; set; }
-        public float TimeoutDuration { get; set; }
+        [field: SerializeField] public string Condition { get; set; }
+        [field: SerializeField] public float TimeoutDuration { get; set; }
 
         public TimeoutNodeModel(string title) : base(title, NodeType.Timeout)
         {
@@ -18,7 +20,7 @@ namespace Models.Nodes
         /// <summary>
         /// Ensures that OutgoingPaths has at least 2 paths: Timeout (index 0) and Success (index 1)
         /// </summary>
-        private void EnsureMinimumPaths()
+        public void EnsureMinimumPaths()
         {
             while (OutgoingPaths.Count < 2)
             {

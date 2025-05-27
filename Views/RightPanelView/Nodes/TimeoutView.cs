@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Models.Nodes;
 using Controllers;
 using Models;
+using System.Linq;
 
 namespace Views.RightPanel
 {
@@ -12,6 +13,8 @@ namespace Views.RightPanel
     {
         public TimeoutView(TimeoutNodeModel model, GraphController controller) : base(model, controller)
         {
+            var typedModel = (TimeoutNodeModel)_model;
+
             Add(new Label("Details")
             {
                 style = {
@@ -22,15 +25,12 @@ namespace Views.RightPanel
                 }
             });
 
-            var typedModel = (TimeoutNodeModel)_model;
-
             Add(new Label("Timeout Timer (seconds)") { style = { whiteSpace = WhiteSpace.Normal } });
 
             var timeoutTimerField = new FloatField { value = typedModel.TimeoutDuration };
             timeoutTimerField.RegisterValueChangedCallback(evt =>
             {
                 typedModel.TimeoutDuration = evt.newValue;
-                UpdateWaitInstruction(typedModel);
                 _controller.MarkDirty();
             });
             Add(timeoutTimerField);
@@ -40,7 +40,12 @@ namespace Views.RightPanel
                 style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
             });
 
-            if (typedModel.OutgoingPaths.Count >= 1 && string.IsNullOrEmpty(typedModel.OutgoingPaths[0].TargetNodeID))
+            typedModel.EnsureMinimumPaths();
+
+            var timeoutPath = typedModel.OutgoingPaths[0];
+            var successPath = typedModel.OutgoingPaths[1];
+
+            if (string.IsNullOrEmpty(timeoutPath.TargetNodeID))
             {
                 var timeoutBtn = new Button(() =>
                 {
@@ -58,17 +63,13 @@ namespace Views.RightPanel
                 };
                 Add(timeoutBtn);
             }
-            else if (typedModel.OutgoingPaths.Count >= 1)
+            else
             {
-                var connectedModel = _controller.GetNode(typedModel.OutgoingPaths[0].TargetNodeID);
-                var connectedLabel = new Label($"Timeout → {connectedModel?.Title ?? "(Unknown)"}")
-                {
-                    style = { marginTop = 4 }
-                };
-                Add(connectedLabel);
+                var connectedModel = _controller.GetNode(timeoutPath.TargetNodeID);
+                Add(new Label($"Timeout → {connectedModel?.Title ?? "(Unknown)"}") { style = { marginTop = 4 } });
             }
 
-            if (typedModel.OutgoingPaths.Count < 2 || string.IsNullOrEmpty(typedModel.OutgoingPaths[1].TargetNodeID))
+            if (string.IsNullOrEmpty(successPath.TargetNodeID))
             {
                 var successBtn = new Button(() =>
                 {
@@ -86,35 +87,31 @@ namespace Views.RightPanel
                 };
                 Add(successBtn);
             }
-            else if (typedModel.OutgoingPaths.Count >= 2)
+            else
             {
-                var connectedModel = _controller.GetNode(typedModel.OutgoingPaths[1].TargetNodeID);
-                var connectedLabel = new Label($"Success → {connectedModel?.Title ?? "(Unknown)"}")
-                {
-                    style = { marginTop = 4 }
-                };
-                Add(connectedLabel);
+                var connectedModel = _controller.GetNode(successPath.TargetNodeID);
+                Add(new Label($"Success → {connectedModel?.Title ?? "(Unknown)"}") { style = { marginTop = 4 } });
             }
 
-            if (typedModel.OutgoingPaths.Count >= 2 && !string.IsNullOrEmpty(typedModel.OutgoingPaths[1].TargetNodeID))
+            if (!string.IsNullOrEmpty(successPath.TargetNodeID))
             {
                 Add(new Label("Success Trigger Assignment")
                 {
                     style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 10 }
                 });
 
-                var objectField = new ObjectField();
-                objectField.objectType = typeof(GameObject);
+                var objectField = new ObjectField { objectType = typeof(GameObject) };
                 Add(objectField);
 
-                var methodDropdown = new PopupField<string>("Trigger Method", new List<string>(), 0);
-                methodDropdown.style.marginTop = 2;
-                methodDropdown.style.display = DisplayStyle.None;
+                var methodDropdown = new PopupField<string>("Trigger Method", new List<string>(), 0)
+                {
+                    style = { marginTop = 2, display = DisplayStyle.None }
+                };
                 Add(methodDropdown);
 
-                if (!string.IsNullOrEmpty(typedModel.OutgoingPaths[1].Trigger) && typedModel.OutgoingPaths[1].Trigger.Contains(":"))
+                if (!string.IsNullOrEmpty(successPath.Trigger) && successPath.Trigger.Contains(":"))
                 {
-                    var parts = typedModel.OutgoingPaths[1].Trigger.Split(':');
+                    var parts = successPath.Trigger.Split(':');
                     if (parts.Length == 2)
                     {
                         var objName = parts[0];
@@ -129,7 +126,7 @@ namespace Views.RightPanel
                             methodDropdown.choices = availableMethods;
 
                             methodDropdown.SetValueWithoutNotify(
-                                availableMethods.Contains(methodFull) ? methodFull : availableMethods[0]
+                                availableMethods.Contains(methodFull) ? methodFull : availableMethods.FirstOrDefault()
                             );
                             methodDropdown.style.display = DisplayStyle.Flex;
                         }
@@ -157,7 +154,7 @@ namespace Views.RightPanel
                             methodDropdown.index = 0;
                             methodDropdown.style.display = DisplayStyle.Flex;
 
-                            SetTriggerFromCombinedString(typedModel, selectedObj.name, availableMethods[0]);
+                            SetTriggerFromCombinedString(successPath, selectedObj.name, availableMethods[0]);
                         }
                         else
                         {
@@ -175,15 +172,13 @@ namespace Views.RightPanel
                     var selectedObj = objectField.value as GameObject;
                     if (selectedObj != null && !string.IsNullOrEmpty(evt.newValue))
                     {
-                        SetTriggerFromCombinedString(typedModel, selectedObj.name, evt.newValue);
+                        SetTriggerFromCombinedString(successPath, selectedObj.name, evt.newValue);
                     }
                 });
             }
-
-            UpdateWaitInstruction(typedModel);
         }
 
-        private void SetTriggerFromCombinedString(TimeoutNodeModel model, string objectName, string combined)
+        private void SetTriggerFromCombinedString(PathData path, string objectName, string combined)
         {
             var parts = combined.Split('.');
             if (parts.Length != 2) return;
@@ -191,13 +186,9 @@ namespace Views.RightPanel
             var scriptName = parts[0];
             var methodName = parts[1];
             var triggerString = $"{objectName}:{scriptName}.{methodName}";
-            model.OutgoingPaths[1].Trigger = triggerString;
+            path.Trigger = triggerString;
 
             _controller.MarkDirty();
-        }
-
-        private void UpdateWaitInstruction(TimeoutNodeModel model)
-        {
         }
     }
 }
