@@ -5176,6 +5176,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 250913888}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &280352909 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1680501587, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+  m_PrefabInstance: {fileID: 489251263}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &308247287
 GameObject:
   m_ObjectHideFlags: 0
@@ -10240,6 +10245,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: XR Origin (XR Rig)
       objectReference: {fileID: 0}
+    - target: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -10434,7 +10443,6 @@ GameObject:
   m_Component:
   - component: {fileID: 586929505}
   - component: {fileID: 586929507}
-  - component: {fileID: 586929508}
   m_Layer: 0
   m_Name: FireZone
   m_TagString: Untagged
@@ -10478,21 +10486,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 10, y: 10, z: 10}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &586929508
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 586929504}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 219e29a81a0b8df4dbd58d56c17a7874, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fireCollider: {fileID: 586929507}
-  sprayZone: {fileID: 555405924}
-  fireVisual: {fileID: 1612716375}
 --- !u!1001 &641633604
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10921,7 +10914,6 @@ GameObject:
   - component: {fileID: 656382280}
   - component: {fileID: 656382279}
   - component: {fileID: 656382278}
-  - component: {fileID: 656382284}
   m_Layer: 0
   m_Name: ExtintorBodyAzul
   m_TagString: Untagged
@@ -11175,21 +11167,6 @@ Transform:
   - {fileID: 582435022}
   m_Father: {fileID: 963760654}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &656382284
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 656382276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d7844e09d1b4bb488a418a6adb9fcc9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  grabInteractable: {fileID: 656382278}
-  sprayEffect: {fileID: 358681047}
-  sprayZoneCollider: {fileID: 586929507}
 --- !u!1 &696640279
 GameObject:
   m_ObjectHideFlags: 0
@@ -11234,9 +11211,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72c76ecc743682b4c8109e61a0fc2cb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  redExtinguisher: {fileID: 1461404666}
-  blueExtinguisher: {fileID: 656382284}
-  fireManager: {fileID: 1498481656}
+  redExtinguisher: {fileID: 2141625447}
+  blueExtinguisher: {fileID: 963760655}
 --- !u!114 &766420701 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 742272467831425975, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -11315,7 +11291,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panelController: {fileID: 959842695}
-  playerCamera: {fileID: 1985707725}
+  playerCamera: {fileID: 280352909}
 --- !u!114 &781946299 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5739245880472075158, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -11336,6 +11312,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 834660927}
+  - component: {fileID: 834660928}
   m_Layer: 0
   m_Name: FuegoNaranja
   m_TagString: Untagged
@@ -11360,6 +11337,21 @@ Transform:
   - {fileID: 586929505}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &834660928
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 834660926}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 219e29a81a0b8df4dbd58d56c17a7874, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fireCollider: {fileID: 586929507}
+  sprayZone: {fileID: 555405924}
+  fireVisual: {fileID: 1612716375}
 --- !u!1 &928751223 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4422659091188657046, guid: fd28f23af44f73f4a95e33435872ad15, type: 3}
@@ -12146,6 +12138,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 963760654}
+  - component: {fileID: 963760655}
   m_Layer: 0
   m_Name: ExtintorAzul
   m_TagString: Untagged
@@ -12170,6 +12163,21 @@ Transform:
   - {fileID: 1348587023}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &963760655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963760653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d7844e09d1b4bb488a418a6adb9fcc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grabInteractable: {fileID: 656382278}
+  sprayEffect: {fileID: 358681047}
+  sprayZoneCollider: {fileID: 555405924}
 --- !u!1001 &984612679
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12368,7 +12376,6 @@ GameObject:
   - component: {fileID: 1097373888}
   - component: {fileID: 1097373894}
   - component: {fileID: 1097373893}
-  - component: {fileID: 1097373892}
   - component: {fileID: 1097373891}
   - component: {fileID: 1097373890}
   - component: {fileID: 1097373895}
@@ -12444,78 +12451,6 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: -0.00000017881393, y: -0.0000076293945, z: -0.00000008940697}
---- !u!114 &1097373892
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1097373887}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8a35f6cfbfba9b548aaa00d52cfe8a50, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_InteractionManager: {fileID: 0}
-  m_Colliders: []
-  m_InteractionLayers:
-    m_Bits: 1
-  m_DistanceCalculationMode: 1
-  m_SelectMode: 0
-  m_FocusMode: 1
-  m_CustomReticle: {fileID: 0}
-  m_AllowGazeInteraction: 0
-  m_AllowGazeSelect: 0
-  m_OverrideGazeTimeToSelect: 0
-  m_GazeTimeToSelect: 0.5
-  m_OverrideTimeToAutoDeselectGaze: 0
-  m_TimeToAutoDeselectGaze: 3
-  m_AllowGazeAssistance: 0
-  m_FirstHoverEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_LastHoverExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_HoverEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_HoverExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FirstSelectEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_LastSelectExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_SelectEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_SelectExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FirstFocusEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_LastFocusExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FocusEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FocusExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Activated:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Deactivated:
-    m_PersistentCalls:
-      m_Calls: []
-  m_StartingHoverFilters: []
-  m_StartingSelectFilters: []
-  m_StartingInteractionStrengthFilters: []
 --- !u!23 &1097373893
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -12581,7 +12516,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30b01f354f4f814409c8c386164b067e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  extinguisher: {fileID: 656382284}
+  extinguisher: {fileID: 963760655}
 --- !u!1 &1114630782
 GameObject:
   m_ObjectHideFlags: 0
@@ -13193,7 +13128,6 @@ GameObject:
   - component: {fileID: 1461404663}
   - component: {fileID: 1461404662}
   - component: {fileID: 1461404661}
-  - component: {fileID: 1461404666}
   m_Layer: 0
   m_Name: ExtintorBodyRojo
   m_TagString: Untagged
@@ -13447,21 +13381,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1461404659}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &1461404666
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1461404659}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d7844e09d1b4bb488a418a6adb9fcc9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  grabInteractable: {fileID: 1461404661}
-  sprayEffect: {fileID: 1605619363}
-  sprayZoneCollider: {fileID: 1479712992}
 --- !u!1 &1468383672
 GameObject:
   m_ObjectHideFlags: 0
@@ -13504,7 +13423,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1479712990}
   - component: {fileID: 1479712992}
-  - component: {fileID: 1479712993}
   m_Layer: 0
   m_Name: FireZone
   m_TagString: Untagged
@@ -13548,21 +13466,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 10, y: 10, z: 10}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1479712993
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1479712989}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 219e29a81a0b8df4dbd58d56c17a7874, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fireCollider: {fileID: 1479712992}
-  sprayZone: {fileID: 2025034952}
-  fireVisual: {fileID: 227761687}
 --- !u!1 &1482431093
 GameObject:
   m_ObjectHideFlags: 0
@@ -13746,7 +13649,7 @@ Transform:
   m_GameObject: {fileID: 1605619360}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0.41, y: 1.33, z: -0}
+  m_LocalPosition: {x: 0.41, y: 1.33, z: 0}
   m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -18561,6 +18464,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1607126676}
+  - component: {fileID: 1607126677}
   m_Layer: 0
   m_Name: FuegoRojo
   m_TagString: Untagged
@@ -18585,6 +18489,21 @@ Transform:
   - {fileID: 1479712990}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1607126677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1607126675}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 219e29a81a0b8df4dbd58d56c17a7874, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fireCollider: {fileID: 1479712992}
+  sprayZone: {fileID: 2025034952}
+  fireVisual: {fileID: 227761687}
 --- !u!1 &1612716375
 GameObject:
   m_ObjectHideFlags: 0
@@ -23575,7 +23494,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30b01f354f4f814409c8c386164b067e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  extinguisher: {fileID: 1461404666}
+  extinguisher: {fileID: 2141625447}
 --- !u!54 &1952869048
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -23874,7 +23793,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2020297147}
   - component: {fileID: 2020297149}
-  - component: {fileID: 2020297148}
+  - component: {fileID: 2020297150}
   m_Layer: 0
   m_Name: PlayArea
   m_TagString: Untagged
@@ -23897,19 +23816,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 59291380}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2020297148
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2020297146}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cac2c6e2f88100d4683c2b4926cef072, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetPlayer: {fileID: 1985707724}
 --- !u!65 &2020297149
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -23931,6 +23837,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 2, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2020297150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2020297146}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6d8da1ba8cb22a4a9170a263ec9ca6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerTag: Player
 --- !u!1 &2025034951
 GameObject:
   m_ObjectHideFlags: 0
@@ -24021,6 +23940,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2141625446}
+  - component: {fileID: 2141625447}
   m_Layer: 0
   m_Name: ExtintorRojo
   m_TagString: Untagged
@@ -24045,6 +23965,21 @@ Transform:
   - {fileID: 1226711427}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2141625447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2141625445}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d7844e09d1b4bb488a418a6adb9fcc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grabInteractable: {fileID: 1461404661}
+  sprayEffect: {fileID: 1605619363}
+  sprayZoneCollider: {fileID: 2025034952}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

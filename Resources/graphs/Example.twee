@@ -1,10 +1,11 @@
-:: Inicio de la Simulación [start] {"position":"-610,300","id":"start-1"}
+:: Inicio de la Simulación [start] {"position":"-613,300","id":"start-1"}
 Iniciar la simulación y preparar el entorno inicial.
 @
 - null
 - null
 [{"label":"Iniciar simulación","trigger":"","target":"briefing-1"}]
 <
+Action(ExtintorManager:FireExtinguisherManager.HideAllExtinguishers),
 Wait(1),
 >
 
@@ -19,7 +20,7 @@ Wait(1),
 Action(DialogueManager:DialogueManager.ShowWelcomeDialogue),
 >
 
-:: Preparar Fuego Rojo [notype] {"position":"-3,142","id":"dd0c7db2-e3b3-433d-9c68-11fbba921b1b"}
+:: Preparar Fuego Rojo [notype] {"position":"-3,144","id":"dd0c7db2-e3b3-433d-9c68-11fbba921b1b"}
 
 @
 - null
@@ -44,9 +45,9 @@ Action(FireManager:FireManager.ActivateOrangeFire),
 @
 - null
 - null
-[{"label":"Success","trigger":"PlayArea:TriggerZone.OnTriggerEnter","target":"bdd07cb5-2abb-473d-ad2d-d2364878af2a"},{"label":"Reminder","trigger":"","target":""}]
+[{"label":"Success","trigger":"PlayArea:PlayAreaDetector.OnTriggerEnter","target":"bdd07cb5-2abb-473d-ad2d-d2364878af2a"}]
 <
-Wait(15),
+Wait(5),
 Remind(DialogueManager:DialogueManager.RemindStepIntoPlayArea),
 >
 
@@ -55,9 +56,9 @@ Remind(DialogueManager:DialogueManager.RemindStepIntoPlayArea),
 @
 - null
 - null
-[{"label":"Success","trigger":"PlayArea:TriggerZone.OnTriggerEnter","target":"e0b37f64-52f7-4e96-83c0-8031dbf47797"}]
+[{"label":"Success","trigger":"PlayArea:PlayAreaDetector.OnTriggerEnter","target":"e0b37f64-52f7-4e96-83c0-8031dbf47797"}]
 <
-Wait(15),
+Wait(5),
 Remind(DialogueManager:DialogueManager.RemindStepIntoPlayArea),
 >
 
@@ -68,8 +69,7 @@ Remind(DialogueManager:DialogueManager.RemindStepIntoPlayArea),
 - null
 [{"label":"Next","trigger":"","target":"a32ed749-74b4-483c-867c-b77cbc17d4dc"}]
 <
-Action(ExtintorManager:ExtintorManager.ActivarExtintorRojo),
-Action(ExtintorManager:ExtintorManager.ActivarExtintorAzul),
+Action(ExtintorManager:FireExtinguisherManager.ShowAllExtinguishers),
 >
 
 :: Preparar Extintores [notype] {"position":"372,567","id":"e0b37f64-52f7-4e96-83c0-8031dbf47797"}
@@ -79,25 +79,24 @@ Action(ExtintorManager:ExtintorManager.ActivarExtintorAzul),
 - null
 [{"label":"Next","trigger":"","target":"2bcfb802-1115-451e-846b-baa91d31ef2e"}]
 <
-Action(ExtintorManager:ExtintorManager.ActivarExtintorRojo),
-Action(ExtintorManager:ExtintorManager.ActivarExtintorAzul),
+Action(ExtintorManager:FireExtinguisherManager.ShowAllExtinguishers),
 >
 
 :: Escoger Extintor [multiplechoice] {"position":"541,144","id":"a32ed749-74b4-483c-867c-b77cbc17d4dc"}
 
 @
-- 
 - null
-[{"label":"Extintor Rojo","trigger":"ExtintorBodyRojo:FireExtinguisher.OnGrab","target":"0b10cf8d-7822-407a-9764-88871448515e"},{"label":"Extintor  Azul","trigger":"ExtintorBodyAzul:FireExtinguisher.OnGrab","target":"e16fc6e1-e7ba-4702-9ac3-4b8d086da3aa"}]
+- null
+[{"label":"Extintor Rojo","trigger":"ExtintorRojo:FireExtinguisher.OnGrab","target":"0b10cf8d-7822-407a-9764-88871448515e"},{"label":"Extintor  Azul","trigger":"ExtintorAzul:FireExtinguisher.OnGrab","target":"e16fc6e1-e7ba-4702-9ac3-4b8d086da3aa"}]
 <
 >
 
 :: Escoger Extintor [multiplechoice] {"position":"556,564","id":"2bcfb802-1115-451e-846b-baa91d31ef2e"}
 
 @
-- 
 - null
-[{"label":"Extintor Azul","trigger":"ExtintorBodyAzul:FireExtinguisher.OnGrab","target":"e1bb38a1-aba7-4254-b552-0c22ec3c90db"},{"label":"Extintor Rojo","trigger":"ExtintorBodyRojo:FireExtinguisher.OnGrab","target":"6791ded3-37d6-480a-823f-ac4c703ee081"}]
+- null
+[{"label":"Extintor Azul","trigger":"ExtintorAzul:FireExtinguisher.OnGrab","target":"e1bb38a1-aba7-4254-b552-0c22ec3c90db"},{"label":"Extintor Rojo","trigger":"ExtintorRojo:FireExtinguisher.OnGrab","target":"6791ded3-37d6-480a-823f-ac4c703ee081"}]
 <
 >
 
@@ -109,8 +108,7 @@ de Fallo
 - null
 [{"label":"Next","trigger":"","target":"51fec734-cf25-456e-83e7-e1cbcfc8a024"}]
 <
-Action(ExtintorManager:ExtintorManager.DesactivarExtintorRojo),
-Action(ExtintorManager:ExtintorManager.DesactivarExtintorAzul),
+Action(ExtintorManager:FireExtinguisherManager.HideAllExtinguishers),
 Action(FireManager:FireManager.DeactivateRedFire),
 >
 
@@ -118,11 +116,11 @@ Action(FireManager:FireManager.DeactivateRedFire),
 Se explica que los fuegos rojos 
 deberian ser apagados con extintores de color Rojo
 @
-- 
+- null
 - null
 [{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
-Action(DialogueManager:DialogueManager.ShowExtinguisherFeedback),
+Action(DialogueManager:DialogueManager.ShowWrongExtinguisherWarning),
 >
 
 :: Exito: Limpiar Escena [notype] {"position":"650,3","id":"0b10cf8d-7822-407a-9764-88871448515e"}
@@ -133,7 +131,7 @@ el otro extintor
 - null
 [{"label":"Next","trigger":"","target":"d65fc5d3-00f9-4074-b7ad-5d19cc05838d"}]
 <
-Action(ExtintorManager:ExtintorManager.DesactivarExtintorAzul),
+Action(ExtintorManager:FireExtinguisherManager.HideBlueExtinguisher),
 >
 
 :: Apagar El incendio [timeout] {"position":"928,5","id":"d65fc5d3-00f9-4074-b7ad-5d19cc05838d"}
@@ -141,29 +139,29 @@ Se le dan 15 segundos para que el usuario apague el incendio
 @
 - 15
 - 15
-[{"label":"Timeout","trigger":"","target":"2ab4ede8-4a40-4c0a-a864-c0d272a3bb8f"},{"label":"Success","trigger":"FireManager:FireManager.DeactivateRedFire","target":"79580699-b63f-49de-9cbb-ec6fe301a74d"}]
+[{"label":"Timeout","trigger":"","target":"2ab4ede8-4a40-4c0a-a864-c0d272a3bb8f"},{"label":"Success","trigger":"FuegoRojo:FireZone.ExtinguishFire","target":"79580699-b63f-49de-9cbb-ec6fe301a74d"}]
 <
 >
 
 :: Dar Feedback [dialogue] {"position":"1280,6","id":"2ab4ede8-4a40-4c0a-a864-c0d272a3bb8f"}
 Se le explica al usuario que se quedo sin tiempo para apagar el incendio
 @
-- 
+- null
 - null
 [{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
-Action(DialogueManager:DialogueManager.ShowTimeoutFailureMessage),
+Action(DialogueManager:DialogueManager.ShowFailureMessage),
 Action(FireManager:FireManager.DeactivateRedFire),
 >
 
 :: Felicitar al usuario [dialogue] {"position":"1139,-139","id":"79580699-b63f-49de-9cbb-ec6fe301a74d"}
 Se le felicita al usuario por completar el escenario
 @
-- 
+- null
 - null
 [{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
-Action(DialogueManager:DialogueManager.ShowCongratulations),
+Action(DialogueManager:DialogueManager.ShowSuccessMessage),
 >
 
 :: Exito: Limpiar Escena [notype] {"position":"666,446","id":"e1bb38a1-aba7-4254-b552-0c22ec3c90db"}
@@ -173,7 +171,7 @@ Action(DialogueManager:DialogueManager.ShowCongratulations),
 - null
 [{"label":"Next","trigger":"","target":"bd1fcd7f-f427-49f7-8383-e9e88e9ff1e4"}]
 <
-Action(ExtintorManager:ExtintorManager.DesactivarExtintorRojo),
+Action(ExtintorManager:FireExtinguisherManager.HideRedExtinguisher),
 >
 
 :: Fallo: Limpiar Escena [notype] {"position":"725,562","id":"6791ded3-37d6-480a-823f-ac4c703ee081"}
@@ -183,8 +181,7 @@ Action(ExtintorManager:ExtintorManager.DesactivarExtintorRojo),
 - null
 [{"label":"Next","trigger":"","target":"4809a3e1-54d9-43ff-847c-35a9fe4471f7"}]
 <
-Action(ExtintorManager:ExtintorManager.DesactivarExtintorRojo),
-Action(ExtintorManager:ExtintorManager.DesactivarExtintorAzul),
+Action(ExtintorManager:FireExtinguisherManager.HideAllExtinguishers),
 Action(FireManager:FireManager.DeactivateOrangeFire),
 >
 
@@ -193,7 +190,7 @@ Se le dan 15 segundos para que el usuario apague el incendio
 @
 - 15
 - 15
-[{"label":"Timeout","trigger":"","target":"9fb906b4-ce7c-4ebc-b8db-4a90d139b696"},{"label":"Success","trigger":"FireManager:FireManager.DeactivateOrangeFire","target":"2fd88992-cc14-406e-b552-70f8094bf90b"}]
+[{"label":"Timeout","trigger":"","target":"9fb906b4-ce7c-4ebc-b8db-4a90d139b696"},{"label":"Success","trigger":"FuegoNaranja:FireZone.ExtinguishFire","target":"2fd88992-cc14-406e-b552-70f8094bf90b"}]
 <
 >
 
@@ -201,54 +198,56 @@ Se le dan 15 segundos para que el usuario apague el incendio
 Se explica que los fuegos naranjas 
 deberian ser apagados con extintores de color Azul
 @
-- 
+- null
 - null
 [{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
-Action(DialogueManager:DialogueManager.ShowExtinguisherFeedback),
+Action(DialogueManager:DialogueManager.ShowWrongExtinguisherWarning),
 >
 
-:: Felicitar al usuario [dialogue] {"position":"1134,329","id":"2fd88992-cc14-406e-b552-70f8094bf90b"}
+:: Felicitar al usuario [dialogue] {"position":"1127,328","id":"2fd88992-cc14-406e-b552-70f8094bf90b"}
 Se le felicita al usuario por completar el escenario
 @
-- 
+- null
 - null
 [{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
-Action(DialogueManager:DialogueManager.ShowCongratulations),
+Action(DialogueManager:DialogueManager.ShowSuccessMessage),
 >
 
 :: Dar Feedback [dialogue] {"position":"1214,442","id":"9fb906b4-ce7c-4ebc-b8db-4a90d139b696"}
 Se le explica al usuario que se quedo sin tiempo para apagar el incendio
 @
-- 
+- null
 - null
 [{"label":"New Response","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"8409b072-632f-49ee-a4ea-0a9715524e01"}]
 <
-Action(DialogueManager:DialogueManager.ShowTimeoutFailureMessage),
+Action(DialogueManager:DialogueManager.ShowFailureMessage),
 Action(FireManager:FireManager.DeactivateOrangeFire),
 >
 
-:: Escoger Fuego [random] {"position":"-112,299","id":"d881861e-cdb2-426e-9477-2ca3fa1aa0d8"}
+:: Escoger Fuego [random] {"position":"-112,300","id":"d881861e-cdb2-426e-9477-2ca3fa1aa0d8"}
 
 @
 - null
 - null
 [{"label":"Fuego Rojo","trigger":"","target":"dd0c7db2-e3b3-433d-9c68-11fbba921b1b"},{"label":"Fuego Naranja","trigger":"","target":"81774aea-742d-4601-bc54-7a1932ee2f02"}]
 <
+Wait(2),
+Action(DialogueManager:DialogueManager.ShowExtinguisherTip),
 >
 
-:: Restart? [dialogue] {"position":"1691,192","id":"8409b072-632f-49ee-a4ea-0a9715524e01"}
+:: Restart? [dialogue] {"position":"1691,191","id":"8409b072-632f-49ee-a4ea-0a9715524e01"}
 Se le pregunta al usuario si quiere 
 reiniciar la simulacion o 
 entrar en freemode
 @
-- 
 - null
-[{"label":"FreeRoam","trigger":"DialogueManager:DialogueManager.ReportButtonClickB","target":"702330aa-8578-44f0-adb7-754919db7a95"},{"label":"Reiniciar","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"briefing-1"}]
+- null
+[{"label":"Reiniciar","trigger":"DialogueManager:DialogueManager.ReportButtonClickA","target":"c175f8c7-a6b5-4bc3-9da3-3abd477c65f7"},{"label":"FreeRoam","trigger":"DialogueManager:DialogueManager.ReportButtonClickB","target":"702330aa-8578-44f0-adb7-754919db7a95"}]
 <
 Wait(2),
-Action(DialogueManager:DialogueManager.AskRestartOrRoam),
+Action(DialogueManager:DialogueManager.ShowEndOfSimulationDialogue),
 >
 
 :: Final [end] {"position":"1905,191","id":"702330aa-8578-44f0-adb7-754919db7a95"}
@@ -258,5 +257,16 @@ Action(DialogueManager:DialogueManager.AskRestartOrRoam),
 - null
 []
 <
+>
+
+:: Prepare Restart Scene [notype] {"position":"1830,721","id":"c175f8c7-a6b5-4bc3-9da3-3abd477c65f7"}
+
+@
+- null
+- null
+[{"label":"Next","trigger":"","target":"briefing-1"}]
+<
+Action(ExtintorManager:FireExtinguisherManager.RestartSimulation),
+Wait(1),
 >
 
